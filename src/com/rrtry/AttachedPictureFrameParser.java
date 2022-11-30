@@ -10,7 +10,7 @@ public class AttachedPictureFrameParser implements FrameBodyParser<AttachedPictu
     private static final int MIME_TYPE_OFFSET = 1;
 
     @Override
-    public AttachedPictureFrame parse(TagHeader tagHeader, FrameHeader frameHeader, byte[] frameData) {
+    public AttachedPictureFrame parse(String identifier, FrameHeader frameHeader, byte[] frameData, TagHeader tagHeader) {
 
         position = 0;
 

@@ -2,7 +2,7 @@ package com.rrtry;
 
 import java.io.*;
 
-public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
+public class ID3V2TagEditor extends AbstractID3TagEditor<ID3V2Tag> {
 
     private int originalTagSize;
 

@@ -49,7 +49,7 @@ public class CommentFrameParser implements FrameBodyParser<CommentFrame> {
     }
 
     @Override
-    public CommentFrame parse(TagHeader tagHeader, FrameHeader frameHeader, byte[] frameData) {
+    public CommentFrame parse(String identifier, FrameHeader frameHeader, byte[] frameData, TagHeader tagHeader) {
 
         byte encoding = frameData[ENCODING_OFFSET];
         Charset charset = TextEncoding.getCharset(encoding);

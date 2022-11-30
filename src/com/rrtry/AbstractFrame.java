@@ -67,7 +67,7 @@ public abstract class AbstractFrame implements Component {
     public static final String SET_SUBTITLE          = "TSST";
     public static final String CUSTOM                = "TXXX";
 
-    public static final String[] v2_3_FRAMES = new String[] {
+    public static final String[] V2_3_FRAMES = new String[] {
             ALBUM, COMMENT, PICTURE, COMPOSER,
             GENRE, TITLE, ARTIST, TRACK_NUMBER,
             BPM, COPYRIGHT, PLAYLIST_DELAY, ENCODED_BY,
@@ -80,7 +80,7 @@ public abstract class AbstractFrame implements Component {
             SIZE, DATE, TIME, RELATIVE_VOL_ADJUST, INVOLVED_PEOPLE, EQUALIZATION
     };
 
-    public static final String[] v2_4_FRAMES = new String[] {
+    public static final String[] V2_4_FRAMES = new String[] {
             ALBUM, COMMENT, PICTURE, COMPOSER,
             GENRE, RECORDING_TIME, TITLE, ARTIST, TRACK_NUMBER,
             BPM, COPYRIGHT, ENCODING_TIME, PLAYLIST_DELAY,

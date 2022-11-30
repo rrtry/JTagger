@@ -2,7 +2,7 @@ package com.rrtry;
 
 import java.io.IOException;
 
-public class ID3V1TagEditor extends AbstractTagEditor<ID3V1Tag> {
+public class ID3V1TagEditor extends AbstractID3TagEditor<ID3V1Tag> {
 
     @Override
     protected final void parseTag() throws IOException {

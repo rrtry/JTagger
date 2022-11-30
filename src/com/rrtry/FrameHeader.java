@@ -71,8 +71,8 @@ public class FrameHeader implements Component {
 
         String[] frames;
 
-        if (version == ID3V2Tag.ID3V2_3) frames = AbstractFrame.v2_3_FRAMES;
-        else if (version == ID3V2Tag.ID3V2_4) frames = AbstractFrame.v2_4_FRAMES;
+        if (version == ID3V2Tag.ID3V2_3) frames = AbstractFrame.V2_3_FRAMES;
+        else if (version == ID3V2Tag.ID3V2_4) frames = AbstractFrame.V2_4_FRAMES;
         else throw new IllegalArgumentException("Unsupported tag version: " + version);
 
         if (Arrays.stream(frames).noneMatch(identifier::equals)) {

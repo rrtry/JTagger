@@ -8,9 +8,10 @@ public class FrameParserFactory {
         FrameBodyParser parser;
 
         switch (frameType) {
-            case TEXT: parser = new TextFrameParser(); break;
-            case PICTURE: parser = new AttachedPictureFrameParser(); break;
-            case COMMENT: parser = new CommentFrameParser(); break;
+            case TIMESTAMP: parser = new RecordingTimeFrameParser(); break;
+            case TEXT:      parser = new TextFrameParser(); break;
+            case PICTURE:   parser = new AttachedPictureFrameParser(); break;
+            case COMMENT:   parser = new CommentFrameParser(); break;
             default: throw new IllegalArgumentException("Frame not supported");
         }
 

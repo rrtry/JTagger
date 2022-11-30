@@ -8,15 +8,22 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 
 import static com.rrtry.AbstractFrame.*;
+import static com.rrtry.DateFrame.DATE_FORMAT_PATTERN;
+import static com.rrtry.TextEncoding.ENCODING_LATIN_1;
+import static com.rrtry.TimeFrame.TIME_FORMAT_PATTERN;
 
 public class ID3V2Tag implements ID3Tag, Component {
+
+    public static final String[] DEPRECATED_V23_FRAMES = new String[] {
+            "EQUA", "IPLS", "RVAD", "TDAT", "TIME", "TORY", "TRDA", "TSIZ", "TYER"
+    };
 
     public static final byte ID3V2   = 0x02;
     public static final byte ID3V2_3 = 0x03;
@@ -63,6 +70,7 @@ public class ID3V2Tag implements ID3Tag, Component {
 
     public void addFrame(AbstractFrame frame) { frames.add(frame); }
     public void replaceFrame(int index, AbstractFrame frame) { frames.set(index, frame); }
+    public void replaceFrame(AbstractFrame frame) { replaceFrame(getFrameIndex(frame.getIdentifier()), frame); }
 
     public void removeFrame(int index) { frames.remove(index); }
     public boolean removeFrame(AbstractFrame frame) { return frames.remove(frame); }
@@ -118,6 +126,21 @@ public class ID3V2Tag implements ID3Tag, Component {
         }
     }
 
+    private void setRecordingYear(String id, String year) {
+
+        int index = getFrameIndex(id);
+        RecordingTimeFrame recordingTimeFrame = RecordingTimeFrame.createBuilder()
+                .setHeader(FrameHeader.createFrameHeader(id, ID3V2_4))
+                .setYear(Year.parse(year))
+                .build(ID3V2_4);
+
+        if (index != -1) {
+            replaceFrame(index, recordingTimeFrame);
+        } else {
+            addFrame(recordingTimeFrame);
+        }
+    }
+
     private void setTextFrame(String id, String text, byte encoding) {
 
         int index = getFrameIndex(id);
@@ -126,7 +149,7 @@ public class ID3V2Tag implements ID3Tag, Component {
         if (index != -1) {
             replaceFrame(index, frame);
         } else {
-            addFrame(TextFrame.createInstance(id, text, encoding, getVersion()));
+            addFrame(frame);
         }
     }
 
@@ -233,7 +256,7 @@ public class ID3V2Tag implements ID3Tag, Component {
     public void setYear(String year) {
         byte version = getVersion();
         if (version == ID3V2_3) setTextFrame(YEAR, year, TextEncoding.getAppropriateEncoding(version));
-        if (version == ID3V2_4) setTextFrame(RECORDING_TIME, year, TextEncoding.getAppropriateEncoding(version));
+        if (version == ID3V2_4) setRecordingYear(RECORDING_TIME, year);
     }
 
     @Override
@@ -275,33 +298,6 @@ public class ID3V2Tag implements ID3Tag, Component {
         return stringBuilder.toString();
     }
 
-    private static void replaceUnsupportedTextFrames(
-            ArrayList<AbstractFrame> frames,
-            final String currentFrameId,
-            final String replacementFrameId,
-            byte encoding,
-            byte version)
-    {
-
-        TextFrame currentFrame = null;
-
-        for (AbstractFrame frame : frames) {
-            if (frame instanceof TextFrame &&
-                frame.getIdentifier().equals(currentFrameId))
-            {
-                currentFrame = (TextFrame) frame;
-            }
-        }
-
-        if (currentFrame != null) {
-            TextFrame replacementFrame = TextFrame.createInstance(
-                    replacementFrameId, currentFrame.getText(),
-                    encoding, version
-            );
-            frames.set(frames.indexOf(currentFrame), replacementFrame);
-        }
-    }
-
     @Override
     public byte[] assemble(byte version) {
 
@@ -337,7 +333,9 @@ public class ID3V2Tag implements ID3Tag, Component {
         this.tagBytes = tag;
 
         if (tagHeader.isUnsynch() && version == ID3V2_3) {
-            byte[] unsynchFrameData = UnsynchronisationHelper.toUnsynch(Arrays.copyOfRange(tagBytes, TagHeaderParser.HEADER_LENGTH, tagBytes.length));
+            byte[] unsynchFrameData = UnsynchronisationHelper.toUnsynch(
+                    Arrays.copyOfRange(tagBytes, TagHeaderParser.HEADER_LENGTH, tagBytes.length)
+            );
             tagSize = unsynchFrameData.length;
         }
 
@@ -354,105 +352,122 @@ public class ID3V2Tag implements ID3Tag, Component {
     public static Builder newBuilder() { return new ID3V2Tag().new Builder(); }
     public static Builder newBuilder(ID3V2Tag ID3V2Tag) { return ID3V2Tag.new Builder(); }
 
-    private static void convertToID3V23Tag(ID3V2Tag id3V2Tag, ArrayList<AbstractFrame> frames) {
+    private static void convertToID3V23Tag(ID3V2Tag id3V2Tag) {
 
         final byte version = ID3V2_3;
+        ArrayList<AbstractFrame> frames = id3V2Tag.getFrames();
 
-        TextFrame recordingTimeFrame = id3V2Tag.getFrame(RECORDING_TIME);
+        RecordingTimeFrame recordingTimeFrame = id3V2Tag.getFrame(RECORDING_TIME);
         TextFrame releaseTimeFrame = id3V2Tag.getFrame(ORIGINAL_RELEASE_TIME);
 
-        if (releaseTimeFrame != null) {
-            if (releaseTimeFrame.getText().length() >= 4) {
-                TextFrame releaseYear = TextFrame.createInstance(
-                        ORIGINAL_RELEASE_YEAR,
-                        releaseTimeFrame.getText().substring(0, 4),
-                        TextEncoding.ENCODING_LATIN_1,
-                        version);
-                frames.add(releaseYear);
-            }
-            frames.remove(releaseTimeFrame);
+        if (releaseTimeFrame != null && releaseTimeFrame.getText().length() >= 4) {
+            TextFrame releaseYear = TextFrame.createInstance(
+                    ORIGINAL_RELEASE_YEAR,
+                    releaseTimeFrame.getText().substring(0, 4),
+                    ENCODING_LATIN_1,
+                    version);
+            frames.add(releaseYear);
         }
+
+        frames.remove(releaseTimeFrame);
 
         if (recordingTimeFrame != null) {
 
-            String recordingTime = recordingTimeFrame.getText();
+            Year year      = recordingTimeFrame.getYear();
+            MonthDay date  = recordingTimeFrame.getMonthDay();
+            LocalTime time = recordingTimeFrame.getTime();
 
-            String year = null;
-            String date = null;
-            String time = null;
+            TextFrame frame;
 
-            if (recordingTime.length() >= 4)  year = recordingTime.substring(0, 4);
-            if (recordingTime.length() >= 10) date = recordingTime.substring(8, 10)  + recordingTime.substring(5, 7);
-            if (recordingTime.length() >= 16) time = recordingTime.substring(11, 13) + recordingTime.substring(14, 16);
-
-            frames.remove(recordingTimeFrame);
-
-            if (year != null) frames.add(TextFrame.createInstance(YEAR, year, TextEncoding.ENCODING_LATIN_1, version));
-            if (date != null) frames.add(TextFrame.createInstance(DATE, date, TextEncoding.ENCODING_LATIN_1, version));
-            if (time != null) frames.add(TextFrame.createInstance(TIME, time, TextEncoding.ENCODING_LATIN_1, version));
+            if (year != null) {
+                frame = TextFrame.createInstance(
+                        YEAR, String.valueOf(year),
+                        ENCODING_LATIN_1, version
+                );
+                frames.add(frame);
+            }
+            if (date != null) {
+                frame = DateFrame.createInstance(date);
+                frames.add(frame);
+            }
+            if (time != null) {
+                frame = TimeFrame.createInstance(time);
+                frames.add(frame);
+            }
+            frames.remove(releaseTimeFrame);
         }
     }
 
-    private static void convertToID3V24Tag(ID3V2Tag id3V2Tag, ArrayList<AbstractFrame> frames) {
+    private static void convertToID3V24Tag(ID3V2Tag id3V2Tag) {
 
         final byte version = ID3V2_4;
+        ArrayList<AbstractFrame> frames = id3V2Tag.getFrames();
 
         StringBuilder dateString = new StringBuilder();
-        StringBuilder oldPattern = new StringBuilder();
-        StringBuilder newPattern = new StringBuilder();
+        StringBuilder pattern    = new StringBuilder();
 
         TextFrame releaseYear = id3V2Tag.getFrame(ORIGINAL_RELEASE_YEAR);
         TextFrame yearFrame   = id3V2Tag.getFrame(YEAR);
-        TextFrame timeFrame   = id3V2Tag.getFrame(TIME);
-        TextFrame dateFrame   = id3V2Tag.getFrame(DATE);
+        TimeFrame timeFrame   = id3V2Tag.getFrame(TIME);
+        DateFrame dateFrame   = id3V2Tag.getFrame(DATE);
 
-        if (releaseYear != null) {
-            if (releaseYear.getText().length() == 4) {
-                TextFrame releaseTime = TextFrame.newBuilder()
-                        .setHeader(FrameHeader.createFrameHeader(ORIGINAL_RELEASE_TIME, version))
-                        .setEncoding(TextEncoding.ENCODING_LATIN_1)
-                        .setText(releaseYear.getText())
-                        .build(version);
-                frames.set(frames.indexOf(releaseYear), releaseTime);
-            } else {
-                frames.remove(releaseYear);
-            }
-        }
+        if (releaseYear != null && releaseYear.getText().length() == 4) {
 
-        if (yearFrame != null) {
-            if (yearFrame.getText().length() == 4) {
-                newPattern.append("yyyy"); oldPattern.append("yyyy"); dateString.append(yearFrame.getText());
-            }
-            frames.remove(yearFrame);
-        }
-        if (dateFrame != null) {
-            if (dateFrame.getText().length() == 4) {
-                newPattern.append("-MM-dd"); oldPattern.append("DDMM"); dateString.append(dateFrame.getText());
-            }
-            frames.remove(dateFrame);
-        }
-        if (timeFrame != null) {
-            if (timeFrame.getText().length() == 4) {
-                newPattern.append("THH:mm"); oldPattern.append("HHMM"); dateString.append(timeFrame.getText());
-            }
-            frames.remove(timeFrame);
-        }
-
-        SimpleDateFormat oldDateFormat = new SimpleDateFormat(oldPattern.toString());
-        SimpleDateFormat newDateFormat = new SimpleDateFormat(newPattern.toString());
-
-        try {
-            Date date = oldDateFormat.parse(dateString.toString());
-            String recordingTime = newDateFormat.format(date);
-
-            TextFrame recordingTimeFrame = TextFrame.newBuilder()
-                    .setHeader(FrameHeader.createFrameHeader(RECORDING_TIME, version))
-                    .setEncoding(TextEncoding.ENCODING_LATIN_1)
-                    .setText(recordingTime)
+            RecordingTimeFrame releaseTime = RecordingTimeFrame.createBuilder()
+                    .setHeader(FrameHeader.createFrameHeader(ORIGINAL_RELEASE_TIME, version))
+                    .setYear(Year.parse(releaseYear.getText()))
                     .build(version);
 
+            frames.set(frames.indexOf(releaseYear), releaseTime);
+        }
+
+        frames.remove(releaseYear);
+
+        boolean isYear      = false;
+        boolean isDate      = false;
+        boolean isDateTime  = false;
+
+        final String yearPattern = "yyyy";
+
+        if (yearFrame != null && yearFrame.getText().length() == 4) {
+            pattern.append(yearPattern);
+            dateString.append(yearFrame.getText());
+            isYear = true;
+        }
+        if (isYear && dateFrame != null && dateFrame.getText().length() == 4) {
+            pattern.append("-").append(DATE_FORMAT_PATTERN);
+            dateString.append("-").append(dateFrame.getText());
+            isDate = true;
+        }
+        if (isYear && isDate && timeFrame != null && timeFrame.getText().length() == 4) {
+            pattern.append("-").append(TIME_FORMAT_PATTERN);
+            dateString.append("-").append(timeFrame.getText());
+            isDateTime = true;
+        }
+
+        frames.remove(yearFrame);
+        frames.remove(dateFrame);
+        frames.remove(timeFrame);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern.toString());
+
+        try {
+
+            RecordingTimeFrame.Builder recTime = RecordingTimeFrame.createBuilder();
+            recTime = recTime.setHeader(FrameHeader.createFrameHeader(RECORDING_TIME, version));
+
+            if (isDateTime) {
+                recTime.setDateTime(LocalDateTime.parse(dateString, formatter));
+            } else if (isDate) {
+                recTime.setDate(LocalDate.parse(dateString, formatter));
+            } else if (isYear) {
+                recTime.setYear(Year.parse(dateString.toString()));
+            }
+
+            RecordingTimeFrame recordingTimeFrame = recTime.build(version);
             frames.add(recordingTimeFrame);
-        } catch (ParseException e) {
+
+        } catch (DateTimeParseException e) {
             e.printStackTrace();
         }
     }
@@ -467,23 +482,21 @@ public class ID3V2Tag implements ID3Tag, Component {
             frame.assemble(version);
         }
 
-        if (version == ID3V2_4) convertToID3V24Tag(id3V2Tag, frames);
-        if (version == ID3V2_3) convertToID3V23Tag(id3V2Tag, frames);
-
+        if (version == ID3V2_4) {
+            convertToID3V24Tag(id3V2Tag);
+            frames.removeIf((frame) -> !Arrays.asList(V2_4_FRAMES).contains(frame.getIdentifier()));
+        }
+        if (version == ID3V2_3) {
+            convertToID3V23Tag(id3V2Tag);
+            frames.removeIf((frame) -> !Arrays.asList(V2_3_FRAMES).contains(frame.getIdentifier()));
+        }
         return ID3V2Tag.newBuilder(id3V2Tag).build(version);
     }
 
     public static ID3V2Tag fromID3V1Tag(ID3V1Tag id3v1Tag, byte version) {
 
-        byte revision = 0;
-
         TagHeader header = TagHeader.newBuilder(version)
-                .setUnsynch(false)
-                .setHasFooter(false)
-                .setIsExperimental(false)
-                .setHasExtendedHeader(false)
                 .setMajorVersion(version)
-                .setMinorVersion(revision)
                 .build(version);
 
         ID3V2Tag id3v2Tag = ID3V2Tag.newBuilder()

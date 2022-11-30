@@ -73,7 +73,7 @@ class FrameParser {
         }
 
         FrameBodyParser frameParser = FrameParserFactory.getParser(frameType);
-        return frameParser.parse(tagHeader, frameHeader, frame);
+        return frameParser.parse(frameHeader.getIdentifier(), frameHeader, frame, tagHeader);
     }
 
     public final ArrayList<AbstractFrame> parseFrames() {
