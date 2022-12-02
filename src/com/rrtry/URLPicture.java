@@ -1,5 +1,6 @@
 package com.rrtry;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,11 +48,12 @@ public class URLPicture {
         InputStream inputStream = url.openStream();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-        byte[] buffer = new byte[2048];
-        while (inputStream.read(buffer, 0, buffer.length) != -1) {
-            outputStream.write(buffer, 0, buffer.length);
+        int data;
+        while ((data = inputStream.read()) != -1) {
+            outputStream.write(data);
         }
 
+        inputStream.close();
         return outputStream.toByteArray();
     }
 }

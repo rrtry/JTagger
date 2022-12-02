@@ -345,7 +345,6 @@ public class ID3V2Tag implements ID3Tag, Component {
                 .build(version);
 
         System.arraycopy(tagHeader.getBytes(), 0, tag, 0, TagHeaderParser.HEADER_LENGTH);
-
         return tag;
     }
 

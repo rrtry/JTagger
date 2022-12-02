@@ -92,6 +92,10 @@ public class TagHeader implements Component {
     @Override
     public byte[] assemble(byte version) {
 
+        System.out.println(
+                String.format("Assembling frame, flags: %d", flags)
+        );
+
         byte[] header = new byte[HEADER_LENGTH];
         byte[] id = new byte[] { 0x49, 0x44, 0x33 };
         byte[] size = getBytesFromInteger(toSynchSafeInteger(tagSize));
@@ -115,7 +119,8 @@ public class TagHeader implements Component {
     @Override
     public String toString() {
         return String.format(
-                "Major version: %d, revision number %d, tag size: %d", majorVersion, minorVersion, tagSize
+                "Major version: %d, revision number %d, tag size: %d, unsynch: %b, flags: %d",
+                majorVersion, minorVersion, tagSize, isUnsynch, ((int) flags) & 0xFF
         );
     }
 
@@ -142,22 +147,22 @@ public class TagHeader implements Component {
         }
 
         public Builder setUnsynch(boolean unsynch) {
-            TagHeader.this.isUnsynch = unsynch;
+            TagHeader.this.setUnsynch(unsynch);
             return this;
         }
 
         public Builder setHasExtendedHeader(boolean hasExtendedHeader) {
-            TagHeader.this.hasExtendedHeader = hasExtendedHeader;
+            TagHeader.this.setHasExtendedHeader(hasExtendedHeader);
             return this;
         }
 
         public Builder setIsExperimental(boolean isExperimental) {
-            TagHeader.this.isExperimental = isExperimental;
+            TagHeader.this.setExperimental(isExperimental);
             return this;
         }
 
         public Builder setHasFooter(boolean hasFooter) {
-            TagHeader.this.hasFooter = hasFooter;
+            TagHeader.this.setHasFooter(hasFooter);
             return this;
         }
 

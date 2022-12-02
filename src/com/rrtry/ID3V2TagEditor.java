@@ -24,7 +24,8 @@ public class ID3V2TagEditor extends AbstractID3TagEditor<ID3V2Tag> {
 
     @Override
     public void setTag(ID3V2Tag tag) {
-        this.tag = ID3V2Tag.newBuilder(tag).build(tag.getVersion());
+        this.tag = ID3V2Tag.newBuilder(tag)
+                .build(tag.getVersion());
     }
 
     @Override

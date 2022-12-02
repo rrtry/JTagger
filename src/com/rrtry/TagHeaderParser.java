@@ -30,7 +30,7 @@ public class TagHeaderParser {
         file.seek(0);
         file.read(tagHeader, 0, HEADER_LENGTH);
 
-        if (hasExtendedHeader()) {
+        if (isExtendedHeaderPresent()) {
             extendedHeaderSize = new byte[4];
             file.seek(HEADER_LENGTH);
             file.read(extendedHeaderSize, 0, 4);
@@ -50,7 +50,7 @@ public class TagHeaderParser {
                 .setMinorVersion(minorVersion)
                 .setIsExperimental(isTagExperimental())
                 .setHasExtendedHeader(isFooterPresent())
-                .setHasExtendedHeader(hasExtendedHeader())
+                .setHasExtendedHeader(isExtendedHeaderPresent())
                 .build(majorVersion);
     }
 
@@ -76,7 +76,7 @@ public class TagHeaderParser {
     public byte parseMinorVersion() { return tagHeader[REVISION_NUMBER_OFFSET]; }
 
     public boolean isUsynchronisationApplied() { return (tagHeader[FLAGS_OFFSET] & TagHeader.FLAG_UNSYNCH) != 0; }
-    public boolean hasExtendedHeader()         { return (tagHeader[FLAGS_OFFSET] & TagHeader.FLAG_EXTENDED_HEADER) != 0; }
+    public boolean isExtendedHeaderPresent()   { return (tagHeader[FLAGS_OFFSET] & TagHeader.FLAG_EXTENDED_HEADER) != 0; }
     public boolean isTagExperimental()         { return (tagHeader[FLAGS_OFFSET] & TagHeader.FLAG_EXPERIMENTAL) != 0; }
     public boolean isFooterPresent()           { return (tagHeader[FLAGS_OFFSET] & TagHeader.FLAG_FOOTER_PRESENT) != 0; }
 }
