@@ -461,6 +461,8 @@ public class ID3V2Tag implements ID3Tag, Component {
                 recTime.setDate(LocalDate.parse(dateString, formatter));
             } else if (isYear) {
                 recTime.setYear(Year.parse(dateString.toString()));
+            } else {
+                return;
             }
 
             RecordingTimeFrame recordingTimeFrame = recTime.build(version);
