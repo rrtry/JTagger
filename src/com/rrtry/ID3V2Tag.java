@@ -35,19 +35,20 @@ public class ID3V2Tag implements ID3Tag, Component {
     private ArrayList<AbstractFrame> frames = new ArrayList<>();
     private byte[] tagBytes;
 
-    public TagHeader getTagHeader() {
-        return tagHeader;
-    }
+    public TagHeader getTagHeader()             { return tagHeader; }
+    public ArrayList<AbstractFrame> getFrames() { return frames; }
+    public AbstractFrame getFrameAt(int index)  { return frames.get(index); }
 
-    public ArrayList<AbstractFrame> getFrames() {
-        return frames;
-    }
-
-    public AbstractFrame getFrameAt(int index) {
-        return frames.get(index);
-    }
+    public TextFrame getTextFrame(String id) { return getFrame(id); }
 
     public <T extends AbstractFrame> T getFrame(String id) {
+
+        boolean knownFrame = false;
+        if (getVersion() == ID3V2_3) knownFrame = Arrays.asList(V2_3_FRAMES).contains(id);
+        if (getVersion() == ID3V2_4) knownFrame = Arrays.asList(V2_4_FRAMES).contains(id);
+
+        if (!knownFrame) throw new NotImplementedException();
+
         for (AbstractFrame frame : frames) {
             if (frame.getIdentifier().equals(id)) {
                 return (T) frame;
@@ -56,25 +57,19 @@ public class ID3V2Tag implements ID3Tag, Component {
         return null;
     }
 
-    public <T extends AbstractFrame> ArrayList<T> getFrames(String id) {
+    public void addFrame(AbstractFrame frame) { frames.add(frame); }
+    public void setFrameAtIndex(int index, AbstractFrame frame) { frames.set(index, frame); }
 
-        ArrayList<T> selectedFrames = new ArrayList<>();
-
-        for (AbstractFrame frame : frames) {
-            if (frame.getIdentifier().equals(id)) {
-                selectedFrames.add((T) frame);
-            }
-        }
-        return selectedFrames;
+    public void setFrame(AbstractFrame frame) {
+        int index = indexOf(frame.getIdentifier());
+        if (index != -1) setFrameAtIndex(indexOf(frame.getIdentifier()), frame);
+        else addFrame(frame);
     }
 
-    public void addFrame(AbstractFrame frame) { frames.add(frame); }
-    public void replaceFrame(int index, AbstractFrame frame) { frames.set(index, frame); }
-    public void replaceFrame(AbstractFrame frame) { replaceFrame(getFrameIndex(frame.getIdentifier()), frame); }
-
-    public void removeFrame(int index) { frames.remove(index); }
+    public void removeFrameAtIndex(int index)       { frames.remove(index); }
+    public boolean removePictures()                 { return removeFramesWithId(PICTURE); }
     public boolean removeFrame(AbstractFrame frame) { return frames.remove(frame); }
-    public boolean removeFramesWithId(String id) { return frames.removeIf(frame -> frame.getIdentifier().equals(id)); }
+    public boolean removeFramesWithId(String id)    { return frames.removeIf(frame -> frame.getIdentifier().equals(id)); }
 
     private int getTagSize(byte version) {
 
@@ -90,7 +85,7 @@ public class ID3V2Tag implements ID3Tag, Component {
         return size + PADDING;
     }
 
-    public int getFrameIndex(String id) {
+    public int indexOf(String id) {
 
         int index = -1;
 
@@ -108,49 +103,26 @@ public class ID3V2Tag implements ID3Tag, Component {
         newFrame = AttachedPictureFrame.newBuilder(newFrame).build(getVersion()); // assemble frame
 
         if (index != -1 && getFrameAt(index) instanceof AttachedPictureFrame) {
-            replaceFrame(index, newFrame);
+            setFrameAtIndex(index, newFrame);
             return;
         }
         throw new IllegalArgumentException("Index must be non-negative and frame at the position must have id 'APIC'");
     }
 
     private void setCommentFrame(String comment, String language) {
-
-        int index = getFrameIndex(COMMENT);
-        CommentFrame frame = CommentFrame.createInstance(comment, language, getVersion());
-
-        if (index != -1) {
-            replaceFrame(index, frame);
-        } else {
-            addFrame(frame);
-        }
+        setFrame(CommentFrame.createInstance(comment, language, getVersion()));
     }
 
     private void setRecordingYear(String id, String year) {
-
-        int index = getFrameIndex(id);
         RecordingTimeFrame recordingTimeFrame = RecordingTimeFrame.createBuilder()
                 .setHeader(FrameHeader.createFrameHeader(id, ID3V2_4))
                 .setYear(Year.parse(year))
                 .build(ID3V2_4);
-
-        if (index != -1) {
-            replaceFrame(index, recordingTimeFrame);
-        } else {
-            addFrame(recordingTimeFrame);
-        }
+        setFrame(recordingTimeFrame);
     }
 
     private void setTextFrame(String id, String text, byte encoding) {
-
-        int index = getFrameIndex(id);
-        TextFrame frame = TextFrame.createInstance(id, text, encoding, getVersion());
-
-        if (index != -1) {
-            replaceFrame(index, frame);
-        } else {
-            addFrame(frame);
-        }
+        setFrame(TextFrame.createInstance(id, text, encoding, getVersion()));
     }
 
     public void addPictureURL(URL url, String description, byte pictureType) {
@@ -164,20 +136,18 @@ public class ID3V2Tag implements ID3Tag, Component {
     }
 
     public void addPicture(byte[] buffer, String description, String mimeType, byte pictureType) {
-        addFrame(
-                AttachedPictureFrame.createInstance(description, mimeType, pictureType, buffer, getVersion())
-        );
+        addFrame(AttachedPictureFrame.createInstance(description, mimeType, pictureType, buffer, getVersion()));
     }
 
     public void addPictureFromURL(URL url, String description, byte pictureType) throws IOException {
-        addPicture(url, description, pictureType);
+        addPictureFrame(url, description, pictureType);
     }
 
     public void addPictureFromFile(File file, String description, byte pictureType) throws IOException {
         addPictureFrame(file, description, pictureType);
     }
 
-    private void addPicture(URL url, String description, byte pictureType) throws IOException {
+    private void addPictureFrame(URL url, String description, byte pictureType) throws IOException {
         addFrame(
                 AttachedPictureFrame.newBuilder()
                         .setHeader(FrameHeader.createFrameHeader(PICTURE, getVersion()))
@@ -225,19 +195,77 @@ public class ID3V2Tag implements ID3Tag, Component {
     }
 
     @Override
-    public String getTitle() { return ((TextFrame) getFrame(TITLE)).getText(); }
+    public String getTitle() {
+        TextFrame titleFrame = getTextFrame(TITLE);
+        return titleFrame == null ? "" : titleFrame.getText();
+    }
 
     @Override
-    public String getArtist() { return ((TextFrame) getFrame(ARTIST)).getText(); }
+    public String getArtist() {
+        TextFrame artistFrame = getTextFrame(ARTIST);
+        return artistFrame == null ? "" : artistFrame.getText();
+    }
 
     @Override
-    public String getAlbum() { return ((TextFrame) getFrame(ALBUM)).getText(); }
+    public String getAlbum() {
+        TextFrame albumFrame = getTextFrame(ALBUM);
+        return albumFrame == null ? "" : albumFrame.getText();
+    }
+
+    public String getRecordingTimestamp() {
+        if (getVersion() == ID3V2_4) {
+            RecordingTimeFrame recordingTimeFrame = getFrame(RECORDING_TIME);
+            return recordingTimeFrame == null ? "" : recordingTimeFrame.getText();
+        }
+        return "";
+    }
+
+    public String getRecordingTime() {
+
+        String recTime = "";
+
+        if (getVersion() == ID3V2_3) {
+            TimeFrame timeFrame = (TimeFrame) getTextFrame(TIME);
+            recTime = timeFrame == null ? "" : timeFrame.getText();
+        }
+        if (getVersion() == ID3V2_4) {
+            RecordingTimeFrame recordingTimeFrame = getFrame(RECORDING_TIME);
+            LocalTime time = recordingTimeFrame.getTime();
+            recTime = time == null ? "" : time.toString();
+        }
+        return recTime;
+    }
+
+    public String getRecordingDate() {
+
+        String recDate = "";
+
+        if (getVersion() == ID3V2_3) {
+            DateFrame dateFrame = (DateFrame) getTextFrame(DATE);
+            recDate = dateFrame == null ? "" : dateFrame.getText();
+        }
+        if (getVersion() == ID3V2_4) {
+            RecordingTimeFrame recordingTimeFrame = getFrame(RECORDING_TIME);
+            LocalDate date = recordingTimeFrame.getDate();
+            recDate = date == null ? "" : date.toString();
+        }
+        return recDate;
+    }
 
     @Override
     public String getYear() {
-        String id = YEAR;
-        if (getVersion() == ID3V2_4) id = RECORDING_TIME;
-        return ((TextFrame) getFrame(id)).getText();
+
+        String year = "";
+
+        if (getVersion() == ID3V2_3) {
+            TextFrame yearFrame = getTextFrame(YEAR);
+            year = yearFrame == null ? "" : yearFrame.getText();
+        }
+        if (getVersion() == ID3V2_4) {
+            RecordingTimeFrame recordingTimeFrame = getFrame(RECORDING_TIME);
+            year = recordingTimeFrame == null ? "" : recordingTimeFrame.getYear().toString();
+        }
+        return year;
     }
 
     @Override
@@ -255,7 +283,7 @@ public class ID3V2Tag implements ID3Tag, Component {
     @Override
     public void setYear(String year) {
         byte version = getVersion();
-        if (version == ID3V2_3) setTextFrame(YEAR, year, TextEncoding.getAppropriateEncoding(version));
+        if (version == ID3V2_3) setTextFrame(YEAR, year, ENCODING_LATIN_1);
         if (version == ID3V2_4) setRecordingYear(RECORDING_TIME, year);
     }
 
@@ -283,9 +311,8 @@ public class ID3V2Tag implements ID3Tag, Component {
 
     @Override
     public boolean removeYear() {
-        byte version = getVersion();
-        if (version == ID3V2_3) return removeFramesWithId(YEAR);
-        if (version == ID3V2_4) return removeFramesWithId(RECORDING_TIME);
+        if (getVersion() == ID3V2_3) return removeFramesWithId(YEAR);
+        else if (getVersion() == ID3V2_4) return removeFramesWithId(RECORDING_TIME);
         throw new IllegalArgumentException("Invalid version number: " + getVersion());
     }
 
@@ -331,7 +358,6 @@ public class ID3V2Tag implements ID3Tag, Component {
         }
 
         this.tagBytes = tag;
-
         if (tagHeader.isUnsynch() && version == ID3V2_3) {
             byte[] unsynchFrameData = UnsynchronisationHelper.toUnsynch(
                     Arrays.copyOfRange(tagBytes, TagHeaderParser.HEADER_LENGTH, tagBytes.length)

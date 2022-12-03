@@ -46,6 +46,30 @@ public class RecordingTimeFrame extends TextFrame {
         return MonthDay.of(month, day);
     }
 
+    public LocalDate getDate() {
+
+        Year year = getYear();
+        MonthDay monthDay = getMonthDay();
+
+        if (year == null || monthDay == null) {
+            return null;
+        }
+        return LocalDate.of(
+                year.getValue(), monthDay.getMonth(), monthDay.getDayOfMonth()
+        );
+    }
+
+    public LocalDateTime getTimestamp() {
+
+        LocalDate date = getDate();
+        LocalTime time = getTime();
+
+        if (date == null || time == null) {
+            return null;
+        }
+        return LocalDateTime.of(date, time);
+    }
+
     public LocalTime getTime() {
 
         int hour   = getField(ChronoField.HOUR_OF_DAY);
