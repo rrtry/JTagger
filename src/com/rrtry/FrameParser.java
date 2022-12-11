@@ -26,7 +26,7 @@ class FrameParser {
         file.read(tagBuffer, 0, length);
 
         if (tagHeader.isUnsynch() && tagHeader.getMajorVersion() == ID3V2Tag.ID3V2_3) {
-            tagBuffer = UnsynchronisationHelper.fromUnsynch(tagBuffer);
+            tagBuffer = UnsynchronisationUtils.fromUnsynch(tagBuffer);
         }
         frameHeaderParser = new FrameHeaderParser(tagHeader);
     }
@@ -66,7 +66,7 @@ class FrameParser {
             return null;
         }
         if (frameHeader.isFrameUnsynch()) {
-            frame = UnsynchronisationHelper.fromUnsynch(frame);
+            frame = UnsynchronisationUtils.fromUnsynch(frame);
         }
         if (frameHeader.isFrameCompressed()) {
             frame = AbstractFrame.decompressFrame(frame);

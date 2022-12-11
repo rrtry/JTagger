@@ -1,6 +1,6 @@
 package com.rrtry;
 
-import static com.rrtry.ID3Integer.getBytesFromInteger;
+import static com.rrtry.IntegerUtils.fromUInt32BE;
 import static com.rrtry.ID3SynchSafeInteger.toSynchSafeInteger;
 import static com.rrtry.TagHeaderParser.*;
 import static com.rrtry.ID3V2Tag.*;
@@ -98,7 +98,7 @@ public class TagHeader implements Component {
 
         byte[] header = new byte[HEADER_LENGTH];
         byte[] id = new byte[] { 0x49, 0x44, 0x33 };
-        byte[] size = getBytesFromInteger(toSynchSafeInteger(tagSize));
+        byte[] size = fromUInt32BE(toSynchSafeInteger(tagSize));
 
         System.arraycopy(id, 0, header, 0, id.length);
         System.arraycopy(size, 0, header, SIZE_OFFSET, size.length);

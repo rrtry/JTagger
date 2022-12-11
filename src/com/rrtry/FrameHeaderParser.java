@@ -5,7 +5,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-import static com.rrtry.ID3Integer.getIntegerFromBytes;
+import static com.rrtry.IntegerUtils.toUInt32BE;
 import static com.rrtry.ID3SynchSafeInteger.fromSynchSafeIntegerBytes;
 
 public class FrameHeaderParser {
@@ -32,7 +32,7 @@ public class FrameHeaderParser {
         if (tagHeader.getMajorVersion() == ID3V2Tag.ID3V2_4) {
             return fromSynchSafeIntegerBytes(frameSize);
         }
-        return getIntegerFromBytes(frameSize);
+        return toUInt32BE(frameSize);
     }
 
     public FrameHeader parseFrameHeader(byte[] tagBuffer, int position) {

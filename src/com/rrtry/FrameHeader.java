@@ -4,7 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import static com.rrtry.ID3SynchSafeInteger.toSynchSafeInteger;
-import static com.rrtry.ID3Integer.getBytesFromInteger;
+import static com.rrtry.IntegerUtils.fromUInt32BE;
 
 public class FrameHeader implements Component {
 
@@ -95,9 +95,9 @@ public class FrameHeader implements Component {
         byte[] lengthIndicator;
 
         if (version == ID3V2Tag.ID3V2_4) {
-            lengthIndicator = getBytesFromInteger(toSynchSafeInteger(frameLength));
+            lengthIndicator = fromUInt32BE(toSynchSafeInteger(frameLength));
         } else {
-            lengthIndicator = getBytesFromInteger(frameLength);
+            lengthIndicator = fromUInt32BE(frameLength);
         }
         System.arraycopy(lengthIndicator, 0, fields, index, lengthIndicator.length);
     }
@@ -318,8 +318,8 @@ public class FrameHeader implements Component {
     public byte[] getFlags() { return flags; }
 
     private byte[] getFrameSizeBytes(byte version) {
-        if (version == ID3V2Tag.ID3V2_3) return getBytesFromInteger(frameSize);
-        if (version == ID3V2Tag.ID3V2_4) return getBytesFromInteger(toSynchSafeInteger(frameSize));
+        if (version == ID3V2Tag.ID3V2_3) return fromUInt32BE(frameSize);
+        if (version == ID3V2Tag.ID3V2_4) return fromUInt32BE(toSynchSafeInteger(frameSize));
         throw new IllegalArgumentException("Unsupported version: " + version);
     }
 

@@ -3,7 +3,7 @@ package com.rrtry;
 public class ID3SynchSafeInteger {
 
     public static int fromSynchSafeIntegerBytes(byte[] bytes) {
-        return fromSynchSafeInteger(ID3Integer.getIntegerFromBytes(bytes));
+        return fromSynchSafeInteger(IntegerUtils.toUInt32BE(bytes));
     }
 
     public static int toSynchSafeInteger(int in) {

@@ -107,7 +107,7 @@ public abstract class AbstractFrame implements Component {
             frameBody = compressFrame(frameBody);
         }
         if (header.isFrameUnsynch()) {
-            frameBody = UnsynchronisationHelper.toUnsynch(frameBody);
+            frameBody = UnsynchronisationUtils.toUnsynch(frameBody);
         }
 
         byte[] frame = new byte[frameBody.length + fieldBytes.length];

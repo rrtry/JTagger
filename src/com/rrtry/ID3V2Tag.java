@@ -174,14 +174,11 @@ public class ID3V2Tag implements ID3Tag, Component {
     }
 
     @Override
-    public byte getTagVersion() { return ID3V2; }
-
-    @Override
     public byte[] getBytes() {
         if (tagHeader.getMajorVersion() == ID3V2_3 && tagHeader.isUnsynch()) {
 
             byte[] header    = tagHeader.getBytes();
-            byte[] frameData = UnsynchronisationHelper.toUnsynch(
+            byte[] frameData = UnsynchronisationUtils.toUnsynch(
                     Arrays.copyOfRange(tagBytes, TagHeaderParser.HEADER_LENGTH, tagBytes.length)
             );
 
@@ -359,7 +356,7 @@ public class ID3V2Tag implements ID3Tag, Component {
 
         this.tagBytes = tag;
         if (tagHeader.isUnsynch() && version == ID3V2_3) {
-            byte[] unsynchFrameData = UnsynchronisationHelper.toUnsynch(
+            byte[] unsynchFrameData = UnsynchronisationUtils.toUnsynch(
                     Arrays.copyOfRange(tagBytes, TagHeaderParser.HEADER_LENGTH, tagBytes.length)
             );
             tagSize = unsynchFrameData.length;

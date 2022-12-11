@@ -7,7 +7,6 @@ public interface ID3Tag {
     String getAlbum();
     String getYear();
 
-    byte getTagVersion();
     byte getVersion();
 
     void setTitle(String title);

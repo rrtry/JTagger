@@ -423,9 +423,6 @@ public class ID3V1Tag implements ID3Tag, Component {
     private byte version;
 
     @Override
-    public byte getTagVersion() { return 1; }
-
-    @Override
     public String toString() {
         return String.format(
                 "title: %s\nartist: %s\nalbum: %s\nyear: %s\ncomment: %s\ntrack:%d\nversion: %d",

@@ -2,7 +2,7 @@ package com.rrtry;
 
 import java.util.Arrays;
 
-public class UnsynchronisationHelper {
+public class UnsynchronisationUtils {
 
     public static byte[] toUnsynch(byte[] data) {
 
