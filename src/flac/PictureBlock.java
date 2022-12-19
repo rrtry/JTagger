@@ -39,8 +39,11 @@ METADATA_BLOCK_PICTURE
     <n*8> 	The binary picture data.
  */
 
+import com.rrtry.id3.URLPicture;
 import utils.ImageReader;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.io.File;
@@ -117,6 +120,11 @@ public class PictureBlock extends AbstractMetadataBlock {
         this.pictureData = pictureData;
     }
 
+    public void setPictureURL(URL url) {
+        setMimeType("-->");
+        this.pictureData = url.toString().getBytes(StandardCharsets.US_ASCII);
+    }
+
     public void setPictureFromFile(File file) {
         setMimeType(ImageReader.getMimeType(file));
         this.pictureData = ImageReader.readFromFile(file);
@@ -129,6 +137,15 @@ public class PictureBlock extends AbstractMetadataBlock {
 
     public boolean isPictureURL() {
         return mimeType.equals("-->");
+    }
+
+    public URLPicture getURLPicture() {
+        try {
+            if (!isPictureURL()) throw new IllegalStateException("Block does not contain url");
+            return new URLPicture(pictureData);
+        } catch (MalformedURLException e) {
+            return null;
+        }
     }
 
     @Override

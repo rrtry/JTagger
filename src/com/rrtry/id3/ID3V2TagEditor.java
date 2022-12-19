@@ -2,6 +2,9 @@ package com.rrtry.id3;
 
 import java.io.*;
 
+import static com.rrtry.TagPadding.MAX_PADDING;
+import static com.rrtry.TagPadding.MIN_PADDING;
+
 public class ID3V2TagEditor extends AbstractID3TagEditor<ID3V2Tag> {
 
     private int originalTagSize;
@@ -16,7 +19,6 @@ public class ID3V2TagEditor extends AbstractID3TagEditor<ID3V2Tag> {
         tag = id3V2TagParser.parse(file);
 
         if (tag != null) {
-
             isTagPresent = true;
             originalTagSize = tag.getTagHeader().getTagSize();
         }
@@ -32,6 +34,24 @@ public class ID3V2TagEditor extends AbstractID3TagEditor<ID3V2Tag> {
     public void commit() throws IOException {
 
         if (tag == null && !isTagPresent) return; // there's nothing to commit
+
+        /* experimental */
+        if (tag != null) {
+
+            final int frameDataSize = tag.getFrameDataSize(tag.getVersion());
+            final int padding       = originalTagSize - frameDataSize;
+
+            if (padding >= MIN_PADDING && padding <= MAX_PADDING) {
+
+                tag.setPaddingAmount(padding);
+                tag.assemble(tag.getVersion());
+
+                byte[] tagBytes = tag.getBytes();
+                file.seek(0);
+                file.write(tagBytes, 0, tagBytes.length);
+                return;
+            }
+        }
 
         final int bufferSize = 4096;
         final String prefix = "ID3";

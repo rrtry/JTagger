@@ -2,15 +2,13 @@ package flac;
 
 import com.rrtry.TagParser;
 import utils.IntegerUtils;
-
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+import static flac.FlacTag.*;
 import static flac.AbstractMetadataBlock.*;
 
 public class FlacTagParser implements TagParser<FlacTag> {
-
-    public static final String MAGIC = "fLaC";
 
     @Override
     public FlacTag parse(RandomAccessFile file) throws IOException {
@@ -25,7 +23,8 @@ public class FlacTagParser implements TagParser<FlacTag> {
 
         file.seek(magicBytes.length);
 
-        while (file.getFilePointer() < file.length()) {
+        byte block = 0;
+        while (block < NUMBER_OF_BLOCKS) {
 
             boolean isLastBlock;
 
@@ -45,7 +44,7 @@ public class FlacTagParser implements TagParser<FlacTag> {
             byte[] blockData = new byte[blockLength];
             file.read(blockData, 0, blockData.length);
 
-            MetadataBlockBodyParser parser = null;
+            BlockBodyParser parser = null;
 
             if (blockType == BLOCK_TYPE_VORBIS_COMMENT) parser = new VorbisCommentBlockParser();
             if (blockType == BLOCK_TYPE_PICTURE)        parser = new PictureBlockParser();
@@ -54,6 +53,7 @@ public class FlacTagParser implements TagParser<FlacTag> {
             if (parser != null) tag.addBlock(parser.parse(blockData));
             else tag.addBlock(new UnknownMetadataBlock(blockData, headerByte));
 
+            block++;
             if (isLastBlock) break;
         }
         tag.assemble();

@@ -9,9 +9,13 @@ public class UnknownMetadataBlock extends AbstractMetadataBlock {
         this.headerByte = headerByte;
     }
 
+    public void setBlockBody(byte[] blockBody) {
+        this.blockBody = blockBody;
+    }
+
     @Override
     public String toString() {
-        return String.format("Unknown metadata block, type %d", getBlockType());
+        return String.format("Unknown metadata block, type %d, size: %d", getBlockType(), blockBody.length);
     }
 
     @Override

@@ -1,14 +1,16 @@
 package flac;
 
 import com.rrtry.AbstractTagEditor;
-import com.rrtry.id3.TagHeaderParser;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.charset.StandardCharsets;
 
-import static flac.FlacTagParser.MAGIC;
+import static com.rrtry.TagPadding.MAX_PADDING;
+import static com.rrtry.TagPadding.MIN_PADDING;
+import static flac.AbstractMetadataBlock.BLOCK_HEADER_LENGTH;
+import static flac.AbstractMetadataBlock.BLOCK_TYPE_PADDING;
+import static flac.FlacTag.MAGIC;
 
 public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
 
@@ -28,8 +30,18 @@ public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
         if (tag != null) {
 
             this.isTagPresent = true;
-            this.originalTagSize = tag.getSize();
+            this.originalTagSize = tag.getBlockDataSize();
         }
+    }
+
+    @Override
+    public void removeTag() {
+
+        FlacTag tag = new FlacTag();
+        tag.addBlock(streamInfo); // remove all blocks except STREAMINFO
+        tag.assemble();
+
+        this.tag = tag;
     }
 
     @Override
@@ -40,23 +52,36 @@ public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
     @Override
     public void commit() throws IOException {
 
+        int padding;
+        int paddingBlockSize = 0;
+
+        UnknownMetadataBlock paddingBlock = tag.getBlock(BLOCK_TYPE_PADDING);
+        if (paddingBlock != null) {
+            paddingBlockSize = paddingBlock.getBytes().length - BLOCK_HEADER_LENGTH;
+        }
+
+        padding = originalTagSize - (tag.getBlockDataSize() - paddingBlockSize);
+        if (padding >= MIN_PADDING && padding <= MAX_PADDING) {
+
+            tag.setPaddingAmount(padding);
+            tag.assemble();
+
+            file.seek(0);
+            file.write(tag.getBytes()); // fit tag in padding space
+            return;
+        }
+
         final int bufferSize = 4096;
         final String suffix = ".tmp";
 
         File temp = File.createTempFile(MAGIC, suffix);
-
         byte[] tempBuffer = new byte[bufferSize];
-        byte[] magicBytes = MAGIC.getBytes(StandardCharsets.US_ASCII);
 
         try (RandomAccessFile tempFile = new RandomAccessFile(temp.getAbsolutePath(), "rw")) {
 
-            byte[] tagBuffer;
-            tempFile.write(magicBytes, 0, magicBytes.length);
-
-            if (tag != null) tagBuffer = tag.getBytes();
-            else tagBuffer = streamInfo.getBytes();
-
+            byte[] tagBuffer = tag.getBytes();
             tempFile.write(tagBuffer, 0, tagBuffer.length);
+
             file.seek(originalTagSize + MAGIC.length());
 
             while (file.read(tempBuffer, 0, tempBuffer.length) != -1) {

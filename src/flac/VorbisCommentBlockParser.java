@@ -4,7 +4,7 @@ import utils.IntegerUtils;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-public class VorbisCommentBlockParser implements MetadataBlockBodyParser<VorbisCommentBlock> {
+public class VorbisCommentBlockParser implements BlockBodyParser<VorbisCommentBlock> {
 
     @Override
     public VorbisCommentBlock parse(byte[] block) {

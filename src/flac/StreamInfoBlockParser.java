@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 import static utils.IntegerUtils.*;
 
-public class StreamInfoBlockParser implements MetadataBlockBodyParser<StreamInfoBlock> {
+public class StreamInfoBlockParser implements BlockBodyParser<StreamInfoBlock> {
 
     private static String toHexString(byte[] bytes) {
         StringBuilder sb = new StringBuilder(bytes.length * 2);

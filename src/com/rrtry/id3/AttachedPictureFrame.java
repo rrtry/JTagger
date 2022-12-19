@@ -37,10 +37,7 @@ import utils.ImageReader;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 public class AttachedPictureFrame extends AbstractFrame {
 
@@ -133,9 +130,13 @@ public class AttachedPictureFrame extends AbstractFrame {
         return mimeType.equals("-->");
     }
 
-    public URLPicture getUrlPicture() throws MalformedURLException {
-        if (!isPictureURL()) throw new IllegalStateException("Frame does not contain url");
-        return new URLPicture(pictureBytes);
+    public URLPicture getURLPicture() {
+        try {
+            if (!isPictureURL()) throw new IllegalStateException("Block does not contain url");
+            return new URLPicture(pictureBytes);
+        } catch (MalformedURLException e) {
+            return null;
+        }
     }
 
     public void setMimeType(String mimeType) {

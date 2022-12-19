@@ -2,10 +2,18 @@ package flac;
 
 import com.rrtry.Component;
 import com.rrtry.Tag;
+import com.rrtry.TagPadding;
+
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-public class FlacTag implements Tag, Component {
+import static flac.AbstractMetadataBlock.*;
+
+public class FlacTag extends TagPadding implements Tag, Component {
+
+    public static final byte NUMBER_OF_BLOCKS = 7;
+    public static final String MAGIC = "fLaC";
 
     private byte[] tag;
     private final ArrayList<AbstractMetadataBlock> metadataBlocks = new ArrayList<>();
@@ -19,19 +27,44 @@ public class FlacTag implements Tag, Component {
         return null;
     }
 
-    void addBlock(AbstractMetadataBlock block) {
-        metadataBlocks.add(block);
+    public void setPicture(PictureBlock pictureBlock) {
+        addBlock(pictureBlock);
     }
 
-    public void removeBlock(byte type) {
-        if (type == AbstractMetadataBlock.BLOCK_TYPE_STREAMINFO) {
-            throw new IllegalArgumentException("STREAMINFO block cannot be removed");
+    public void setComments(VorbisCommentBlock commentBlock) {
+        addBlock(commentBlock);
+    }
+
+    private void removePicture() {
+        removeBlock(BLOCK_TYPE_PICTURE);
+    }
+
+    private void removeComments() {
+        removeBlock(BLOCK_TYPE_VORBIS_COMMENT);
+    }
+
+    void addBlock(AbstractMetadataBlock block) {
+
+        if (block.getBlockType() == BLOCK_TYPE_PADDING) {
+            setPaddingAmount(block.blockBody.length);
         }
+
+        AbstractMetadataBlock metadataBlock = getBlock(block.getBlockType());
+        if (metadataBlock != null) {
+            metadataBlocks.set(metadataBlocks.indexOf(metadataBlock), block);
+        } else {
+            metadataBlocks.add(block);
+        }
+    }
+
+    void removeBlock(byte type) {
+        if (type == BLOCK_TYPE_STREAMINFO) throw new IllegalArgumentException("STREAMINFO block cannot be removed");
+        if (type == BLOCK_TYPE_PADDING) this.padding = 0;
         metadataBlocks.removeIf((b) -> b.getBlockType() == type);
     }
 
-    private boolean removeComment(String field) {
-        VorbisCommentBlock vorbisComment = getVorbisCommentBlock();
+    public boolean removeComment(String field) {
+        VorbisCommentBlock vorbisComment = getBlock(BLOCK_TYPE_VORBIS_COMMENT);
         if (vorbisComment != null) {
             vorbisComment.removeComment(field);
             return true;
@@ -39,23 +72,18 @@ public class FlacTag implements Tag, Component {
         return false;
     }
 
-    private void setComment(String field, String value) {
-        VorbisCommentBlock vorbisComment = getVorbisCommentBlock();
-        if (vorbisComment != null) vorbisComment.setComment(field, value);
+    public void setComment(String field, String value) {
+        VorbisCommentBlock vorbisComment = getBlock(BLOCK_TYPE_VORBIS_COMMENT);
+        if (vorbisComment == null) {
+            vorbisComment = new VorbisCommentBlock();
+            metadataBlocks.add(vorbisComment);
+        }
+        vorbisComment.setComment(field, value);
     }
 
     private String getComment(String field) {
-        VorbisCommentBlock vorbisComment = getVorbisCommentBlock();
+        VorbisCommentBlock vorbisComment = getBlock(BLOCK_TYPE_VORBIS_COMMENT);
         return vorbisComment == null ? "" : vorbisComment.getComment(field);
-    }
-
-    private VorbisCommentBlock getVorbisCommentBlock() {
-        for (AbstractMetadataBlock block : metadataBlocks) {
-            if (block instanceof VorbisCommentBlock) {
-                return (VorbisCommentBlock) block;
-            }
-        }
-        return null;
     }
 
     @Override
@@ -65,6 +93,17 @@ public class FlacTag implements Tag, Component {
             sb.append(block).append("\n");
         }
         return sb.toString();
+    }
+
+    @Override
+    protected void setPaddingAmount(int padding) {
+        if (padding == 0) {
+            removeBlock(BLOCK_TYPE_PADDING); return;
+        }
+        if (padding >= MIN_PADDING && padding <= MAX_PADDING) {
+            this.padding = padding; return;
+        }
+        throw new IllegalArgumentException("Value is not within defined range");
     }
 
     @Override
@@ -127,7 +166,7 @@ public class FlacTag implements Tag, Component {
         return removeComment(VorbisCommentBlock.DATE);
     }
 
-    public int getSize() {
+    public int getBlockDataSize() {
 
         int size = 0;
 
@@ -142,12 +181,28 @@ public class FlacTag implements Tag, Component {
     @Override
     public byte[] assemble(byte version) {
 
-        metadataBlocks.sort(Comparator.comparingInt(AbstractMetadataBlock::getBlockType));
+        // removing BLOCK_TYPE_PADDING sets padding to zero
+        if (padding > 0) {
 
-        int tagSize = getSize();
-        int index   = 0;
+            byte[] paddingBytes = new byte[padding];
+            UnknownMetadataBlock block = getBlock(BLOCK_TYPE_PADDING);
 
-        byte[] tag = new byte[tagSize];
+            if (block != null) {
+                block.setBlockBody(paddingBytes);
+            } else {
+                metadataBlocks.add(new UnknownMetadataBlock(paddingBytes, 0x81));
+            }
+        }
+
+        metadataBlocks.sort(Comparator.comparingInt(block -> BLOCKS.indexOf(block.getBlockType())));
+
+        int tagSize = getBlockDataSize();
+        int index   = MAGIC.length();
+
+        byte[] tag = new byte[tagSize + MAGIC.length()];
+        byte[] id  = MAGIC.getBytes(StandardCharsets.US_ASCII);
+
+        System.arraycopy(id, 0, tag, 0, id.length);
 
         for (AbstractMetadataBlock block : metadataBlocks) {
             byte[] blockBytes = block.getBytes();

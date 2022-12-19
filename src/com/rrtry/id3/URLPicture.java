@@ -42,17 +42,18 @@ public class URLPicture {
         this.url = url;
     }
 
-    public byte[] getPictureBytes() throws IOException {
+    public byte[] getPictureBytes() {
 
-        InputStream inputStream = url.openStream();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-        int data;
-        while ((data = inputStream.read()) != -1) {
-            outputStream.write(data);
+        try (InputStream inputStream = url.openStream()) {
+            int data;
+            while ((data = inputStream.read()) != -1) {
+                outputStream.write(data);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
-        inputStream.close();
         return outputStream.toByteArray();
     }
 }

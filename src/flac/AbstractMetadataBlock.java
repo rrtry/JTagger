@@ -3,8 +3,12 @@ package flac;
 import com.rrtry.Component;
 import utils.IntegerUtils;
 
+import java.util.Arrays;
+import java.util.List;
+
 public abstract class AbstractMetadataBlock implements Component {
 
+    public static final byte BLOCK_HEADER_LENGTH = 0x04;
     public static final byte BLOCK_HEADER_LENGTH_INDICATOR = 0x03;
 
     public static final byte BLOCK_TYPE_STREAMINFO     = 0x00;
@@ -15,6 +19,10 @@ public abstract class AbstractMetadataBlock implements Component {
     public static final byte BLOCK_TYPE_CUESHEET       = 0x05;
     public static final byte BLOCK_TYPE_PICTURE        = 0x06;
     public static final byte BLOCK_TYPE_INVALID        = 0x7F;
+
+    public static final List<Integer> BLOCKS = Arrays.asList(
+            0x00, 0x02, 0x03, 0x04, 0x05, 0x06, 0x01
+    );
 
     protected byte[] blockBody;
     protected boolean isLastBlock;

@@ -41,7 +41,8 @@ public abstract class AbstractTagEditor<T extends Tag> {
     public final T getTag() {
         return tag;
     }
-    public final void removeTag() {
+
+    public void removeTag() {
         this.tag = null;
     }
 

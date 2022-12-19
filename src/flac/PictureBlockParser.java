@@ -3,7 +3,7 @@ package flac;
 import java.util.Arrays;
 import static utils.IntegerUtils.toUInt32BE;
 
-public class PictureBlockParser implements MetadataBlockBodyParser<PictureBlock> {
+public class PictureBlockParser implements BlockBodyParser<PictureBlock> {
 
     @Override
     public PictureBlock parse(byte[] block) {

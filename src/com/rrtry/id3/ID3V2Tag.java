@@ -1,6 +1,7 @@
 package com.rrtry.id3;
 
 import com.rrtry.Component;
+import com.rrtry.TagPadding;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.File;
@@ -20,7 +21,7 @@ import static com.rrtry.id3.DateFrame.DATE_FORMAT_PATTERN;
 import static com.rrtry.id3.TextEncoding.ENCODING_LATIN_1;
 import static com.rrtry.id3.TimeFrame.TIME_FORMAT_PATTERN;
 
-public class ID3V2Tag implements ID3Tag, Component {
+public class ID3V2Tag extends TagPadding implements ID3Tag, Component {
 
     public static final String[] DEPRECATED_V23_FRAMES = new String[] {
             "EQUA", "IPLS", "RVAD", "TDAT", "TIME", "TORY", "TRDA", "TSIZ", "TYER"
@@ -30,17 +31,25 @@ public class ID3V2Tag implements ID3Tag, Component {
     public static final byte ID3V2_3 = 0x03;
     public static final byte ID3V2_4 = 0x04;
 
-    private static final int PADDING = 2048;
-
     private TagHeader tagHeader;
     private ArrayList<AbstractFrame> frames = new ArrayList<>();
     private byte[] tagBytes;
 
-    public TagHeader getTagHeader()             { return tagHeader; }
-    public ArrayList<AbstractFrame> getFrames() { return frames; }
-    public AbstractFrame getFrameAt(int index)  { return frames.get(index); }
+    public TagHeader getTagHeader() {
+        return tagHeader;
+    }
 
-    public TextFrame getTextFrame(String id) { return getFrame(id); }
+    public ArrayList<AbstractFrame> getFrames() {
+        return frames;
+    }
+
+    public AbstractFrame getFrameAt(int index)  {
+        return frames.get(index);
+    }
+
+    public TextFrame getTextFrame(String id) {
+        return getFrame(id);
+    }
 
     public <T extends AbstractFrame> T getFrame(String id) {
 
@@ -58,8 +67,13 @@ public class ID3V2Tag implements ID3Tag, Component {
         return null;
     }
 
-    public void addFrame(AbstractFrame frame) { frames.add(frame); }
-    public void setFrameAtIndex(int index, AbstractFrame frame) { frames.set(index, frame); }
+    public void addFrame(AbstractFrame frame) {
+        frames.add(frame);
+    }
+
+    public void setFrameAtIndex(int index, AbstractFrame frame) {
+        frames.set(index, frame);
+    }
 
     public void setFrame(AbstractFrame frame) {
         int index = indexOf(frame.getIdentifier());
@@ -67,12 +81,23 @@ public class ID3V2Tag implements ID3Tag, Component {
         else addFrame(frame);
     }
 
-    public void removeFrameAtIndex(int index)       { frames.remove(index); }
-    public boolean removePictures()                 { return removeFramesWithId(PICTURE); }
-    public boolean removeFrame(AbstractFrame frame) { return frames.remove(frame); }
-    public boolean removeFramesWithId(String id)    { return frames.removeIf(frame -> frame.getIdentifier().equals(id)); }
+    public void removeFrameAtIndex(int index) {
+        frames.remove(index);
+    }
 
-    public int getTagSize(byte version) {
+    public boolean removePictures() {
+        return removeFramesWithId(PICTURE);
+    }
+
+    public boolean removeFrame(AbstractFrame frame) {
+        return frames.remove(frame);
+    }
+
+    public boolean removeFramesWithId(String id) {
+        return frames.removeIf(frame -> frame.getIdentifier().equals(id));
+    }
+
+    public int getFrameDataSize(byte version) {
 
         int size = 0;
 
@@ -190,6 +215,15 @@ public class ID3V2Tag implements ID3Tag, Component {
             return unsynchTag;
         }
         return tagBytes;
+    }
+
+    @Override
+    public void setPaddingAmount(int padding) {
+        if (padding == 0 || (padding >= MIN_PADDING && padding <= MAX_PADDING)) {
+            this.padding = padding;
+            return;
+        }
+        throw new IllegalArgumentException("Value is not within defined range");
     }
 
     @Override
@@ -333,7 +367,7 @@ public class ID3V2Tag implements ID3Tag, Component {
         if (tagHeader.hasExtendedHeader()) throw new NotImplementedException();
         if (tagHeader.hasFooter()) throw new NotImplementedException();
 
-        int tagSize  = getTagSize(version) + PADDING;
+        int tagSize  = getFrameDataSize(version) + padding;
         int position = TagHeaderParser.HEADER_LENGTH;
 
         byte[] tag = new byte[tagSize + TagHeaderParser.HEADER_LENGTH];
