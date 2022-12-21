@@ -1,7 +1,6 @@
 package com.rrtry.id3;
 
-import com.rrtry.Component;
-import com.rrtry.TagPadding;
+import com.rrtry.PaddingTag;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.File;
@@ -21,7 +20,7 @@ import static com.rrtry.id3.DateFrame.DATE_FORMAT_PATTERN;
 import static com.rrtry.id3.TextEncoding.ENCODING_LATIN_1;
 import static com.rrtry.id3.TimeFrame.TIME_FORMAT_PATTERN;
 
-public class ID3V2Tag extends TagPadding implements ID3Tag, Component {
+public class ID3V2Tag implements ID3Tag, PaddingTag {
 
     public static final String[] DEPRECATED_V23_FRAMES = new String[] {
             "EQUA", "IPLS", "RVAD", "TDAT", "TIME", "TORY", "TRDA", "TSIZ", "TYER"
@@ -34,6 +33,8 @@ public class ID3V2Tag extends TagPadding implements ID3Tag, Component {
     private TagHeader tagHeader;
     private ArrayList<AbstractFrame> frames = new ArrayList<>();
     private byte[] tagBytes;
+
+    private int padding = MIN_PADDING;
 
     public TagHeader getTagHeader() {
         return tagHeader;
@@ -215,6 +216,11 @@ public class ID3V2Tag extends TagPadding implements ID3Tag, Component {
             return unsynchTag;
         }
         return tagBytes;
+    }
+
+    @Override
+    public int getPaddingAmount() {
+        return padding;
     }
 
     @Override

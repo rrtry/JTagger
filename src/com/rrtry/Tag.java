@@ -1,6 +1,6 @@
 package com.rrtry;
 
-public interface Tag {
+public interface Tag extends Component {
 
     String getTitle();
     String getArtist();

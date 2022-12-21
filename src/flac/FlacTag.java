@@ -1,22 +1,21 @@
 package flac;
 
-import com.rrtry.Component;
-import com.rrtry.Tag;
-import com.rrtry.TagPadding;
-
+import com.rrtry.PaddingTag;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 
 import static flac.AbstractMetadataBlock.*;
 
-public class FlacTag extends TagPadding implements Tag, Component {
+public class FlacTag implements PaddingTag {
 
     public static final byte NUMBER_OF_BLOCKS = 7;
     public static final String MAGIC = "fLaC";
 
     private byte[] tag;
     private final ArrayList<AbstractMetadataBlock> metadataBlocks = new ArrayList<>();
+
+    private int padding = MIN_PADDING;
 
     public <T extends AbstractMetadataBlock> T getBlock(int type) {
         for (AbstractMetadataBlock block : metadataBlocks) {
@@ -96,7 +95,12 @@ public class FlacTag extends TagPadding implements Tag, Component {
     }
 
     @Override
-    protected void setPaddingAmount(int padding) {
+    public int getPaddingAmount() {
+        return padding;
+    }
+
+    @Override
+    public void setPaddingAmount(int padding) {
         if (padding == 0) {
             removeBlock(BLOCK_TYPE_PADDING); return;
         }

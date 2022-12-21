@@ -39,118 +39,35 @@ METADATA_BLOCK_PICTURE
     <n*8> 	The binary picture data.
  */
 
-import com.rrtry.id3.URLPicture;
-import utils.ImageReader;
-
-import java.io.IOException;
-import java.net.MalformedURLException;
+import com.rrtry.AttachedPicture;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.io.File;
-import java.net.URL;
-
 import static utils.IntegerUtils.fromUInt32BE;
 
 public class PictureBlock extends AbstractMetadataBlock {
 
-    private int pictureType;
+    private AttachedPicture picture;
 
-    private String mimeType;
-    private String description;
-
-    private int width;
-    private int height;
-    private int colorDepth;
-
-    private byte[] pictureData;
-
-    public int getPictureType() {
-        return pictureType;
+    public AttachedPicture getPicture() {
+        return picture;
     }
 
-    public String getMimeType() {
-        return mimeType;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public int getPictureWidth() {
-        return width;
-    }
-
-    public int getPictureHeight() {
-        return height;
-    }
-
-    public int getColorDepth() {
-        return colorDepth;
-    }
-
-    public byte[] getPictureData() {
-        return pictureData;
-    }
-
-    public void setPictureType(int type) {
-        this.pictureType = type;
-    }
-
-    public void setMimeType(String mimeType) {
-        this.mimeType = mimeType;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setPictureWidth(int width) {
-        this.width = width;
-    }
-
-    public void setPictureHeight(int height) {
-        this.height = height;
-    }
-
-    public void setPictureColorDepth(int colorDepth) {
-        this.colorDepth = colorDepth;
-    }
-
-    public void setPictureData(byte[] pictureData) {
-        this.pictureData = pictureData;
-    }
-
-    public void setPictureURL(URL url) {
-        setMimeType("-->");
-        this.pictureData = url.toString().getBytes(StandardCharsets.US_ASCII);
-    }
-
-    public void setPictureFromFile(File file) {
-        setMimeType(ImageReader.getMimeType(file));
-        this.pictureData = ImageReader.readFromFile(file);
-    }
-
-    public void setPictureFromURL(URL url) {
-        setMimeType(ImageReader.getMimeType(url));
-        this.pictureData = ImageReader.readFromURL(url);
-    }
-
-    public boolean isPictureURL() {
-        return mimeType.equals("-->");
-    }
-
-    public URLPicture getURLPicture() {
-        try {
-            if (!isPictureURL()) throw new IllegalStateException("Block does not contain url");
-            return new URLPicture(pictureData);
-        } catch (MalformedURLException e) {
-            return null;
-        }
+    public void setPicture(AttachedPicture picture) {
+        this.picture = picture;
     }
 
     @Override
     public byte[] assemble(byte version) {
 
+        String mimeType = picture.getMimeType();
+        String description = picture.getDescription();
+
+        int pictureType = picture.getPictureType();
+        int width       = picture.getWidth();
+        int height      = picture.getHeight();
+        int colorDepth  = picture.getColorDepth();
+
+        byte[] pictureData      = picture.getPictureData();
         byte[] mimeTypeBytes    = mimeType.getBytes(StandardCharsets.US_ASCII);
         byte[] descriptionBytes = description.getBytes(StandardCharsets.UTF_8);
 

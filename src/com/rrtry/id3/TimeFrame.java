@@ -9,6 +9,10 @@ public class TimeFrame extends TextFrame {
     private LocalTime time;
     public static final String TIME_FORMAT_PATTERN = "HHmm";
 
+    {
+        setEncoding(TextEncoding.ENCODING_LATIN_1);
+    }
+
     @Override
     public void setText(String text) {
         throw new UnsupportedOperationException();

@@ -6,8 +6,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import static com.rrtry.TagPadding.MAX_PADDING;
-import static com.rrtry.TagPadding.MIN_PADDING;
+import static com.rrtry.PaddingTag.MAX_PADDING;
+import static com.rrtry.PaddingTag.MIN_PADDING;
 import static flac.AbstractMetadataBlock.BLOCK_HEADER_LENGTH;
 import static flac.AbstractMetadataBlock.BLOCK_TYPE_PADDING;
 import static flac.FlacTag.MAGIC;

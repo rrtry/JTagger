@@ -2,8 +2,8 @@ package com.rrtry.id3;
 
 import java.io.*;
 
-import static com.rrtry.TagPadding.MAX_PADDING;
-import static com.rrtry.TagPadding.MIN_PADDING;
+import static com.rrtry.PaddingTag.MAX_PADDING;
+import static com.rrtry.PaddingTag.MIN_PADDING;
 
 public class ID3V2TagEditor extends AbstractID3TagEditor<ID3V2Tag> {
 

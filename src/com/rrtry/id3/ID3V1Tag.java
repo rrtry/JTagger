@@ -1,11 +1,9 @@
 package com.rrtry.id3;
 
-import com.rrtry.Component;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-public class ID3V1Tag implements ID3Tag, Component {
+public class ID3V1Tag implements ID3Tag {
 
     public static final String ID = "TAG";
     private static final int TAG_SIZE = 128;

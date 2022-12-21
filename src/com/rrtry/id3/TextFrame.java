@@ -1,6 +1,8 @@
 package com.rrtry.id3;
 
-public class TextFrame extends AbstractFrame {
+import com.rrtry.TagField;
+
+public class TextFrame extends AbstractFrame implements TagField<String> {
 
     private byte encoding;
     private String text;
@@ -20,7 +22,6 @@ public class TextFrame extends AbstractFrame {
         frame[0] = encoding;
 
         System.arraycopy(textBuffer, 0, frame, 1, textBuffer.length);
-
         this.frameBytes = frame;
 
         header = FrameHeader.newBuilder(header)
@@ -28,6 +29,16 @@ public class TextFrame extends AbstractFrame {
                 .build(version);
 
         return frame;
+    }
+
+    @Override
+    public String getFieldData() {
+        return text;
+    }
+
+    @Override
+    public void setFieldData(String text) {
+        this.text = text;
     }
 
     public String getText() {

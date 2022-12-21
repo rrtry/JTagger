@@ -32,45 +32,21 @@ package com.rrtry.id3;
                   $14  Publisher/Studio logotype
  */
 
-import utils.ImageReader;
+import com.rrtry.AttachedPicture;
+import com.rrtry.TagField;
 
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 
-public class AttachedPictureFrame extends AbstractFrame {
+public class AttachedPictureFrame extends AbstractFrame implements TagField<AttachedPicture> {
 
-    public static final byte PICTURE_TYPE_OTHER                = 0x00;
-    public static final byte PICTURE_TYPE_PNG_ICON             = 0x01;
-    public static final byte PICTURE_TYPE_FRONT_COVER          = 0x03;
-    public static final byte PICTURE_TYPE_BACK_COVER           = 0x04;
-    public static final byte PICTURE_TYPE_LEAFLET_PAGE         = 0x05;
-    public static final byte PICTURE_TYPE_MEDIA                = 0x06;
-    public static final byte PICTURE_TYPE_LEAD_ARTIST          = 0x07;
-    public static final byte PICTURE_TYPE_ARTIST               = 0x08;
-    public static final byte PICTURE_TYPE_CONDUCTOR            = 0x09;
-    public static final byte PICTURE_TYPE_BAND                 = 0x0A;
-    public static final byte PICTURE_TYPE_COMPOSER             = 0x0B;
-    public static final byte PICTURE_TYPE_TEXT_WRITER          = 0x0C;
-    public static final byte PICTURE_TYPE_RECORDING_LOCATION   = 0x0D;
-    public static final byte PICTURE_TYPE_DURING_RECODING      = 0x0E;
-    public static final byte PICTURE_TYPE_DURING_PERFORMANCE   = 0x0F;
-    public static final byte PICTURE_TYPE_MOVIE_SCREEN_CAPTURE = 0x10;
-    public static final byte PICTURE_TYPE_COLOURED_FISH        = 0x11;
-    public static final byte PICTURE_TYPE_ILLUSTRATION         = 0x12;
-    public static final byte PICTURE_TYPE_BAND_LOGO            = 0x13;
-    public static final byte PICTURE_TYPE_STUDIO_LOGO          = 0x14;
-
-    private String mimeType;
-    private String description;
-
+    private AttachedPicture picture = new AttachedPicture();
     private byte encoding;
-    private byte pictureType;
-    private byte[] pictureBytes;
 
     @Override
     public final byte[] assemble(byte version) {
+
+        byte[] pictureBytes = getPictureData();
 
         byte[] mimeType = TextEncoding.getStringBytes(getMimeType(), TextEncoding.ENCODING_LATIN_1);
         byte[] description = TextEncoding.getStringBytes(getDescription(), encoding);
@@ -85,7 +61,7 @@ public class AttachedPictureFrame extends AbstractFrame {
         final int pictureDataOffset = descriptionOffset + description.length;
 
         frame[encodingOffset] = encoding;
-        frame[pictureTypeOffset] = pictureType;
+        frame[pictureTypeOffset] = getPictureType();
 
         System.arraycopy(mimeType, 0, frame, mimeTypeOffset, mimeType.length);
         System.arraycopy(description, 0, frame, descriptionOffset, description.length);
@@ -108,39 +84,32 @@ public class AttachedPictureFrame extends AbstractFrame {
         );
     }
 
-    public byte[] getPictureBytes() {
-        return pictureBytes;
+    public byte[] getPictureData() {
+        return picture.getPictureData();
     }
 
     public byte getPictureType() {
-        return pictureType;
+        return (byte) picture.getPictureType();
     }
+
     public byte getEncoding() {
         return encoding;
     }
 
     public String getDescription() {
-        return description;
+        return picture.getDescription();
     }
+
     public String getMimeType() {
-        return mimeType;
+        return picture.getMimeType();
     }
 
     public boolean isPictureURL() {
-        return mimeType.equals("-->");
-    }
-
-    public URLPicture getURLPicture() {
-        try {
-            if (!isPictureURL()) throw new IllegalStateException("Block does not contain url");
-            return new URLPicture(pictureBytes);
-        } catch (MalformedURLException e) {
-            return null;
-        }
+        return picture.isPictureURL();
     }
 
     public void setMimeType(String mimeType) {
-        this.mimeType = mimeType;
+        picture.setMimeType(mimeType);
     }
 
     public void setEncoding(byte encoding) {
@@ -151,34 +120,27 @@ public class AttachedPictureFrame extends AbstractFrame {
     }
 
     public void setDescription(String description) {
-        this.description = description;
+        picture.setDescription(description);
     }
 
     public void setPictureType(byte pictureType) {
-        if (pictureType >= PICTURE_TYPE_OTHER && pictureType <= PICTURE_TYPE_STUDIO_LOGO) {
-            this.pictureType = pictureType;
-            return;
-        }
-        throw new IllegalArgumentException("Invalid picture type: " + pictureType);
+        picture.setPictureType(pictureType);
     }
 
     public void setPictureURL(URL url) {
-        if (!mimeType.equals("-->")) setMimeType("-->");
-        pictureBytes = url.toString().getBytes(StandardCharsets.ISO_8859_1);
+        picture.isPictureURL();
     }
 
     public void setPictureData(byte[] pictureData) {
-        this.pictureBytes = pictureData;
+        picture.setPictureData(pictureData);
     }
 
     public void setPictureData(File file) {
-        setMimeType(ImageReader.getMimeType(file));
-        setPictureData(ImageReader.readFromFile(file));
+        picture.setPictureData(file);
     }
 
     public void setPictureData(URL url) {
-        setMimeType(ImageReader.getMimeType(url));
-        setPictureData(ImageReader.readFromURL(url));
+        picture.setPictureData(url);
     }
 
     public static Builder newBuilder() { return new AttachedPictureFrame().new Builder(); }
@@ -193,6 +155,16 @@ public class AttachedPictureFrame extends AbstractFrame {
                 .setPictureType(pictureType)
                 .setPictureData(buffer)
                 .build(version);
+    }
+
+    @Override
+    public AttachedPicture getFieldData() {
+        return picture;
+    }
+
+    @Override
+    public void setFieldData(AttachedPicture picture) {
+        this.picture = picture;
     }
 
     public class Builder {

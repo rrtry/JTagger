@@ -1,6 +1,7 @@
 package com.rrtry.id3;
 
 import com.rrtry.Component;
+import com.rrtry.TagField;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

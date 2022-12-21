@@ -1,5 +1,7 @@
 package flac;
 
+import com.rrtry.AttachedPicture;
+
 import java.util.Arrays;
 import static utils.IntegerUtils.toUInt32BE;
 
@@ -9,6 +11,7 @@ public class PictureBlockParser implements BlockBodyParser<PictureBlock> {
     public PictureBlock parse(byte[] block) {
 
         PictureBlock pictureBlock = new PictureBlock();
+        AttachedPicture picture   = new AttachedPicture();
 
         int index          = 0;
         int pictureType    = toUInt32BE(Arrays.copyOfRange(block, index, index + 4)); index += 4;
@@ -30,14 +33,15 @@ public class PictureBlockParser implements BlockBodyParser<PictureBlock> {
         int pictureLength = toUInt32BE(Arrays.copyOfRange(block, index, index + 4)); index += 4;
         byte[] pictureData = Arrays.copyOfRange(block, index, index + pictureLength);
 
-        pictureBlock.setPictureType(pictureType);
-        pictureBlock.setMimeType(mimeType);
-        pictureBlock.setDescription(description);
-        pictureBlock.setPictureWidth(width);
-        pictureBlock.setPictureHeight(height);
-        pictureBlock.setPictureColorDepth(colorDepth);
-        pictureBlock.setPictureData(pictureData);
+        picture.setPictureType(pictureType);
+        picture.setMimeType(mimeType);
+        picture.setDescription(description);
+        picture.setPictureWidth(width);
+        picture.setPictureHeight(height);
+        picture.setPictureColorDepth(colorDepth);
+        picture.setPictureData(pictureData);
 
+        pictureBlock.setPicture(picture);
         pictureBlock.assemble();
         return pictureBlock;
     }
