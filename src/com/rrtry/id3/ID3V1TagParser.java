@@ -27,9 +27,7 @@ public class ID3V1TagParser implements TagParser<ID3V1Tag> {
         byte version = ID3V1;
         byte commentLength = 30;
 
-        if (buffer[COMMENT_OFFSET + 28] == 0x00 &&
-                buffer[TRACK_NUMBER] != 0)
-        {
+        if (buffer[COMMENT_OFFSET + 28] == 0x00 && buffer[TRACK_NUMBER] != 0x00) {
             version = ID3V1_1;
             commentLength = 28;
         }

@@ -14,8 +14,6 @@ import static flac.FlacTag.MAGIC;
 
 public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
 
-    private static final String FLAC_MIME_TYPE = "audio/flac";
-
     private StreamInfoBlock streamInfo;
     private int originalTagSize;
 

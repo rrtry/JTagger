@@ -8,12 +8,12 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 
-import static com.rrtry.id3.RecordingTimeFrame.VALID_PATTERNS;
+import static com.rrtry.id3.TimestampFrame.VALID_PATTERNS;
 
-public class RecordingTimeFrameParser implements FrameBodyParser<RecordingTimeFrame> {
+public class TimestampFrameParser implements FrameBodyParser<TimestampFrame> {
 
     @Override
-    public RecordingTimeFrame parse(String identifier, FrameHeader frameHeader, byte[] frameData, TagHeader tagHeader) {
+    public TimestampFrame parse(String identifier, FrameHeader frameHeader, byte[] frameData, TagHeader tagHeader) {
 
         String formatPattern = "";
         String recordingTime = new String(
@@ -31,7 +31,7 @@ public class RecordingTimeFrameParser implements FrameBodyParser<RecordingTimeFr
             }
         }
 
-        RecordingTimeFrame.Builder builder = RecordingTimeFrame.createBuilder().setHeader(frameHeader);
+        TimestampFrame.Builder builder = TimestampFrame.createBuilder().setHeader(frameHeader);
 
         if (index == -1) return null;
 

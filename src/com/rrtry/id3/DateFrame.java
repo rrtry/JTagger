@@ -1,7 +1,5 @@
 package com.rrtry.id3;
 
-import com.rrtry.TagField;
-
 import java.time.MonthDay;
 import java.time.format.DateTimeFormatter;
 import static com.rrtry.id3.ID3V2Tag.ID3V2_3;

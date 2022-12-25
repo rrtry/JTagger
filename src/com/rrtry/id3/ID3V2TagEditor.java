@@ -1,16 +1,23 @@
 package com.rrtry.id3;
 
+import com.rrtry.AbstractTagEditor;
+
 import java.io.*;
 
 import static com.rrtry.PaddingTag.MAX_PADDING;
 import static com.rrtry.PaddingTag.MIN_PADDING;
 
-public class ID3V2TagEditor extends AbstractID3TagEditor<ID3V2Tag> {
+public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
 
     private int originalTagSize;
+    private boolean isID3V1Present;
 
     @Override
     protected final void parseTag() throws IOException {
+
+        originalTagSize = 0;
+        isID3V1Present  = false;
+        isTagPresent    = false;
 
         TagHeaderParser tagHeaderParser = new TagHeaderParser();
         FrameParser frameParser = new FrameParser(tagHeaderParser);
@@ -21,7 +28,21 @@ public class ID3V2TagEditor extends AbstractID3TagEditor<ID3V2Tag> {
         if (tag != null) {
             isTagPresent = true;
             originalTagSize = tag.getTagHeader().getTagSize();
+            return;
         }
+
+        ID3V1TagParser parser = new ID3V1TagParser();
+        ID3V1Tag id3V1Tag = parser.parse(file);
+
+        if (id3V1Tag != null) {
+            isID3V1Present = true;
+            this.tag = ID3V2Tag.fromID3V1Tag(id3V1Tag, ID3V2Tag.ID3V2_3);
+        }
+    }
+
+    @Override
+    protected String getFileMimeType() {
+        return MPEG_MIME_TYPE;
     }
 
     @Override
@@ -36,7 +57,7 @@ public class ID3V2TagEditor extends AbstractID3TagEditor<ID3V2Tag> {
         if (tag == null && !isTagPresent) return; // there's nothing to commit
 
         /* experimental */
-        if (tag != null) {
+        if (tag != null && isTagPresent) {
 
             final int frameDataSize = tag.getFrameDataSize(tag.getVersion());
             final int padding       = originalTagSize - frameDataSize;
@@ -67,7 +88,15 @@ public class ID3V2TagEditor extends AbstractID3TagEditor<ID3V2Tag> {
                 tempFile.write(tagBuffer, 0, tagBuffer.length);
             }
 
-            file.seek(originalTagSize + TagHeaderParser.HEADER_LENGTH);
+            int streamOffset = 0;
+            if (originalTagSize > 0) {
+                streamOffset = originalTagSize + TagHeaderParser.HEADER_LENGTH;
+            }
+            if (isID3V1Present) {
+                file.setLength(file.length() - 128);
+            }
+
+            file.seek(streamOffset);
 
             while (file.read(tempBuffer, 0, tempBuffer.length) != -1) {
                 tempFile.write(tempBuffer, 0, tempBuffer.length);

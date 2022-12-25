@@ -25,12 +25,6 @@ public class VorbisCommentBlock extends AbstractMetadataBlock {
     public static final String CONTACT      = "CONTACT";
     public static final String ISRC         = "ISRC";
 
-    private static final String[] COMMENT_FIELDS = new String[] {
-            TITLE, VERSION, ALBUM, TRACK_NUMBER, ARTIST, PERFORMER,
-            COPYRIGHT, LICENCE, ORGANIZATION, DESCRIPTION, GENRE,
-            DATE, LOCATION, CONTACT, ISRC
-    };
-
     private String vendorString = VENDOR_STRING;
     private HashMap<String, String> commentsMap = new HashMap<>();
 

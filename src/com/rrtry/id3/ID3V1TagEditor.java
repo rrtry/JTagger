@@ -1,8 +1,9 @@
 package com.rrtry.id3;
 
+import com.rrtry.AbstractTagEditor;
 import java.io.IOException;
 
-public class ID3V1TagEditor extends AbstractID3TagEditor<ID3V1Tag> {
+public class ID3V1TagEditor extends AbstractTagEditor<ID3V1Tag> {
 
     @Override
     protected final void parseTag() throws IOException {
@@ -18,8 +19,14 @@ public class ID3V1TagEditor extends AbstractID3TagEditor<ID3V1Tag> {
     }
 
     @Override
+    protected String getFileMimeType() {
+        return MPEG_MIME_TYPE;
+    }
+
+    @Override
     public void setTag(ID3V1Tag tag) {
-        this.tag = ID3V1Tag.newBuilder(tag).build(tag.getVersion());
+        this.tag = ID3V1Tag.newBuilder(tag)
+                .build(tag.getVersion());
     }
 
     @Override

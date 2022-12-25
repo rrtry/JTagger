@@ -1,15 +1,13 @@
 package com.rrtry.id3;
 
 import com.rrtry.Component;
-import com.rrtry.TagField;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterOutputStream;
 
-public abstract class AbstractFrame implements Component {
+public abstract class AbstractFrame<T> implements Component {
 
     public static final String EQUALIZATION          = "EQUA";
     public static final String INVOLVED_PEOPLE       = "IPLS";
@@ -99,6 +97,9 @@ public abstract class AbstractFrame implements Component {
 
     protected FrameHeader header;
     protected byte[] frameBytes;
+
+    abstract T getFrameData();
+    abstract void setFrameData(T data);
 
     @Override
     public byte[] getBytes() {

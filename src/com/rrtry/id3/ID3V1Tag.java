@@ -1,9 +1,11 @@
 package com.rrtry.id3;
 
+import com.rrtry.Tag;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-public class ID3V1Tag implements ID3Tag {
+public class ID3V1Tag extends ID3Tag {
 
     public static final String ID = "TAG";
     private static final int TAG_SIZE = 128;
@@ -423,6 +425,35 @@ public class ID3V1Tag implements ID3Tag {
     private byte version;
 
     @Override
+    protected <T> void setFieldValue(String fieldId, T value) {
+
+        String fieldValue = (String) value;
+
+        if (fieldId.equals(Tag.TITLE))   setTitle(fieldValue);
+        if (fieldId.equals(Tag.ARTIST))  setArtist(fieldValue);
+        if (fieldId.equals(Tag.ALBUM))   setAlbum(fieldValue);
+        if (fieldId.equals(Tag.YEAR))    setYear(fieldValue);
+        if (fieldId.equals(Tag.COMMENT)) setComment(fieldValue);
+        if (fieldId.equals(Tag.GENRE))   setGenre(Integer.parseInt(fieldValue));
+        if (fieldId.equals(Tag.TRACK_NUMBER)) setAlbumTrack(Integer.parseInt(fieldValue));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    protected <T> T getFieldValue(String fieldId) {
+
+        if (fieldId.equals(Tag.TITLE))   return (T) title;
+        if (fieldId.equals(Tag.ARTIST))  return (T) artist;
+        if (fieldId.equals(Tag.ALBUM))   return (T) album;
+        if (fieldId.equals(Tag.YEAR))    return (T) String.valueOf(year);
+        if (fieldId.equals(Tag.COMMENT)) return (T) comment;
+        if (fieldId.equals(Tag.GENRE))   return (T) String.valueOf(genre);
+        if (fieldId.equals(Tag.TRACK_NUMBER)) return (T) String.valueOf(trackNumber);
+
+        return null;
+    }
+
+    @Override
     public String toString() {
         return String.format(
                 "title: %s\nartist: %s\nalbum: %s\nyear: %s\ncomment: %s\ntrack:%d\nversion: %d",
@@ -430,55 +461,64 @@ public class ID3V1Tag implements ID3Tag {
         );
     }
 
-    @Override
-    public String getTitle() { return title; }
+    public String getTitle() {
+        return title;
+    }
 
-    @Override
-    public String getArtist() { return artist; }
+    public String getArtist() {
+        return artist;
+    }
 
-    @Override
-    public String getAlbum() { return album; }
+    public String getAlbum() {
+        return album;
+    }
 
-    @Override
-    public String getYear() { return year; }
-
-    @Override
-    public byte getVersion() { return version; }
-
-    public String getComment() { return comment; }
-
-    public int getGenre() { return toUnsignedInt(genre); }
-    public int getTrackNumber() { return toUnsignedInt(trackNumber); }
-
-    @Override
-    public void setTitle(String title) {
-        if (title.length() > 30) throw new IllegalArgumentException("'title' field cannot be longer than 30 characters");
-        this.title = title;
+    public String getYear() {
+        return year;
     }
 
     @Override
-    public void setArtist(String artist) {
-        if (artist.length() > 30) throw new IllegalArgumentException("'artist' field cannot be longer than 30 characters");
-        this.artist = artist;
-    }
-
-    @Override
-    public void setAlbum(String album) {
-        if (album.length() > 30) throw new IllegalArgumentException("'album' field cannot be longer than 30 characters");
-        this.album = album;
-    }
-
-    @Override
-    public void setYear(String year) {
-        if (year.contains("[a-zA-Z]+")) throw new IllegalArgumentException("'year' must be numeric string");
-        if (year.length() > 4) throw new IllegalArgumentException("'year' field cannot be longer than 4 characters");
-        this.year = year;
+    public byte getVersion() {
+        return version;
     }
 
     @Override
     public void setVersion(byte version) {
         if (version != ID3V1 && version != ID3V1_1) throw new IllegalArgumentException("Invalid version number");
         this.version = version;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public int getGenre() {
+        return toUnsignedInt(genre);
+    }
+
+    public int getTrackNumber() {
+        return toUnsignedInt(trackNumber);
+    }
+
+    public void setTitle(String title) {
+        if (title.length() > 30) throw new IllegalArgumentException("'title' field cannot be longer than 30 characters");
+        this.title = title;
+    }
+
+    public void setArtist(String artist) {
+        if (artist.length() > 30) throw new IllegalArgumentException("'artist' field cannot be longer than 30 characters");
+        this.artist = artist;
+    }
+
+    public void setAlbum(String album) {
+        if (album.length() > 30) throw new IllegalArgumentException("'album' field cannot be longer than 30 characters");
+        this.album = album;
+    }
+
+    public void setYear(String year) {
+        if (year.contains("[a-zA-Z]+")) throw new IllegalArgumentException("'year' must be numeric string");
+        if (year.length() > 4) throw new IllegalArgumentException("'year' field cannot be longer than 4 characters");
+        this.year = year;
     }
 
     public void setComment(String comment) {
@@ -495,22 +535,11 @@ public class ID3V1Tag implements ID3Tag {
 
     public void setAlbumTrack(int trackNumber) {
         if (trackNumber > 0 && trackNumber < 256) {
-            this.trackNumber = (byte) trackNumber; return;
+            this.trackNumber = (byte) trackNumber;
+            return;
         }
         throw new IllegalArgumentException("Invalid track number: " + trackNumber);
     }
-
-    @Override
-    public boolean removeTitle() { title = ""; return true; }
-
-    @Override
-    public boolean removeArtist() { artist = ""; return true; }
-
-    @Override
-    public boolean removeAlbum() { album = ""; return true; }
-
-    @Override
-    public boolean removeYear() { year = ""; return true; }
 
     @Override
     public byte[] assemble(byte version) {
@@ -518,13 +547,11 @@ public class ID3V1Tag implements ID3Tag {
         if (version != ID3V1 && version != ID3V1_1) {
             throw new IllegalArgumentException("Invalid version number: " + version);
         }
-
         if (version == ID3V1_1 && comment.length() > 28) {
-            throw new IllegalArgumentException(
-                    "According to ID3v1.1 specification 'comment' string cannot be longer than 28 characters"
-            );
+            comment = comment.substring(0, 28);
         }
 
+        this.version = version;
         byte[] tag = new byte[TAG_SIZE];
 
         byte[] tagIdBytes   = ID.getBytes(StandardCharsets.ISO_8859_1);

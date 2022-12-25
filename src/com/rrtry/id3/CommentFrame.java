@@ -1,7 +1,5 @@
 package com.rrtry.id3;
 
-import com.rrtry.TagField;
-
 import java.nio.charset.StandardCharsets;
 
 /*
@@ -12,7 +10,7 @@ import java.nio.charset.StandardCharsets;
      The actual text        <full text string according to encoding>
 */
 
-public class CommentFrame extends AbstractFrame implements TagField<String> {
+public class CommentFrame extends AbstractFrame<String> {
 
     private byte encoding;
     private String language;
@@ -92,12 +90,12 @@ public class CommentFrame extends AbstractFrame implements TagField<String> {
     }
 
     @Override
-    public String getFieldData() {
+    public String getFrameData() {
         return comment;
     }
 
     @Override
-    public void setFieldData(String comment) {
+    public void setFrameData(String comment) {
         this.comment = comment;
     }
 

@@ -33,12 +33,10 @@ package com.rrtry.id3;
  */
 
 import com.rrtry.AttachedPicture;
-import com.rrtry.TagField;
-
 import java.io.*;
 import java.net.URL;
 
-public class AttachedPictureFrame extends AbstractFrame implements TagField<AttachedPicture> {
+public class AttachedPictureFrame extends AbstractFrame<AttachedPicture> {
 
     private AttachedPicture picture = new AttachedPicture();
     private byte encoding;
@@ -158,12 +156,12 @@ public class AttachedPictureFrame extends AbstractFrame implements TagField<Atta
     }
 
     @Override
-    public AttachedPicture getFieldData() {
+    public AttachedPicture getFrameData() {
         return picture;
     }
 
     @Override
-    public void setFieldData(AttachedPicture picture) {
+    public void setFrameData(AttachedPicture picture) {
         this.picture = picture;
     }
 

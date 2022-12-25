@@ -1,5 +1,7 @@
 package com.rrtry.id3;
 
+import com.rrtry.Tag;
+import com.rrtry.AttachedPicture;
 import com.rrtry.PaddingTag;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -14,17 +16,116 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
-import static com.rrtry.id3.AbstractFrame.*;
+import static com.rrtry.id3.AbstractFrame.V2_3_FRAMES;
+import static com.rrtry.id3.AbstractFrame.V2_4_FRAMES;
 import static com.rrtry.id3.DateFrame.DATE_FORMAT_PATTERN;
 import static com.rrtry.id3.TextEncoding.ENCODING_LATIN_1;
 import static com.rrtry.id3.TimeFrame.TIME_FORMAT_PATTERN;
 
-public class ID3V2Tag implements ID3Tag, PaddingTag {
+public class ID3V2Tag extends ID3Tag implements PaddingTag {
 
     public static final String[] DEPRECATED_V23_FRAMES = new String[] {
             "EQUA", "IPLS", "RVAD", "TDAT", "TIME", "TORY", "TRDA", "TSIZ", "TYER"
     };
+
+    private static final HashMap<String, String> FIELD_MAP_V23 = new HashMap<>();
+    private static final HashMap<String, String> FIELD_MAP_V24 = new HashMap<>();
+
+    static {
+        FIELD_MAP_V23.put(Tag.TITLE            ,"TIT2");
+        FIELD_MAP_V23.put(Tag.ARTIST           ,"TPE1");
+        FIELD_MAP_V23.put(Tag.ALBUM            ,"TALB");
+        FIELD_MAP_V23.put(Tag.COMMENT          ,"COMM");
+        FIELD_MAP_V23.put(Tag.YEAR             ,"TYER");
+        FIELD_MAP_V23.put(Tag.TRACK_NUMBER     ,"TRCK");
+        FIELD_MAP_V23.put(Tag.GENRE            ,"TCON");
+        FIELD_MAP_V23.put(Tag.ALBUM_ARTIST     ,"TPE2");
+        FIELD_MAP_V23.put(Tag.ARRANGER         ,"IPLS");
+        FIELD_MAP_V23.put(Tag.AUTHOR           ,"TOLY");
+        FIELD_MAP_V23.put(Tag.BPM              ,"TBPM");
+        FIELD_MAP_V23.put(Tag.COMPILATION      ,"TCMP");
+        FIELD_MAP_V23.put(Tag.COMPOSER         ,"TCOM");
+        FIELD_MAP_V23.put(Tag.CONDUCTOR        ,"TPE3");
+        FIELD_MAP_V23.put(Tag.COPYRIGHT        ,"TCOP");
+        FIELD_MAP_V23.put(Tag.DESCRIPTION      ,"TIT3");
+        FIELD_MAP_V23.put(Tag.DISC_NUMBER      ,"TPOS");
+        FIELD_MAP_V23.put(Tag.ENCODED_BY       ,"TENC");
+        FIELD_MAP_V23.put(Tag.ENCODER_SETTINGS ,"TSSE");
+        FIELD_MAP_V23.put(Tag.GROUPING         ,"GRP1");
+        FIELD_MAP_V23.put(Tag.INITIAL_KEY      ,"TKEY");
+        FIELD_MAP_V23.put(Tag.ISRC             ,"TSRC");
+        FIELD_MAP_V23.put(Tag.LANGUAGE         ,"TLAN");
+        FIELD_MAP_V23.put(Tag.LYRICIST         ,"TEXT");
+        FIELD_MAP_V23.put(Tag.LYRICS           ,"USLT");
+        FIELD_MAP_V23.put(Tag.MEDIA            ,"TMED");
+        FIELD_MAP_V23.put(Tag.ORIGINAL_ALBUM   ,"TOAL");
+        FIELD_MAP_V23.put(Tag.ORIGINAL_ARTIST  ,"TOPE");
+        FIELD_MAP_V23.put(Tag.ORIGINAL_DATE    ,"TORY");
+        FIELD_MAP_V23.put(Tag.PERFORMER        ,"IPLS");
+        FIELD_MAP_V23.put(Tag.PICTURE          ,"APIC");
+        FIELD_MAP_V23.put(Tag.PUBLISHER        ,"TPUB");
+        FIELD_MAP_V23.put(Tag.RATING           ,"POPM");
+        FIELD_MAP_V23.put(Tag.REMIXER          ,"TPE4");
+        FIELD_MAP_V23.put(Tag.SORT_ALBUM       ,"TSOA");
+        FIELD_MAP_V23.put(Tag.SORT_ALBUM_ARTIST,"TSO2");
+        FIELD_MAP_V23.put(Tag.SORT_ARTIST      ,"TSOP");
+        FIELD_MAP_V23.put(Tag.SORT_COMPOSER    ,"TSOC");
+        FIELD_MAP_V23.put(Tag.SORT_NAME        ,"TSOT");
+        FIELD_MAP_V23.put(Tag.WEBSITE          ,"WOAR");
+        FIELD_MAP_V23.put(Tag.WORK             ,"TIT1");
+        FIELD_MAP_V23.put(Tag.WWW_AUDIO_FILE   ,"WOAF");
+        FIELD_MAP_V23.put(Tag.WWW_AUDIO_SOURCE ,"WOAS");
+
+        FIELD_MAP_V24.put(Tag.TITLE            ,"TIT2");
+        FIELD_MAP_V24.put(Tag.ARTIST           ,"TPE1");
+        FIELD_MAP_V24.put(Tag.ALBUM            ,"TALB");
+        FIELD_MAP_V24.put(Tag.COMMENT          ,"COMM");
+        FIELD_MAP_V24.put(Tag.YEAR             ,"TDRC");
+        FIELD_MAP_V24.put(Tag.TRACK_NUMBER     ,"TRCK");
+        FIELD_MAP_V24.put(Tag.GENRE            ,"TCON");
+        FIELD_MAP_V24.put(Tag.ALBUM_ARTIST     ,"TPE2");
+        FIELD_MAP_V24.put(Tag.ARRANGER         ,"TIPL");
+        FIELD_MAP_V24.put(Tag.AUTHOR           ,"TOLY");
+        FIELD_MAP_V24.put(Tag.BPM              ,"TBPM");
+        FIELD_MAP_V24.put(Tag.COMPILATION      ,"TCMP");
+        FIELD_MAP_V24.put(Tag.COMPOSER         ,"TCOM");
+        FIELD_MAP_V24.put(Tag.CONDUCTOR        ,"TPE3");
+        FIELD_MAP_V24.put(Tag.COPYRIGHT        ,"TCOP");
+        FIELD_MAP_V24.put(Tag.DESCRIPTION      ,"TIT3");
+        FIELD_MAP_V24.put(Tag.DISC_NUMBER      ,"TPOS");
+        FIELD_MAP_V24.put(Tag.ENCODED_BY       ,"TENC");
+        FIELD_MAP_V24.put(Tag.ENCODER_SETTINGS ,"TSSE");
+        FIELD_MAP_V24.put(Tag.ENCODING_TIME    ,"TDEN");
+        FIELD_MAP_V24.put(Tag.GROUPING         ,"GRP1");
+        FIELD_MAP_V24.put(Tag.INITIAL_KEY      ,"TKEY");
+        FIELD_MAP_V24.put(Tag.ISRC             ,"TSRC");
+        FIELD_MAP_V24.put(Tag.LANGUAGE         ,"TLAN");
+        FIELD_MAP_V24.put(Tag.LYRICIST         ,"TEXT");
+        FIELD_MAP_V24.put(Tag.LYRICS           ,"USLT");
+        FIELD_MAP_V24.put(Tag.MEDIA            ,"TMED");
+        FIELD_MAP_V24.put(Tag.MOOD             ,"TMOO");
+        FIELD_MAP_V24.put(Tag.ORIGINAL_ALBUM   ,"TOAL");
+        FIELD_MAP_V24.put(Tag.ORIGINAL_ARTIST  ,"TOPE");
+        FIELD_MAP_V24.put(Tag.ORIGINAL_DATE    ,"TDOR");
+        FIELD_MAP_V24.put(Tag.PERFORMER        ,"TMCL");
+        FIELD_MAP_V24.put(Tag.PICTURE          ,"APIC");
+        FIELD_MAP_V24.put(Tag.PUBLISHER        ,"TPUB");
+        FIELD_MAP_V24.put(Tag.RATING           ,"POPM");
+        FIELD_MAP_V24.put(Tag.RELEASE_DATE     ,"TDRL");
+        FIELD_MAP_V24.put(Tag.REMIXER          ,"TPE4");
+        FIELD_MAP_V24.put(Tag.SORT_ALBUM       ,"TSOA");
+        FIELD_MAP_V24.put(Tag.SORT_ALBUM_ARTIST,"TSO2");
+        FIELD_MAP_V24.put(Tag.SORT_ARTIST      ,"TSOP");
+        FIELD_MAP_V24.put(Tag.SORT_COMPOSER    ,"TSOC");
+        FIELD_MAP_V24.put(Tag.SORT_NAME        ,"TSOT");
+        FIELD_MAP_V24.put(Tag.SUBTITLE         ,"TSST");
+        FIELD_MAP_V24.put(Tag.WEBSITE          ,"WOAR");
+        FIELD_MAP_V24.put(Tag.WORK             ,"TIT1");
+        FIELD_MAP_V24.put(Tag.WWW_AUDIO_FILE   ,"WOAF");
+        FIELD_MAP_V24.put(Tag.WWW_AUDIO_SOURCE ,"WOAS");
+    }
 
     public static final byte ID3V2   = 0x02;
     public static final byte ID3V2_3 = 0x03;
@@ -58,7 +159,7 @@ public class ID3V2Tag implements ID3Tag, PaddingTag {
         if (getVersion() == ID3V2_3) knownFrame = Arrays.asList(V2_3_FRAMES).contains(id);
         if (getVersion() == ID3V2_4) knownFrame = Arrays.asList(V2_4_FRAMES).contains(id);
 
-        if (!knownFrame) throw new NotImplementedException();
+        if (!knownFrame) return null;
 
         for (AbstractFrame frame : frames) {
             if (frame.getIdentifier().equals(id)) {
@@ -66,6 +167,12 @@ public class ID3V2Tag implements ID3Tag, PaddingTag {
             }
         }
         return null;
+    }
+
+    private <T> AbstractFrame<T> getFrameFromUnifiedId(String fieldId) {
+        HashMap<String, String> fieldMap = getVersion() == ID3V2_3 ? FIELD_MAP_V23 : FIELD_MAP_V24;
+        String frameId = fieldMap.get(fieldId);
+        return getFrame(frameId);
     }
 
     public void addFrame(AbstractFrame frame) {
@@ -82,19 +189,11 @@ public class ID3V2Tag implements ID3Tag, PaddingTag {
         else addFrame(frame);
     }
 
-    public void removeFrameAtIndex(int index) {
-        frames.remove(index);
-    }
-
     public boolean removePictures() {
-        return removeFramesWithId(PICTURE);
+        return removeFrame(PICTURE);
     }
 
-    public boolean removeFrame(AbstractFrame frame) {
-        return frames.remove(frame);
-    }
-
-    public boolean removeFramesWithId(String id) {
+    public boolean removeFrame(String id) {
         return frames.removeIf(frame -> frame.getIdentifier().equals(id));
     }
 
@@ -141,11 +240,11 @@ public class ID3V2Tag implements ID3Tag, PaddingTag {
     }
 
     private void setRecordingYear(String id, String year) {
-        RecordingTimeFrame recordingTimeFrame = RecordingTimeFrame.createBuilder()
+        TimestampFrame timestampFrame = TimestampFrame.createBuilder()
                 .setHeader(FrameHeader.createFrameHeader(id, ID3V2_4))
                 .setYear(Year.parse(year))
                 .build(ID3V2_4);
-        setFrame(recordingTimeFrame);
+        setFrame(timestampFrame);
     }
 
     private void setTextFrame(String id, String text, byte encoding) {
@@ -177,7 +276,7 @@ public class ID3V2Tag implements ID3Tag, PaddingTag {
     private void addPictureFrame(URL url, String description, byte pictureType) throws IOException {
         addFrame(
                 AttachedPictureFrame.newBuilder()
-                        .setHeader(FrameHeader.createFrameHeader(PICTURE, getVersion()))
+                        .setHeader(FrameHeader.createFrameHeader(AbstractFrame.PICTURE, getVersion()))
                         .setEncoding(TextEncoding.getAppropriateEncoding(getVersion()))
                         .setPictureType(pictureType)
                         .setDescription(description)
@@ -190,7 +289,7 @@ public class ID3V2Tag implements ID3Tag, PaddingTag {
         String mimeType = Files.probeContentType(Paths.get(file.getAbsolutePath()));
         addFrame(
                 AttachedPictureFrame.newBuilder()
-                        .setHeader(FrameHeader.createFrameHeader(PICTURE, getVersion()))
+                        .setHeader(FrameHeader.createFrameHeader(AbstractFrame.PICTURE, getVersion()))
                         .setEncoding(TextEncoding.getAppropriateEncoding(getVersion()))
                         .setMimeType(mimeType)
                         .setPictureType(pictureType)
@@ -232,28 +331,25 @@ public class ID3V2Tag implements ID3Tag, PaddingTag {
         throw new IllegalArgumentException("Value is not within defined range");
     }
 
-    @Override
     public String getTitle() {
-        TextFrame titleFrame = getTextFrame(TITLE);
+        TextFrame titleFrame = getTextFrame(AbstractFrame.TITLE);
         return titleFrame == null ? "" : titleFrame.getText();
     }
 
-    @Override
     public String getArtist() {
-        TextFrame artistFrame = getTextFrame(ARTIST);
+        TextFrame artistFrame = getTextFrame(AbstractFrame.ARTIST);
         return artistFrame == null ? "" : artistFrame.getText();
     }
 
-    @Override
     public String getAlbum() {
-        TextFrame albumFrame = getTextFrame(ALBUM);
+        TextFrame albumFrame = getTextFrame(AbstractFrame.ALBUM);
         return albumFrame == null ? "" : albumFrame.getText();
     }
 
     public String getRecordingTimestamp() {
         if (getVersion() == ID3V2_4) {
-            RecordingTimeFrame recordingTimeFrame = getFrame(RECORDING_TIME);
-            return recordingTimeFrame == null ? "" : recordingTimeFrame.getText();
+            TimestampFrame timestampFrame = getFrame(AbstractFrame.RECORDING_TIME);
+            return timestampFrame == null ? "" : timestampFrame.getText();
         }
         return "";
     }
@@ -263,12 +359,12 @@ public class ID3V2Tag implements ID3Tag, PaddingTag {
         String recTime = "";
 
         if (getVersion() == ID3V2_3) {
-            TimeFrame timeFrame = (TimeFrame) getTextFrame(TIME);
+            TimeFrame timeFrame = (TimeFrame) getTextFrame(AbstractFrame.TIME);
             recTime = timeFrame == null ? "" : timeFrame.getText();
         }
         if (getVersion() == ID3V2_4) {
-            RecordingTimeFrame recordingTimeFrame = getFrame(RECORDING_TIME);
-            LocalTime time = recordingTimeFrame.getTime();
+            TimestampFrame timestampFrame = getFrame(AbstractFrame.RECORDING_TIME);
+            LocalTime time = timestampFrame.getTime();
             recTime = time == null ? "" : time.toString();
         }
         return recTime;
@@ -279,50 +375,35 @@ public class ID3V2Tag implements ID3Tag, PaddingTag {
         String recDate = "";
 
         if (getVersion() == ID3V2_3) {
-            DateFrame dateFrame = (DateFrame) getTextFrame(DATE);
+            DateFrame dateFrame = (DateFrame) getTextFrame(AbstractFrame.YEAR);
             recDate = dateFrame == null ? "" : dateFrame.getText();
         }
         if (getVersion() == ID3V2_4) {
-            RecordingTimeFrame recordingTimeFrame = getFrame(RECORDING_TIME);
-            LocalDate date = recordingTimeFrame.getDate();
+            TimestampFrame timestampFrame = getFrame(AbstractFrame.RECORDING_TIME);
+            LocalDate date = timestampFrame.getDate();
             recDate = date == null ? "" : date.toString();
         }
         return recDate;
     }
 
-    @Override
     public String getYear() {
 
         String year = "";
 
         if (getVersion() == ID3V2_3) {
-            TextFrame yearFrame = getTextFrame(YEAR);
+            TextFrame yearFrame = getTextFrame(AbstractFrame.YEAR);
             year = yearFrame == null ? "" : yearFrame.getText();
         }
         if (getVersion() == ID3V2_4) {
-            RecordingTimeFrame recordingTimeFrame = getFrame(RECORDING_TIME);
-            year = recordingTimeFrame == null ? "" : recordingTimeFrame.getYear().toString();
+            TimestampFrame timestampFrame = getFrame(AbstractFrame.RECORDING_TIME);
+            year = timestampFrame == null ? "" : timestampFrame.getYear().toString();
         }
         return year;
     }
 
     @Override
-    public byte getVersion() { return getTagHeader().getMajorVersion(); }
-
-    @Override
-    public void setTitle(String title) { setTextFrame(TITLE, title, TextEncoding.getAppropriateEncoding(getVersion())); }
-
-    @Override
-    public void setArtist(String artist) { setTextFrame(ARTIST, artist, TextEncoding.getAppropriateEncoding(getVersion())); }
-
-    @Override
-    public void setAlbum(String album) { setTextFrame(ALBUM, album, TextEncoding.getAppropriateEncoding(getVersion())); }
-
-    @Override
-    public void setYear(String year) {
-        byte version = getVersion();
-        if (version == ID3V2_3) setTextFrame(YEAR, year, ENCODING_LATIN_1);
-        if (version == ID3V2_4) setRecordingYear(RECORDING_TIME, year);
+    public byte getVersion() {
+        return getTagHeader().getMajorVersion();
     }
 
     @Override
@@ -332,25 +413,60 @@ public class ID3V2Tag implements ID3Tag, PaddingTag {
                 .build(version);
     }
 
+    public void setTitle(String title) {
+        setTextFrame(AbstractFrame.TITLE, title, TextEncoding.getAppropriateEncoding(getVersion()));
+    }
+
+    public void setArtist(String artist) {
+        setTextFrame(AbstractFrame.ARTIST, artist, TextEncoding.getAppropriateEncoding(getVersion()));
+    }
+
+    public void setAlbum(String album) {
+        setTextFrame(AbstractFrame.ALBUM, album, TextEncoding.getAppropriateEncoding(getVersion()));
+    }
+
+    public void setAlbumTrack(String trackNum) {
+        setTextFrame(AbstractFrame.TRACK_NUMBER, trackNum, ENCODING_LATIN_1);
+    }
+
+    public void setGenre(int genre) {
+        String genreString = ID3V1Tag.GENRES[genre];
+        setTextFrame(AbstractFrame.GENRE, genreString, ENCODING_LATIN_1);
+    }
+
+    public void setGenre(String genre) {
+        setTextFrame(AbstractFrame.GENRE, genre, TextEncoding.getAppropriateEncoding(getVersion()));
+    }
+
+    public void setYear(String year) {
+        byte version = getVersion();
+        if (version == ID3V2_3) setTextFrame(AbstractFrame.YEAR, year, ENCODING_LATIN_1);
+        if (version == ID3V2_4) setRecordingYear(AbstractFrame.RECORDING_TIME, year);
+    }
+
     public void setComment(String comment, String language) {
         setCommentFrame(comment, language);
     }
 
-    public boolean removeComment() { return removeFramesWithId(COMMENT); }
+    public boolean removeComment() {
+        return removeFrame(AbstractFrame.COMMENT);
+    }
 
-    @Override
-    public boolean removeTitle() { return removeFramesWithId(TITLE); }
+    public boolean removeTitle() {
+        return removeFrame(AbstractFrame.TITLE);
+    }
 
-    @Override
-    public boolean removeArtist() { return removeFramesWithId(ARTIST); }
+    public boolean removeArtist() {
+        return removeFrame(AbstractFrame.ARTIST);
+    }
 
-    @Override
-    public boolean removeAlbum() { return removeFramesWithId(ALBUM); }
+    public boolean removeAlbum() {
+        return removeFrame(AbstractFrame.ALBUM);
+    }
 
-    @Override
     public boolean removeYear() {
-        if (getVersion() == ID3V2_3) return removeFramesWithId(YEAR);
-        else if (getVersion() == ID3V2_4) return removeFramesWithId(RECORDING_TIME);
+        if (getVersion() == ID3V2_3) return removeFrame(AbstractFrame.YEAR);
+        else if (getVersion() == ID3V2_4) return removeFrame(AbstractFrame.RECORDING_TIME);
         throw new IllegalArgumentException("Invalid version number: " + getVersion());
     }
 
@@ -420,12 +536,12 @@ public class ID3V2Tag implements ID3Tag, PaddingTag {
         final byte version = ID3V2_3;
         ArrayList<AbstractFrame> frames = id3V2Tag.getFrames();
 
-        RecordingTimeFrame recordingTimeFrame = id3V2Tag.getFrame(RECORDING_TIME);
-        TextFrame releaseTimeFrame = id3V2Tag.getFrame(ORIGINAL_RELEASE_TIME);
+        TimestampFrame timestampFrame = id3V2Tag.getFrame(AbstractFrame.RECORDING_TIME);
+        TextFrame releaseTimeFrame = id3V2Tag.getFrame(AbstractFrame.ORIGINAL_RELEASE_TIME);
 
         if (releaseTimeFrame != null && releaseTimeFrame.getText().length() >= 4) {
             TextFrame releaseYear = TextFrame.createInstance(
-                    ORIGINAL_RELEASE_YEAR,
+                    AbstractFrame.ORIGINAL_RELEASE_YEAR,
                     releaseTimeFrame.getText().substring(0, 4),
                     ENCODING_LATIN_1,
                     version);
@@ -434,17 +550,17 @@ public class ID3V2Tag implements ID3Tag, PaddingTag {
 
         frames.remove(releaseTimeFrame);
 
-        if (recordingTimeFrame != null) {
+        if (timestampFrame != null) {
 
-            Year year      = recordingTimeFrame.getYear();
-            MonthDay date  = recordingTimeFrame.getMonthDay();
-            LocalTime time = recordingTimeFrame.getTime();
+            Year year      = timestampFrame.getYear();
+            MonthDay date  = timestampFrame.getMonthDay();
+            LocalTime time = timestampFrame.getTime();
 
             TextFrame frame;
 
             if (year != null) {
                 frame = TextFrame.createInstance(
-                        YEAR, String.valueOf(year),
+                        AbstractFrame.YEAR, String.valueOf(year),
                         ENCODING_LATIN_1, version
                 );
                 frames.add(frame);
@@ -469,15 +585,15 @@ public class ID3V2Tag implements ID3Tag, PaddingTag {
         StringBuilder dateString = new StringBuilder();
         StringBuilder pattern    = new StringBuilder();
 
-        TextFrame releaseYear = id3V2Tag.getFrame(ORIGINAL_RELEASE_YEAR);
-        TextFrame yearFrame   = id3V2Tag.getFrame(YEAR);
-        TimeFrame timeFrame   = id3V2Tag.getFrame(TIME);
-        DateFrame dateFrame   = id3V2Tag.getFrame(DATE);
+        TextFrame releaseYear = id3V2Tag.getFrame(AbstractFrame.ORIGINAL_RELEASE_YEAR);
+        TextFrame yearFrame   = id3V2Tag.getFrame(AbstractFrame.YEAR);
+        TimeFrame timeFrame   = id3V2Tag.getFrame(AbstractFrame.TIME);
+        DateFrame dateFrame   = id3V2Tag.getFrame(AbstractFrame.YEAR);
 
         if (releaseYear != null && releaseYear.getText().length() == 4) {
 
-            RecordingTimeFrame releaseTime = RecordingTimeFrame.createBuilder()
-                    .setHeader(FrameHeader.createFrameHeader(ORIGINAL_RELEASE_TIME, version))
+            TimestampFrame releaseTime = TimestampFrame.createBuilder()
+                    .setHeader(FrameHeader.createFrameHeader(AbstractFrame.ORIGINAL_RELEASE_TIME, version))
                     .setYear(Year.parse(releaseYear.getText()))
                     .build(version);
 
@@ -516,8 +632,8 @@ public class ID3V2Tag implements ID3Tag, PaddingTag {
 
         try {
 
-            RecordingTimeFrame.Builder recTime = RecordingTimeFrame.createBuilder();
-            recTime = recTime.setHeader(FrameHeader.createFrameHeader(RECORDING_TIME, version));
+            TimestampFrame.Builder recTime = TimestampFrame.createBuilder();
+            recTime = recTime.setHeader(FrameHeader.createFrameHeader(AbstractFrame.RECORDING_TIME, version));
 
             if (isDateTime) {
                 recTime.setDateTime(LocalDateTime.parse(dateString, formatter));
@@ -529,8 +645,8 @@ public class ID3V2Tag implements ID3Tag, PaddingTag {
                 return;
             }
 
-            RecordingTimeFrame recordingTimeFrame = recTime.build(version);
-            frames.add(recordingTimeFrame);
+            TimestampFrame timestampFrame = recTime.build(version);
+            frames.add(timestampFrame);
 
         } catch (DateTimeParseException e) {
             e.printStackTrace();
@@ -564,21 +680,98 @@ public class ID3V2Tag implements ID3Tag, PaddingTag {
                 .setMajorVersion(version)
                 .build(version);
 
-        ID3V2Tag id3v2Tag = ID3V2Tag.newBuilder()
+        ID3V2Tag.Builder builder = ID3V2Tag.newBuilder()
                 .setHeader(header)
+                .setGenre(id3v1Tag.getGenre())
+                .setComment(id3v1Tag.getComment())
+                .setYear(id3v1Tag.getYear())
                 .setTitle(id3v1Tag.getTitle())
                 .setAlbum(id3v1Tag.getAlbum())
-                .setArtist(id3v1Tag.getArtist())
-                .build(version);
+                .setArtist(id3v1Tag.getArtist());
 
-        id3v2Tag.setYear(id3v1Tag.getYear());
-        return ID3V2Tag.newBuilder(id3v2Tag).build(version);
+        if (id3v1Tag.getVersion() == ID3V1Tag.ID3V1_1) {
+            builder = builder.setAlbumTrack(String.valueOf(id3v1Tag.getTrackNumber()));
+        }
+        return builder.build(version);
+    }
+
+    @Override
+    protected <T> T getFieldValue(String fieldId) {
+        AbstractFrame<T> field = getFrameFromUnifiedId(fieldId);
+        if (field == null) return null;
+        return field.getFrameData();
+    }
+
+    @Override
+    protected <T> void setFieldValue(String fieldId, T value) {
+
+        AbstractFrame<T> frame = getFrameFromUnifiedId(fieldId);
+        if (frame != null) {
+            frame.setFrameData(value);
+            return;
+        }
+
+        HashMap<String, String> fieldMap = getVersion() == ID3V2_3 ? FIELD_MAP_V23 : FIELD_MAP_V24;
+        String frameId = fieldMap.get(fieldId);
+
+        if (frameId == null) {
+            return;
+        }
+
+        if (fieldId.equals(Tag.PICTURE)) {
+            AttachedPicture picture = (AttachedPicture) value;
+            AttachedPictureFrame pictureFrame = AttachedPictureFrame.createInstance(
+                    picture.getDescription(), picture.getMimeType(),
+                    (byte) picture.getPictureType(), picture.getPictureData(),
+                    getVersion()
+            );
+            frames.add(pictureFrame);
+        } else if (TimestampFrame.isTimestampFrame(frameId)) {
+            Year year = Year.parse((String) value);
+            TimestampFrame timestampFrame = TimestampFrame.createBuilder()
+                    .setYear(year)
+                    .setHeader(FrameHeader.createFrameHeader(frameId, getVersion()))
+                    .build(getVersion());
+            frames.add(timestampFrame);
+        } else {
+            TextFrame textFrame = TextFrame.createInstance(
+                    fieldId,
+                    ((String) value),
+                    TextEncoding.getAppropriateEncoding(getVersion()),
+                    getVersion());
+            frames.add(textFrame);
+        }
     }
 
     public class Builder {
 
         public Builder setTitle(String title) {
             ID3V2Tag.this.setTitle(title);
+            return this;
+        }
+
+        public Builder setGenre(int genre) {
+            ID3V2Tag.this.setGenre(genre);
+            return this;
+        }
+
+        public Builder setGenre(String genre) {
+            ID3V2Tag.this.setGenre(genre);
+            return this;
+        }
+
+        public Builder setYear(String year) {
+            ID3V2Tag.this.setYear(year);
+            return this;
+        }
+
+        public Builder setComment(String comment) {
+            ID3V2Tag.this.setComment(comment, "XXX");
+            return this;
+        }
+
+        public Builder setAlbumTrack(String trackNum) {
+            ID3V2Tag.this.setAlbumTrack(trackNum);
             return this;
         }
 

@@ -1,13 +1,16 @@
 package flac;
 
+import com.rrtry.Tag;
+import com.rrtry.AttachedPicture;
 import com.rrtry.PaddingTag;
+
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 
 import static flac.AbstractMetadataBlock.*;
 
-public class FlacTag implements PaddingTag {
+public class FlacTag extends Tag implements PaddingTag {
 
     public static final byte NUMBER_OF_BLOCKS = 7;
     public static final String MAGIC = "fLaC";
@@ -17,29 +20,14 @@ public class FlacTag implements PaddingTag {
 
     private int padding = MIN_PADDING;
 
-    public <T extends AbstractMetadataBlock> T getBlock(int type) {
+    @SuppressWarnings("unchecked")
+    <T extends AbstractMetadataBlock> T getBlock(int type) {
         for (AbstractMetadataBlock block : metadataBlocks) {
             if (block.getBlockType() == type) {
                 return (T) block;
             }
         }
         return null;
-    }
-
-    public void setPicture(PictureBlock pictureBlock) {
-        addBlock(pictureBlock);
-    }
-
-    public void setComments(VorbisCommentBlock commentBlock) {
-        addBlock(commentBlock);
-    }
-
-    private void removePicture() {
-        removeBlock(BLOCK_TYPE_PICTURE);
-    }
-
-    private void removeComments() {
-        removeBlock(BLOCK_TYPE_VORBIS_COMMENT);
     }
 
     void addBlock(AbstractMetadataBlock block) {
@@ -110,62 +98,66 @@ public class FlacTag implements PaddingTag {
         throw new IllegalArgumentException("Value is not within defined range");
     }
 
-    @Override
     public String getTitle() {
         return getComment(VorbisCommentBlock.TITLE);
     }
 
-    @Override
     public String getArtist() {
         return getComment(VorbisCommentBlock.ARTIST);
     }
 
-    @Override
     public String getAlbum() {
         return getComment(VorbisCommentBlock.ALBUM);
     }
 
-    @Override
     public String getYear() {
         return getComment(VorbisCommentBlock.DATE);
     }
 
-    @Override
     public void setTitle(String title) {
         setComment(VorbisCommentBlock.TITLE, title);
     }
 
-    @Override
     public void setArtist(String artist) {
         setComment(VorbisCommentBlock.ARTIST, artist);
     }
 
-    @Override
     public void setAlbum(String album) {
         setComment(VorbisCommentBlock.ALBUM, album);
     }
 
-    @Override
     public void setYear(String year) {
         setComment(VorbisCommentBlock.DATE, year);
     }
 
-    @Override
+    public void setPicture(PictureBlock pictureBlock) {
+        addBlock(pictureBlock);
+    }
+
+    public void setComments(VorbisCommentBlock commentBlock) {
+        addBlock(commentBlock);
+    }
+
+    private void removePicture() {
+        removeBlock(BLOCK_TYPE_PICTURE);
+    }
+
+    private void removeComments() {
+        removeBlock(BLOCK_TYPE_VORBIS_COMMENT);
+    }
+
     public boolean removeTitle() {
         return removeComment(VorbisCommentBlock.TITLE);
     }
 
-    @Override
     public boolean removeArtist() {
         return removeComment(VorbisCommentBlock.ARTIST);
     }
 
-    @Override
     public boolean removeAlbum() {
         return removeComment(VorbisCommentBlock.ALBUM);
     }
 
-    @Override
     public boolean removeYear() {
         return removeComment(VorbisCommentBlock.DATE);
     }
@@ -221,5 +213,44 @@ public class FlacTag implements PaddingTag {
     @Override
     public byte[] getBytes() {
         return tag;
+    }
+
+    @Override
+    protected <T> void setFieldValue(String fieldId, T value) {
+
+        if (fieldId.equals(Tag.PICTURE)) {
+
+            PictureBlock pictureBlock = getBlock(BLOCK_TYPE_PICTURE);
+            if (pictureBlock == null) {
+                pictureBlock = new PictureBlock();
+                metadataBlocks.add(pictureBlock);
+            }
+
+            pictureBlock.setPicture((AttachedPicture) value);
+            return;
+        }
+
+        VorbisCommentBlock commentBlock = getBlock(BLOCK_TYPE_VORBIS_COMMENT);
+        if (commentBlock == null) {
+            commentBlock = new VorbisCommentBlock();
+            metadataBlocks.add(commentBlock);
+        }
+        commentBlock.setComment(fieldId, (String) value);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    protected <T> T getFieldValue(String fieldId) {
+
+        if (fieldId.equals(Tag.PICTURE)) {
+            PictureBlock pictureBlock = getBlock(BLOCK_TYPE_PICTURE);
+            return (T) pictureBlock.getPicture();
+        }
+
+        VorbisCommentBlock commentBlock = getBlock(BLOCK_TYPE_VORBIS_COMMENT);
+        if (commentBlock != null) {
+            return (T) commentBlock.getComment(fieldId);
+        }
+        return null;
     }
 }

@@ -102,8 +102,8 @@ public class AttachedPicture {
     }
 
     public void setPictureType(int type) {
-        if (type >= PICTURE_TYPE_OTHER && type <= PICTURE_TYPE_BAND_LOGO) {
-            this.pictureType = PICTURE_TYPE_STUDIO_LOGO;
+        if (type >= PICTURE_TYPE_OTHER && type <= PICTURE_TYPE_STUDIO_LOGO) {
+            this.pictureType = type;
             return;
         }
         throw new IllegalArgumentException("Invalid picture type");

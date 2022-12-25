@@ -8,7 +8,7 @@ public enum FrameType {
 
         if (id.equals(AbstractFrame.PICTURE)) return PICTURE;
         if (id.equals(AbstractFrame.COMMENT)) return COMMENT;
-        if (id.equals(AbstractFrame.RECORDING_TIME)) return TIMESTAMP;
+        if (TimestampFrame.isTimestampFrame(id)) return TIMESTAMP;
         if (id.charAt(0) == 'T') return TEXT;
 
         return null;
