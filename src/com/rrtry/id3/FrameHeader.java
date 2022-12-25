@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import static com.rrtry.id3.ID3SynchSafeInteger.toSynchSafeInteger;
-import static utils.IntegerUtils.fromUInt32BE;
+import static com.rrtry.utils.IntegerUtils.fromUInt32BE;
 
 public class FrameHeader implements Component {
 

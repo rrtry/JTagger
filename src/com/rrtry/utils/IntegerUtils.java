@@ -1,4 +1,4 @@
-package utils;
+package com.rrtry.utils;
 
 public class IntegerUtils {
 

@@ -2,7 +2,7 @@ package com.rrtry.id3;
 
 import com.rrtry.Component;
 
-import static utils.IntegerUtils.fromUInt32BE;
+import static com.rrtry.utils.IntegerUtils.fromUInt32BE;
 import static com.rrtry.id3.ID3SynchSafeInteger.toSynchSafeInteger;
 import static com.rrtry.id3.TagHeaderParser.*;
 import static com.rrtry.id3.ID3V2Tag.*;

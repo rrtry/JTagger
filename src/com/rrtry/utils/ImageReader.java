@@ -1,4 +1,4 @@
-package utils;
+package com.rrtry.utils;
 
 import java.io.*;
 import java.net.URL;

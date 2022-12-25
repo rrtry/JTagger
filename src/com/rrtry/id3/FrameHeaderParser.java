@@ -5,7 +5,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-import static utils.IntegerUtils.toUInt32BE;
+import static com.rrtry.utils.IntegerUtils.toUInt32BE;
 import static com.rrtry.id3.ID3SynchSafeInteger.fromSynchSafeIntegerBytes;
 
 public class FrameHeaderParser {

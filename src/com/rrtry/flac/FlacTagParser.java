@@ -1,7 +1,7 @@
 package com.rrtry.flac;
 
 import com.rrtry.TagParser;
-import utils.IntegerUtils;
+import com.rrtry.utils.IntegerUtils;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 

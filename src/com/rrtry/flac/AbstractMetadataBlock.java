@@ -1,7 +1,7 @@
 package com.rrtry.flac;
 
 import com.rrtry.Component;
-import utils.IntegerUtils;
+import com.rrtry.utils.IntegerUtils;
 
 import java.util.Arrays;
 import java.util.List;

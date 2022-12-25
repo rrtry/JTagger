@@ -3,7 +3,7 @@ package com.rrtry.flac;
 import com.rrtry.AttachedPicture;
 
 import java.util.Arrays;
-import static utils.IntegerUtils.toUInt32BE;
+import static com.rrtry.utils.IntegerUtils.toUInt32BE;
 
 public class PictureBlockParser implements BlockBodyParser<PictureBlock> {
 

@@ -2,7 +2,7 @@ package com.rrtry.flac;
 
 import java.util.Arrays;
 
-import static utils.IntegerUtils.*;
+import static com.rrtry.utils.IntegerUtils.*;
 
 public class StreamInfoBlockParser implements BlockBodyParser<StreamInfoBlock> {
 

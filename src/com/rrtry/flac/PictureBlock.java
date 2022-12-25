@@ -42,7 +42,7 @@ METADATA_BLOCK_PICTURE
 import com.rrtry.AttachedPicture;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import static utils.IntegerUtils.fromUInt32BE;
+import static com.rrtry.utils.IntegerUtils.fromUInt32BE;
 
 public class PictureBlock extends AbstractMetadataBlock {
 

@@ -1,6 +1,6 @@
 package com.rrtry;
 
-import utils.ImageReader;
+import com.rrtry.utils.ImageReader;
 
 import java.io.File;
 import java.net.MalformedURLException;

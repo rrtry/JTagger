@@ -1,6 +1,6 @@
 package com.rrtry.id3;
 
-import utils.IntegerUtils;
+import com.rrtry.utils.IntegerUtils;
 
 public class ID3SynchSafeInteger {
 

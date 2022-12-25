@@ -1,6 +1,6 @@
 package com.rrtry.flac;
 
-import utils.IntegerUtils;
+import com.rrtry.utils.IntegerUtils;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
