@@ -1,4 +1,4 @@
-package flac;
+package com.rrtry.flac;
 
 import utils.IntegerUtils;
 import java.nio.charset.StandardCharsets;

@@ -1,4 +1,4 @@
-package flac;
+package com.rrtry.flac;
 
 public interface BlockBodyParser<T extends AbstractMetadataBlock> {
 

@@ -1,7 +1,7 @@
 package com.rrtry;
 
 import com.rrtry.id3.ID3V2TagEditor;
-import flac.FlacTagEditor;
+import com.rrtry.flac.FlacTagEditor;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import static com.rrtry.AbstractTagEditor.FLAC_MIME_TYPE;

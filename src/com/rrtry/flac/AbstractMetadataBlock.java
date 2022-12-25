@@ -1,4 +1,4 @@
-package flac;
+package com.rrtry.flac;
 
 import com.rrtry.Component;
 import utils.IntegerUtils;

@@ -1,4 +1,4 @@
-package flac;
+package com.rrtry.flac;
 
 public class StreamInfoBlock extends AbstractMetadataBlock {
 

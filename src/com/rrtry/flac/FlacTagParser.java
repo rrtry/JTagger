@@ -1,12 +1,12 @@
-package flac;
+package com.rrtry.flac;
 
 import com.rrtry.TagParser;
 import utils.IntegerUtils;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import static flac.FlacTag.*;
-import static flac.AbstractMetadataBlock.*;
+import static com.rrtry.flac.FlacTag.*;
+import static com.rrtry.flac.AbstractMetadataBlock.*;
 
 public class FlacTagParser implements TagParser<FlacTag> {
 

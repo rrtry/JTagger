@@ -1,4 +1,4 @@
-package flac;
+package com.rrtry.flac;
 
 /*
 METADATA_BLOCK_PICTURE

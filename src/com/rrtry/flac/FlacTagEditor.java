@@ -1,4 +1,4 @@
-package flac;
+package com.rrtry.flac;
 
 import com.rrtry.AbstractTagEditor;
 
@@ -8,9 +8,9 @@ import java.io.RandomAccessFile;
 
 import static com.rrtry.PaddingTag.MAX_PADDING;
 import static com.rrtry.PaddingTag.MIN_PADDING;
-import static flac.AbstractMetadataBlock.BLOCK_HEADER_LENGTH;
-import static flac.AbstractMetadataBlock.BLOCK_TYPE_PADDING;
-import static flac.FlacTag.MAGIC;
+import static com.rrtry.flac.AbstractMetadataBlock.BLOCK_HEADER_LENGTH;
+import static com.rrtry.flac.AbstractMetadataBlock.BLOCK_TYPE_PADDING;
+import static com.rrtry.flac.FlacTag.MAGIC;
 
 public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
 

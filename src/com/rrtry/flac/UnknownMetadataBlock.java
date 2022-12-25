@@ -1,4 +1,4 @@
-package flac;
+package com.rrtry.flac;
 
 public class UnknownMetadataBlock extends AbstractMetadataBlock {
 

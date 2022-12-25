@@ -1,10 +1,5 @@
 package com.rrtry;
 
-import com.rrtry.id3.ID3V2TagEditor;
-import flac.FlacTagEditor;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
-import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
@@ -13,7 +8,7 @@ import java.nio.file.Paths;
 public abstract class AbstractTagEditor<T extends Tag> {
 
     public static final String MPEG_MIME_TYPE = "audio/mpeg";
-    public static final String FLAC_MIME_TYPE = "audio/flac";
+    public static final String FLAC_MIME_TYPE = "audio/com.rrtry.flac";
 
     protected RandomAccessFile file;
     protected T tag;

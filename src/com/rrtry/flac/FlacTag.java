@@ -1,4 +1,4 @@
-package flac;
+package com.rrtry.flac;
 
 import com.rrtry.Tag;
 import com.rrtry.AttachedPicture;
@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-import static flac.AbstractMetadataBlock.*;
+import static com.rrtry.flac.AbstractMetadataBlock.*;
 
 public class FlacTag extends Tag implements PaddingTag {
 

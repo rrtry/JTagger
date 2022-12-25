@@ -1,4 +1,4 @@
-package flac;
+package com.rrtry.flac;
 
 import java.util.Arrays;
 
