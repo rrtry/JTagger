@@ -24,19 +24,10 @@ public class TagHeaderParser {
     public static final int SIZE_OFFSET = 6;
 
     private byte[] tagHeader;
-    private byte[] extendedHeaderSize;
 
-    public void read(RandomAccessFile file) throws IOException {
-
-        tagHeader = new byte[HEADER_LENGTH];
-        file.seek(0);
-        file.read(tagHeader, 0, HEADER_LENGTH);
-
-        if (isExtendedHeaderPresent()) {
-            extendedHeaderSize = new byte[4];
-            file.seek(HEADER_LENGTH);
-            file.read(extendedHeaderSize, 0, 4);
-        }
+    public void setHeaderData(byte[] tagHeader) {
+        if (tagHeader.length != HEADER_LENGTH) throw new IllegalArgumentException("Header length should be 10 bytes");
+        this.tagHeader = tagHeader;
     }
 
     public TagHeader parse() throws IOException, InvalidTagException {
@@ -67,11 +58,6 @@ public class TagHeaderParser {
     public int parseTagSize() {
         byte[] bytes = Arrays.copyOfRange(tagHeader, SIZE_OFFSET, SIZE_OFFSET + SIZE_LENGTH);
         return fromSynchSafeIntegerBytes(bytes);
-    }
-
-    public int parseExtendedHeaderSize() {
-        if (extendedHeaderSize == null) return 0;
-        return fromSynchSafeIntegerBytes(extendedHeaderSize);
     }
 
     public byte parseMajorVersion() { return tagHeader[MAJOR_VERSION_OFFSET]; }

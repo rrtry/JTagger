@@ -21,9 +21,11 @@ import java.util.HashMap;
 import static com.rrtry.id3.AbstractFrame.V2_3_FRAMES;
 import static com.rrtry.id3.AbstractFrame.V2_4_FRAMES;
 import static com.rrtry.id3.DateFrame.DATE_FORMAT_PATTERN;
+import static com.rrtry.id3.TagHeaderParser.HEADER_LENGTH;
 import static com.rrtry.id3.TextEncoding.ENCODING_LATIN_1;
 import static com.rrtry.id3.TimeFrame.TIME_FORMAT_PATTERN;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class ID3V2Tag extends ID3Tag implements PaddingTag {
 
     public static final String[] DEPRECATED_V23_FRAMES = new String[] {
@@ -206,7 +208,7 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
                 frame.getHeader().setFrameUnsynch(true);
             }
             frame.assemble(version);
-            size += frame.getHeader().getFrameSize() + TagHeaderParser.HEADER_LENGTH;
+            size += frame.getHeader().getFrameSize() + HEADER_LENGTH;
         }
         return size;
     }
@@ -305,11 +307,11 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
 
             byte[] header    = tagHeader.getBytes();
             byte[] frameData = UnsynchronisationUtils.toUnsynch(
-                    Arrays.copyOfRange(tagBytes, TagHeaderParser.HEADER_LENGTH, tagBytes.length)
+                    Arrays.copyOfRange(tagBytes, HEADER_LENGTH, tagBytes.length)
             );
 
-            byte[] unsynchTag = new byte[TagHeaderParser.HEADER_LENGTH + frameData.length];
-            System.arraycopy(header, 0, unsynchTag, 0, TagHeaderParser.HEADER_LENGTH);
+            byte[] unsynchTag = new byte[HEADER_LENGTH + frameData.length];
+            System.arraycopy(header, 0, unsynchTag, 0, HEADER_LENGTH);
             System.arraycopy(frameData, 0, unsynchTag, header.length, frameData.length);
 
             return unsynchTag;
@@ -486,13 +488,13 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
             throw new IllegalStateException("Tag must contain at least one frame");
         }
 
-        if (tagHeader.hasExtendedHeader()) throw new NotImplementedException();
-        if (tagHeader.hasFooter()) throw new NotImplementedException();
+        tagHeader.setHasExtendedHeader(false);
+        tagHeader.setHasFooter(false);
 
         int tagSize  = getFrameDataSize(version) + padding;
-        int position = TagHeaderParser.HEADER_LENGTH;
+        int position = HEADER_LENGTH;
 
-        byte[] tag = new byte[tagSize + TagHeaderParser.HEADER_LENGTH];
+        byte[] tag = new byte[tagSize + HEADER_LENGTH];
 
         for (AbstractFrame frame : frames) {
 
@@ -514,7 +516,7 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
         this.tagBytes = tag;
         if (tagHeader.isUnsynch() && version == ID3V2_3) {
             byte[] unsynchFrameData = UnsynchronisationUtils.toUnsynch(
-                    Arrays.copyOfRange(tagBytes, TagHeaderParser.HEADER_LENGTH, tagBytes.length)
+                    Arrays.copyOfRange(tagBytes, HEADER_LENGTH, tagBytes.length)
             );
             tagSize = unsynchFrameData.length;
         }
@@ -524,7 +526,7 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
                 .setTagSize(tagSize)
                 .build(version);
 
-        System.arraycopy(tagHeader.getBytes(), 0, tag, 0, TagHeaderParser.HEADER_LENGTH);
+        System.arraycopy(tagHeader.getBytes(), 0, tag, 0, HEADER_LENGTH);
         return tag;
     }
 

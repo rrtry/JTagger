@@ -1,36 +1,23 @@
 package com.rrtry.id3;
 
-import com.rrtry.InvalidTagException;
-
-import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import static com.rrtry.id3.AbstractFrame.decompressFrame;
+import static com.rrtry.id3.UnsynchronisationUtils.fromUnsynch;
+
+@SuppressWarnings("rawtypes")
 class FrameParser {
 
-    private final TagHeaderParser tagHeaderParser;
-    private FrameHeaderParser frameHeaderParser;
-
     private TagHeader tagHeader;
-    private byte[] tagBuffer;
+    private byte[] frameData;
 
-    public FrameParser(TagHeaderParser tagHeaderParser) {
-        this.tagHeaderParser = tagHeaderParser;
+    void setTagHeader(TagHeader tagHeader) {
+        this.tagHeader = tagHeader;
     }
 
-    public void read(RandomAccessFile file, int pos, int length) throws IOException, InvalidTagException {
-
-        tagHeader = tagHeaderParser.parse();
-        tagBuffer = new byte[length];
-
-        file.seek(pos);
-        file.read(tagBuffer, 0, length);
-
-        if (tagHeader.isUnsynch() && tagHeader.getMajorVersion() == ID3V2Tag.ID3V2_3) {
-            tagBuffer = UnsynchronisationUtils.fromUnsynch(tagBuffer);
-        }
-        frameHeaderParser = new FrameHeaderParser(tagHeader);
+    void setFrames(byte[] frameData) {
+        this.frameData = frameData;
     }
 
     private byte[] copyFrame(int pos, int frameSize) {
@@ -38,20 +25,9 @@ class FrameParser {
         int from = pos + FrameHeader.FRAME_HEADER_DATA_OFFSET;
         int to = from + frameSize;
 
-        return Arrays.copyOfRange(tagBuffer, from, to);
+        return Arrays.copyOfRange(frameData, from, to);
     }
 
-    @SuppressWarnings("unchecked")
-    public <T extends AbstractFrame> T parseFrame(String frameId) throws IOException, NoSuchFrameException {
-        for (AbstractFrame frame : parseFrames()) {
-            if (frame.getIdentifier().equals(frameId)) {
-                return (T) frame;
-            }
-        }
-        throw new NoSuchFrameException(String.format("Frame %s was not found", frameId));
-    }
-
-    @SuppressWarnings("rawtypes")
     private AbstractFrame parseFrame(int position, FrameHeader frameHeader) {
 
         FrameType frameType = FrameType.fromIdentifier(frameHeader.getIdentifier());
@@ -68,10 +44,10 @@ class FrameParser {
             return null;
         }
         if (frameHeader.isFrameUnsynch()) {
-            frame = UnsynchronisationUtils.fromUnsynch(frame);
+            frame = fromUnsynch(frame);
         }
         if (frameHeader.isFrameCompressed()) {
-            frame = AbstractFrame.decompressFrame(frame);
+            frame = decompressFrame(frame);
         }
 
         FrameBodyParser frameParser = FrameParserFactory.getParser(frameType);
@@ -80,12 +56,13 @@ class FrameParser {
 
     public final ArrayList<AbstractFrame> parseFrames() {
 
+        FrameHeaderParser frameHeaderParser = new FrameHeaderParser(tagHeader);
         ArrayList<AbstractFrame> frames = new ArrayList<>();
 
         int position = 0;
-        while (position < tagBuffer.length) {
+        while (position < frameData.length) {
 
-            FrameHeader frameHeader = frameHeaderParser.parseFrameHeader(tagBuffer, position);
+            FrameHeader frameHeader = frameHeaderParser.parseFrameHeader(frameData, position);
             if (frameHeader == null) break;
 
             AbstractFrame frame = parseFrame(position, frameHeader);

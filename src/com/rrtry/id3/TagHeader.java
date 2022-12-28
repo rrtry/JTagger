@@ -15,7 +15,9 @@ public class TagHeader implements Component {
     public static final int FLAG_FOOTER_PRESENT  = 0x10;
 
     private byte[] headerBytes = new byte[HEADER_LENGTH];
+
     private int tagSize;
+    private int extendedHeaderSize;
 
     private byte majorVersion = ID3V2_4;
     private byte minorVersion = 0x00;
@@ -130,6 +132,11 @@ public class TagHeader implements Component {
 
         public Builder setTagSize(int size) {
             TagHeader.this.tagSize = size;
+            return this;
+        }
+
+        public Builder setExtendedHeaderSize(int size) {
+            TagHeader.this.extendedHeaderSize = size;
             return this;
         }
 

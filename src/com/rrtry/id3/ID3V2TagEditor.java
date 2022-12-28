@@ -20,7 +20,7 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
         isTagPresent    = false;
 
         TagHeaderParser tagHeaderParser = new TagHeaderParser();
-        FrameParser frameParser = new FrameParser(tagHeaderParser);
+        FrameParser frameParser = new FrameParser();
 
         ID3V2TagParser id3V2TagParser = new ID3V2TagParser(tagHeaderParser, frameParser);
         tag = id3V2TagParser.parse(file);
