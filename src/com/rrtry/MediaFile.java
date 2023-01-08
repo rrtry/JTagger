@@ -2,23 +2,25 @@ package com.rrtry;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-public class MediaFile {
+public class MediaFile<T extends Tag> {
 
-    private AbstractTagEditor<Tag> editor;
-    private Tag tag;
+    protected RandomAccessFile file;
+    protected AbstractTagEditor<T> editor;
+    protected T tag;
 
-    public void scan(File file) {
-
+    public void scan(File f) {
         try {
 
-            String path     = file.getAbsolutePath();
+            String path     = f.getAbsolutePath();
             String mimeType = Files.probeContentType(Paths.get(path));
 
-            editor = TagEditorFactory.getEditor(mimeType);
-            editor.load(path);
+            file   = new RandomAccessFile(path, "rw");
+            editor = getEditor(mimeType);
+            editor.load(file);
 
             tag = editor.getTag();
 
@@ -27,11 +29,16 @@ public class MediaFile {
         }
     }
 
-    public void setTag(Tag tag) {
+    @SuppressWarnings("unchecked")
+    protected AbstractTagEditor<T> getEditor(String mimeType) {
+        return TagEditorFactory.getEditor(mimeType);
+    }
+
+    public void setTag(T tag) {
         editor.setTag(tag);
     }
 
-    public Tag getTag() {
+    public T getTag() {
         return tag;
     }
 

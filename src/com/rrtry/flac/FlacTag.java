@@ -90,76 +90,12 @@ public class FlacTag extends Tag implements PaddingTag {
     @Override
     public void setPaddingAmount(int padding) {
         if (padding == 0) {
-            removeBlock(BLOCK_TYPE_PADDING); return;
+            removeBlock(BLOCK_TYPE_PADDING);
+            return;
         }
         if (padding >= MIN_PADDING && padding <= MAX_PADDING) {
-            this.padding = padding; return;
+            this.padding = padding;
         }
-        throw new IllegalArgumentException("Value is not within defined range");
-    }
-
-    public String getTitle() {
-        return getComment(VorbisCommentBlock.TITLE);
-    }
-
-    public String getArtist() {
-        return getComment(VorbisCommentBlock.ARTIST);
-    }
-
-    public String getAlbum() {
-        return getComment(VorbisCommentBlock.ALBUM);
-    }
-
-    public String getYear() {
-        return getComment(VorbisCommentBlock.DATE);
-    }
-
-    public void setTitle(String title) {
-        setComment(VorbisCommentBlock.TITLE, title);
-    }
-
-    public void setArtist(String artist) {
-        setComment(VorbisCommentBlock.ARTIST, artist);
-    }
-
-    public void setAlbum(String album) {
-        setComment(VorbisCommentBlock.ALBUM, album);
-    }
-
-    public void setYear(String year) {
-        setComment(VorbisCommentBlock.DATE, year);
-    }
-
-    public void setPicture(PictureBlock pictureBlock) {
-        addBlock(pictureBlock);
-    }
-
-    public void setComments(VorbisCommentBlock commentBlock) {
-        addBlock(commentBlock);
-    }
-
-    private void removePicture() {
-        removeBlock(BLOCK_TYPE_PICTURE);
-    }
-
-    private void removeComments() {
-        removeBlock(BLOCK_TYPE_VORBIS_COMMENT);
-    }
-
-    public boolean removeTitle() {
-        return removeComment(VorbisCommentBlock.TITLE);
-    }
-
-    public boolean removeArtist() {
-        return removeComment(VorbisCommentBlock.ARTIST);
-    }
-
-    public boolean removeAlbum() {
-        return removeComment(VorbisCommentBlock.ALBUM);
-    }
-
-    public boolean removeYear() {
-        return removeComment(VorbisCommentBlock.DATE);
     }
 
     public int getBlockDataSize() {

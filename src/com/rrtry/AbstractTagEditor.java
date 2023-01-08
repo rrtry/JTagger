@@ -8,7 +8,8 @@ import java.nio.file.Paths;
 public abstract class AbstractTagEditor<T extends Tag> {
 
     public static final String MPEG_MIME_TYPE = "audio/mpeg";
-    public static final String FLAC_MIME_TYPE = "audio/com.rrtry.flac";
+    public static final String FLAC_MIME_TYPE = "audio/flac";
+    public static final String OGG_MIME_TYPE  = "audio/x-vorbis+ogg";
 
     protected RandomAccessFile file;
     protected T tag;
@@ -22,7 +23,7 @@ public abstract class AbstractTagEditor<T extends Tag> {
     abstract public void commit() throws IOException;
     abstract public void setTag(T tag);
 
-    public final void load(String path) throws IOException {
+    public void load(String path) throws IOException {
         this.path = path;
         if (file != null) release();
         if (Files.probeContentType(Paths.get(path)).equals(getFileMimeType())) {
@@ -33,7 +34,12 @@ public abstract class AbstractTagEditor<T extends Tag> {
         throw new IllegalArgumentException(path + " has invalid mime type");
     }
 
-    public final T getTag() {
+    void load(RandomAccessFile file) throws IOException {
+        this.file = file;
+        parseTag();
+    }
+
+    public T getTag() {
         return tag;
     }
 
@@ -41,7 +47,7 @@ public abstract class AbstractTagEditor<T extends Tag> {
         this.tag = null;
     }
 
-    public final void release() throws IOException {
+    public void release() throws IOException {
         file.close();
         tag = null;
     }

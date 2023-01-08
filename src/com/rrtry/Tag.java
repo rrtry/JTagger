@@ -54,7 +54,7 @@ public abstract class Tag implements Component {
 
     public void setStringField(String fieldId, String value) {
         if (fieldId.equals(PICTURE)) throw new IllegalArgumentException("Must be a string field");
-        setFieldValue(fieldId, value);
+        setFieldValue(fieldId, value.isEmpty() ? " " : value);
     }
 
     public String getStringField(String fieldId) {
