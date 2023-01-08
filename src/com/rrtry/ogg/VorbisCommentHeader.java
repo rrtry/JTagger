@@ -64,11 +64,10 @@ public class VorbisCommentHeader extends VorbisHeader {
 
             PictureBlock pictureBlock = new PictureBlock();
             pictureBlock.setPicture((AttachedPicture) value);
-            pictureBlock.assemble();
 
             vorbisComments.setComment(
                     commentField,
-                    Base64.getEncoder().encodeToString(pictureBlock.getBytes())
+                    Base64.getEncoder().encodeToString(pictureBlock.assemble())
             );
             return;
         }
@@ -86,9 +85,9 @@ public class VorbisCommentHeader extends VorbisHeader {
             if (value == null) return null;
 
             PictureBlockParser parser = new PictureBlockParser();
-            PictureBlock block = parser.parse(Base64.getDecoder().decode(value));
+            PictureBlock pictureBlock = parser.parse(Base64.getDecoder().decode(value));
 
-            return (T) block.getPicture();
+            return (T) pictureBlock.getPicture();
         }
         return (T) vorbisComments.getComment(fieldId);
     }

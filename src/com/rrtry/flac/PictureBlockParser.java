@@ -30,7 +30,7 @@ public class PictureBlockParser implements BlockBodyParser<PictureBlock> {
         int height     = toUInt32BE(Arrays.copyOfRange(block, index, index + 4)); index += 4;
         int colorDepth = toUInt32BE(Arrays.copyOfRange(block, index, index + 4)); index += 8;
 
-        int pictureLength = toUInt32BE(Arrays.copyOfRange(block, index, index + 4)); index += 4;
+        int pictureLength  = toUInt32BE(Arrays.copyOfRange(block, index, index + 4)); index += 4;
         byte[] pictureData = Arrays.copyOfRange(block, index, index + pictureLength);
 
         picture.setPictureType(pictureType);
@@ -43,6 +43,7 @@ public class PictureBlockParser implements BlockBodyParser<PictureBlock> {
 
         pictureBlock.setPicture(picture);
         pictureBlock.assemble();
+
         return pictureBlock;
     }
 }

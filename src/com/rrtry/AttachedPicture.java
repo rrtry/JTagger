@@ -106,7 +106,7 @@ public class AttachedPicture {
             this.pictureType = type;
             return;
         }
-        throw new IllegalArgumentException("Invalid picture type");
+        throw new IllegalArgumentException("Invalid picture type: " + type);
     }
 
     public void setMimeType(String mimeType) {

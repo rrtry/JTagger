@@ -59,7 +59,7 @@ public class PictureBlock extends AbstractMetadataBlock {
     @Override
     public byte[] assemble(byte version) {
 
-        String mimeType = picture.getMimeType();
+        String mimeType    = picture.getMimeType();
         String description = picture.getDescription();
 
         int pictureType = picture.getPictureType();

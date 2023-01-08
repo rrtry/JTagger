@@ -5,13 +5,13 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class VorbisIdentificationHeader extends VorbisHeader {
 
-    private int version;
-    private byte channels;
-    private int sampleRate;
-    private int maxBitrate;
-    private int nominalBitrate;
-    private int minBitrate;
-    private byte blockSize;
+    private final int version;
+    private final byte channels;
+    private final int sampleRate;
+    private final int maxBitrate;
+    private final int nominalBitrate;
+    private final int minBitrate;
+    private final byte blockSize;
 
     public VorbisIdentificationHeader(
             int version,
