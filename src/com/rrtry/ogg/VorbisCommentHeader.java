@@ -60,13 +60,11 @@ public class VorbisCommentHeader extends VorbisHeader {
     protected <T> void setFieldValue(String fieldId, T value) {
         if (fieldId.equals(PICTURE)) {
 
-            final String commentField = "METADATA_BLOCK_PICTURE";
-
             PictureBlock pictureBlock = new PictureBlock();
             pictureBlock.setPicture((AttachedPicture) value);
 
             vorbisComments.setComment(
-                    commentField,
+                    VorbisComments.PICTURE,
                     Base64.getEncoder().encodeToString(pictureBlock.assemble())
             );
             return;
@@ -79,9 +77,7 @@ public class VorbisCommentHeader extends VorbisHeader {
     protected <T> T getFieldValue(String fieldId) {
         if (fieldId.equals(PICTURE)) {
 
-            final String commentField = "METADATA_BLOCK_PICTURE";
-
-            String value = vorbisComments.getComment(commentField);
+            String value = vorbisComments.getComment(VorbisComments.PICTURE);
             if (value == null) return null;
 
             PictureBlockParser parser = new PictureBlockParser();
@@ -90,5 +86,10 @@ public class VorbisCommentHeader extends VorbisHeader {
             return (T) pictureBlock.getPicture();
         }
         return (T) vorbisComments.getComment(fieldId);
+    }
+
+    @Override
+    public void removeField(String fieldId) {
+        vorbisComments.removeComment(fieldId);
     }
 }

@@ -72,4 +72,5 @@ public abstract class Tag implements Component {
 
     abstract protected <T> void setFieldValue(String fieldId, T value);
     abstract protected <T> T getFieldValue(String fieldId);
+    abstract public void removeField(String fieldId);
 }

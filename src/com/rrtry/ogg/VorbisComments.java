@@ -10,6 +10,7 @@ import java.util.Map;
 public class VorbisComments implements Component {
 
     public static final String VENDOR_STRING = "reference libFLAC 1.3.1 20141125";
+    public static final String PICTURE       = "METADATA_BLOCK_PICTURE";
 
     private String vendorString = VENDOR_STRING;
     private LinkedHashMap<String, String> commentsMap = new LinkedHashMap<>();

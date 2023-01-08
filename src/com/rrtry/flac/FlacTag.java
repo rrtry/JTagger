@@ -180,13 +180,16 @@ public class FlacTag extends Tag implements PaddingTag {
 
         if (fieldId.equals(Tag.PICTURE)) {
             PictureBlock pictureBlock = getBlock(BLOCK_TYPE_PICTURE);
-            return (T) pictureBlock.getPicture();
+            return pictureBlock != null ? (T) pictureBlock.getPicture() : null;
         }
 
         VorbisCommentBlock commentBlock = getBlock(BLOCK_TYPE_VORBIS_COMMENT);
-        if (commentBlock != null) {
-            return (T) commentBlock.getComment(fieldId);
-        }
-        return null;
+        return commentBlock != null ? (T) commentBlock.getComment(fieldId) : null;
+    }
+
+    @Override
+    public void removeField(String fieldId) {
+        VorbisCommentBlock commentBlock = getBlock(BLOCK_TYPE_VORBIS_COMMENT);
+        if (commentBlock != null) commentBlock.removeComment(fieldId);
     }
 }

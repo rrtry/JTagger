@@ -107,4 +107,9 @@ public class VorbisIdentificationHeader extends VorbisHeader {
     protected <T> T getFieldValue(String fieldId) {
         throw new NotImplementedException();
     }
+
+    @Override
+    public void removeField(String fieldId) {
+        throw new NotImplementedException();
+    }
 }

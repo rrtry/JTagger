@@ -1,6 +1,7 @@
 package com.rrtry.mpeg.id3;
 
 import com.rrtry.Tag;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -454,6 +455,11 @@ public class ID3V1Tag extends ID3Tag {
     }
 
     @Override
+    public void removeField(String fieldId) {
+        throw new NotImplementedException();
+    }
+
+    @Override
     public String toString() {
         return String.format(
                 "title: %s\nartist: %s\nalbum: %s\nyear: %s\ncomment: %s\ntrack:%d\nversion: %d",
@@ -493,42 +499,43 @@ public class ID3V1Tag extends ID3Tag {
     }
 
     public int getGenre() {
-        return toUnsignedInt(genre);
+        return Byte.toUnsignedInt(genre);
     }
 
     public int getTrackNumber() {
-        return toUnsignedInt(trackNumber);
+        return Byte.toUnsignedInt(trackNumber);
     }
 
     public void setTitle(String title) {
-        if (title.length() > 30) throw new IllegalArgumentException("'title' field cannot be longer than 30 characters");
+        if (title.length() > 30) title = title.substring(0, 30);
         this.title = title;
     }
 
     public void setArtist(String artist) {
-        if (artist.length() > 30) throw new IllegalArgumentException("'artist' field cannot be longer than 30 characters");
+        if (artist.length() > 30) artist = artist.substring(0, 30);
         this.artist = artist;
     }
 
     public void setAlbum(String album) {
-        if (album.length() > 30) throw new IllegalArgumentException("'album' field cannot be longer than 30 characters");
+        if (album.length() > 30) album = album.substring(0, 30);
         this.album = album;
     }
 
     public void setYear(String year) {
-        if (year.contains("[a-zA-Z]+")) throw new IllegalArgumentException("'year' must be numeric string");
-        if (year.length() > 4) throw new IllegalArgumentException("'year' field cannot be longer than 4 characters");
+        if (year.contains("[a-zA-Z]+")) throw new IllegalArgumentException("'YEAR' must be numeric string");
+        if (year.length() > 4) year = year.substring(0, 4);
         this.year = year;
     }
 
     public void setComment(String comment) {
-        if (comment.length() > 30) throw new IllegalArgumentException("'comment' field cannot be longer than 30 characters");
+        if (comment.length() > 30) comment = comment.substring(0, 30);
         this.comment = comment;
     }
 
     public void setGenre(int genre) {
         if (genre > 0 && genre < 256) {
-            this.genre = (byte) genre; return;
+            this.genre = (byte) genre;
+            return;
         }
         throw new IllegalArgumentException("Invalid genre: " + genre);
     }
@@ -544,12 +551,8 @@ public class ID3V1Tag extends ID3Tag {
     @Override
     public byte[] assemble(byte version) {
 
-        if (version != ID3V1 && version != ID3V1_1) {
-            throw new IllegalArgumentException("Invalid version number: " + version);
-        }
-        if (version == ID3V1_1 && comment.length() > 28) {
-            comment = comment.substring(0, 28);
-        }
+        if (version != ID3V1 && version != ID3V1_1) throw new IllegalArgumentException("Invalid version number: " + version);
+        if (version == ID3V1_1 && comment.length() > 28) comment = comment.substring(0, 28);
 
         this.version = version;
         byte[] tag = new byte[TAG_SIZE];
@@ -584,10 +587,6 @@ public class ID3V1Tag extends ID3Tag {
 
     public static Builder newBuilder() { return new ID3V1Tag().new Builder(); }
     public static Builder newBuilder(ID3V1Tag tag) { return tag.new Builder(); }
-
-    private static int toUnsignedInt(byte b) {
-        return ((int) b) & 0xFF;
-    }
 
     public class Builder {
 

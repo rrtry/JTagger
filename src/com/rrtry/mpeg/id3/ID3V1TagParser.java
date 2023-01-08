@@ -15,7 +15,7 @@ public class ID3V1TagParser implements TagParser<ID3V1Tag> {
 
         byte[] buffer = new byte[128];
 
-        file.seek( file.length() - 128);
+        file.seek(file.length() - 128);
         file.read(buffer, 0, buffer.length);
 
         String id = new String(
@@ -37,7 +37,7 @@ public class ID3V1TagParser implements TagParser<ID3V1Tag> {
         String album   = new String(Arrays.copyOfRange(buffer, ALBUM_OFFSET, ALBUM_OFFSET + 30)).replace("\0", "");
         String year    = new String(Arrays.copyOfRange(buffer, YEAR_OFFSET, YEAR_OFFSET + 4)).replace("\0", "");
         String comment = new String(Arrays.copyOfRange(buffer, COMMENT_OFFSET, COMMENT_OFFSET + commentLength)).replace("\0", "");
-        int genre      = ((int) buffer[GENRE_OFFSET]) & 0xFF;
+        int genre      = Byte.toUnsignedInt(buffer[GENRE_OFFSET]);
 
         ID3V1Tag.Builder builder = ID3V1Tag.newBuilder()
                 .setVersion(version)
@@ -49,9 +49,8 @@ public class ID3V1TagParser implements TagParser<ID3V1Tag> {
                 .setComment(comment);
 
         if (version == ID3V1_1) {
-            int trackNumber = ((int) buffer[TRACK_NUMBER]) & 0xFF;
-            builder = builder.setAlbumTrack(trackNumber);
+            builder = builder.setAlbumTrack(Byte.toUnsignedInt(buffer[TRACK_NUMBER]));
         }
-        return builder.buildExisting(buffer);
+        return builder.build(version);
     }
 }

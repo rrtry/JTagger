@@ -170,10 +170,9 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
         return null;
     }
 
-    private <T> AbstractFrame<T> getFrameFromUnifiedId(String fieldId) {
-        HashMap<String, String> fieldMap = getVersion() == ID3V2_3 ? FIELD_MAP_V23 : FIELD_MAP_V24;
-        String frameId = fieldMap.get(fieldId);
-        return getFrame(frameId);
+    private <T> AbstractFrame<T> getFrameFromFieldName(String field) {
+        String frameId = getFrameIdFromFieldName(field);
+        return frameId != null ? getFrame(frameId) : null;
     }
 
     public void addFrame(AbstractFrame frame) {
@@ -447,22 +446,6 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
         setCommentFrame(comment, language);
     }
 
-    public boolean removeComment() {
-        return removeFrame(AbstractFrame.COMMENT);
-    }
-
-    public boolean removeTitle() {
-        return removeFrame(AbstractFrame.TITLE);
-    }
-
-    public boolean removeArtist() {
-        return removeFrame(AbstractFrame.ARTIST);
-    }
-
-    public boolean removeAlbum() {
-        return removeFrame(AbstractFrame.ALBUM);
-    }
-
     public boolean removeYear() {
         if (getVersion() == ID3V2_3) return removeFrame(AbstractFrame.YEAR);
         else if (getVersion() == ID3V2_4) return removeFrame(AbstractFrame.RECORDING_TIME);
@@ -529,6 +512,11 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
 
     public static Builder newBuilder() { return new ID3V2Tag().new Builder(); }
     public static Builder newBuilder(ID3V2Tag ID3V2Tag) { return ID3V2Tag.new Builder(); }
+
+    private String getFrameIdFromFieldName(String field) {
+        HashMap<String, String> fieldMap = getVersion() == ID3V2_3 ? FIELD_MAP_V23 : FIELD_MAP_V24;
+        return fieldMap.get(field);
+    }
 
     private static void convertToID3V23Tag(ID3V2Tag id3V2Tag) {
 
@@ -695,29 +683,31 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
     }
 
     @Override
-    protected <T> T getFieldValue(String fieldId) {
-        AbstractFrame<T> field = getFrameFromUnifiedId(fieldId);
-        if (field == null) return null;
-        return field.getFrameData();
+    protected <T> T getFieldValue(String field) {
+        AbstractFrame<T> frame = getFrameFromFieldName(field);
+        if (frame == null) return null;
+        return frame.getFrameData();
     }
 
     @Override
-    protected <T> void setFieldValue(String fieldId, T value) {
+    public void removeField(String field) {
+        String frameId = getFrameIdFromFieldName(field);
+        if (frameId != null) removeFrame(frameId);
+    }
 
-        AbstractFrame<T> frame = getFrameFromUnifiedId(fieldId);
+    @Override
+    protected <T> void setFieldValue(String field, T value) {
+
+        AbstractFrame<T> frame = getFrameFromFieldName(field);
         if (frame != null) {
             frame.setFrameData(value);
             return;
         }
 
-        HashMap<String, String> fieldMap = getVersion() == ID3V2_3 ? FIELD_MAP_V23 : FIELD_MAP_V24;
-        String frameId = fieldMap.get(fieldId);
+        String frameId = getFrameIdFromFieldName(field);
 
-        if (frameId == null) {
-            return;
-        }
-
-        if (fieldId.equals(Tag.PICTURE)) {
+        if (frameId == null) return;
+        if (field.equals(Tag.PICTURE)) {
             AttachedPicture picture = (AttachedPicture) value;
             AttachedPictureFrame pictureFrame = AttachedPictureFrame.createInstance(
                     picture.getDescription(), picture.getMimeType(),
@@ -734,7 +724,7 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
             frames.add(timestampFrame);
         } else {
             TextFrame textFrame = TextFrame.createInstance(
-                    fieldId,
+                    frameId,
                     ((String) value),
                     TextEncoding.getAppropriateEncoding(getVersion()),
                     getVersion());
