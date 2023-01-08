@@ -1,5 +1,6 @@
 package com.rrtry.ogg;
 
+import com.rrtry.AbstractTagEditor;
 import com.rrtry.MediaFile;
 
 public class OggVorbisFile extends MediaFile<VorbisCommentHeader> {
@@ -10,6 +11,9 @@ public class OggVorbisFile extends MediaFile<VorbisCommentHeader> {
 
     @Override
     protected OggVorbisTagEditor getEditor(String mimeType) {
+        if (!mimeType.equals(AbstractTagEditor.OGG_MIME_TYPE)) {
+            throw new IllegalArgumentException("Not an Ogg Vorbis file");
+        }
         return new OggVorbisTagEditor();
     }
 }
