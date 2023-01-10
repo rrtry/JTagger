@@ -18,9 +18,9 @@ public class MediaFile<T extends Tag> {
             String path     = f.getAbsolutePath();
             String mimeType = Files.probeContentType(Paths.get(path));
 
-            file   = new RandomAccessFile(path, "rw");
             editor = getEditor(mimeType);
-            editor.load(file);
+            file   = new RandomAccessFile(path, "rw");
+            editor.load(file, mimeType);
 
             tag = editor.getTag();
 

@@ -1,7 +1,7 @@
 package com.rrtry.flac;
 
-import com.rrtry.ogg.VorbisComments;
-import com.rrtry.ogg.VorbisCommentsParser;
+import com.rrtry.ogg.vorbis.VorbisComments;
+import com.rrtry.ogg.vorbis.VorbisCommentsParser;
 
 public class VorbisCommentBlockParser implements BlockBodyParser<VorbisCommentBlock> {
 
@@ -11,7 +11,7 @@ public class VorbisCommentBlockParser implements BlockBodyParser<VorbisCommentBl
         VorbisCommentsParser parser           = new VorbisCommentsParser();
         VorbisCommentBlock vorbisCommentBlock = new VorbisCommentBlock();
 
-        VorbisComments vorbisComments = parser.parse(data);
+        VorbisComments vorbisComments = parser.parse(data, false);
         vorbisCommentBlock.setVorbisComments(vorbisComments);
 
         return vorbisCommentBlock;

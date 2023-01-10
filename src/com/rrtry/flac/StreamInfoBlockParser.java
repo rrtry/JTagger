@@ -15,8 +15,8 @@ public class StreamInfoBlockParser implements BlockBodyParser<StreamInfoBlock> {
     @Override
     public StreamInfoBlock parse(byte[] block) {
 
-        short minBlockSize = toUShort16BE(Arrays.copyOfRange(block, 0, 2));
-        short maxBlockSize = toUShort16BE(Arrays.copyOfRange(block, 2, 4));
+        short minBlockSize = toUInt16BE(Arrays.copyOfRange(block, 0, 2));
+        short maxBlockSize = toUInt16BE(Arrays.copyOfRange(block, 2, 4));
 
         int minFrameSize = toUInt24BE(Arrays.copyOfRange(block, 4, 7));
         int maxFrameSize = toUInt24BE(Arrays.copyOfRange(block, 7, 10));

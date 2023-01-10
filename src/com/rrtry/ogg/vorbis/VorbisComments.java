@@ -1,13 +1,17 @@
-package com.rrtry.ogg;
+package com.rrtry.ogg.vorbis;
 
-import com.rrtry.Component;
+import com.rrtry.AttachedPicture;
+import com.rrtry.Tag;
+import com.rrtry.flac.PictureBlock;
+import com.rrtry.flac.PictureBlockParser;
 import com.rrtry.utils.IntegerUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class VorbisComments implements Component {
+public class VorbisComments extends Tag {
 
     public static final String VENDOR_STRING = "reference libFLAC 1.3.1 20141125";
     public static final String PICTURE       = "METADATA_BLOCK_PICTURE";
@@ -16,9 +20,18 @@ public class VorbisComments implements Component {
     private LinkedHashMap<String, String> commentsMap = new LinkedHashMap<>();
 
     private byte[] bytes;
+    private boolean framingBit = false;
+
+    public VorbisComments() {
+        /* empty constructor */
+    }
+
+    public VorbisComments(boolean framingBit) {
+        this.framingBit = framingBit;
+    }
 
     private int getSize() {
-        int size = 0;
+        int size = framingBit ? 1 : 0;
         for (Map.Entry<String, String> entry : commentsMap.entrySet()) {
             size += entry.getKey().getBytes(StandardCharsets.US_ASCII).length +
                     entry.getValue().getBytes(StandardCharsets.UTF_8).length + 1 + 4;
@@ -63,11 +76,11 @@ public class VorbisComments implements Component {
         final int vendorStringOffset  = 4;
         final int numOfCommentsOffset = vendorStringOffset + vendorStringBytes.length;
 
-        byte[] block = new byte[size];
+        byte[] comments = new byte[size];
 
-        System.arraycopy(vendorStringLength, 0, block, 0, vendorStringLength.length);
-        System.arraycopy(vendorStringBytes, 0, block, vendorStringOffset, vendorStringBytes.length);
-        System.arraycopy(numOfComments, 0, block, numOfCommentsOffset, numOfComments.length);
+        System.arraycopy(vendorStringLength, 0, comments, 0, vendorStringLength.length);
+        System.arraycopy(vendorStringBytes, 0, comments, vendorStringOffset, vendorStringBytes.length);
+        System.arraycopy(numOfComments, 0, comments, numOfCommentsOffset, numOfComments.length);
 
         for (Map.Entry<String, String> entry : commentsMap.entrySet()) {
 
@@ -92,16 +105,57 @@ public class VorbisComments implements Component {
             System.arraycopy(valueBytes, 0, comment, valueOffset, valueBytes.length);
             comment[separatorOffset] = separator;
 
-            System.arraycopy(comment, 0, block, index, comment.length);
+            System.arraycopy(comment, 0, comments, index, comment.length);
             index += comment.length;
         }
 
-        this.bytes = block;
-        return block;
+        if (framingBit) {
+            comments[comments.length - 1] = 0x1;
+        }
+
+        this.bytes = comments;
+        return comments;
     }
 
     @Override
     public byte[] getBytes() {
         return bytes;
+    }
+
+    @Override
+    protected <T> void setFieldValue(String fieldId, T value) {
+        if (fieldId.equals(PICTURE)) {
+
+            PictureBlock pictureBlock = new PictureBlock();
+            pictureBlock.setPicture((AttachedPicture) value);
+
+            setComment(
+                    VorbisComments.PICTURE,
+                    Base64.getEncoder().encodeToString(pictureBlock.assemble())
+            );
+            return;
+        }
+        setComment(fieldId, (String) value);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    protected <T> T getFieldValue(String fieldId) {
+        if (fieldId.equals(PICTURE)) {
+
+            String value = getComment(VorbisComments.PICTURE);
+            if (value == null) return null;
+
+            PictureBlockParser parser = new PictureBlockParser();
+            PictureBlock pictureBlock = parser.parse(Base64.getDecoder().decode(value));
+
+            return (T) pictureBlock.getPicture();
+        }
+        return (T) getComment(fieldId);
+    }
+
+    @Override
+    public void removeField(String fieldId) {
+        removeComment(fieldId);
     }
 }

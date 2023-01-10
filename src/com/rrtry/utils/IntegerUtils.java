@@ -73,13 +73,11 @@ public class IntegerUtils {
         };
     }
 
-    public static short toUShort16BE(byte[] bytes) {
+    public static short toUInt16LE(byte[] bytes) {
+        return (short) ((bytes[1] & 0xFF << 8) | (bytes[0] & 0xFF));
+    }
 
-        short value = 0x00;
-
-        value |= (bytes[0] & 0xFF) << 8;
-        value |= (bytes[1] & 0xFF);
-
-        return value;
+    public static short toUInt16BE(byte[] bytes) {
+        return (short) ((bytes[0] & 0xFF << 8) | (bytes[1] & 0xFF));
     }
 }

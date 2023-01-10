@@ -1,9 +1,8 @@
-package com.rrtry.ogg;
+package com.rrtry.ogg.vorbis;
 
 import com.rrtry.Component;
-import com.rrtry.Tag;
 
-abstract public class VorbisHeader extends Tag implements Component {
+abstract public class VorbisHeader implements Component {
 
     public static final byte[] VORBIS_HEADER_MAGIC = new byte[] { 0x76, 0x6f, 0x72, 0x62, 0x69, 0x73 };
 

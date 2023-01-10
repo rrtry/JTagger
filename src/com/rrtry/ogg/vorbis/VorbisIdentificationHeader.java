@@ -1,7 +1,6 @@
-package com.rrtry.ogg;
+package com.rrtry.ogg.vorbis;
 
 import com.rrtry.utils.IntegerUtils;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class VorbisIdentificationHeader extends VorbisHeader {
 
@@ -96,20 +95,5 @@ public class VorbisIdentificationHeader extends VorbisHeader {
     @Override
     byte getHeaderType() {
         return HEADER_TYPE_IDENTIFICATION;
-    }
-
-    @Override
-    protected <T> void setFieldValue(String fieldId, T value) {
-        throw new NotImplementedException();
-    }
-
-    @Override
-    protected <T> T getFieldValue(String fieldId) {
-        throw new NotImplementedException();
-    }
-
-    @Override
-    public void removeField(String fieldId) {
-        throw new NotImplementedException();
     }
 }

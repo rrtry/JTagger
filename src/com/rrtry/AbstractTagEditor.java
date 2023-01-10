@@ -7,15 +7,17 @@ import java.nio.file.Paths;
 
 public abstract class AbstractTagEditor<T extends Tag> {
 
-    public static final String MPEG_MIME_TYPE = "audio/mpeg";
-    public static final String FLAC_MIME_TYPE = "audio/flac";
-    public static final String OGG_MIME_TYPE  = "audio/x-vorbis+ogg";
+    public static final String MPEG_MIME_TYPE       = "audio/mpeg";
+    public static final String FLAC_MIME_TYPE       = "audio/flac";
+    public static final String OGG_VORBIS_MIME_TYPE = "audio/x-vorbis+ogg";
+    public static final String OGG_OPUS_MIME_TYPE   = "audio/x-opus+ogg";
 
     protected RandomAccessFile file;
     protected T tag;
     protected boolean isTagPresent = false;
 
     protected String path;
+    protected String mimeType;
 
     abstract protected void parseTag() throws IOException;
     abstract protected String getFileMimeType();
@@ -24,18 +26,27 @@ public abstract class AbstractTagEditor<T extends Tag> {
     abstract public void setTag(T tag);
 
     public void load(String path) throws IOException {
+
         this.path = path;
         if (file != null) release();
+
         if (Files.probeContentType(Paths.get(path)).equals(getFileMimeType())) {
-            this.file = new RandomAccessFile(path, "rw");
+
+            this.file     = new RandomAccessFile(path, "rw");
+            this.mimeType = mimeType;
+
             parseTag();
             return;
         }
         throw new IllegalArgumentException(path + " has invalid mime type");
     }
 
-    void load(RandomAccessFile file) throws IOException {
-        this.file = file;
+    void load(RandomAccessFile file, String mimeType) throws IOException {
+
+        if (this.file != null) release();
+        this.mimeType = mimeType;
+        this.file     = file;
+
         parseTag();
     }
 

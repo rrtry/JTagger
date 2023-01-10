@@ -50,13 +50,11 @@ public class FlacTag extends Tag implements PaddingTag {
         metadataBlocks.removeIf((b) -> b.getBlockType() == type);
     }
 
-    public boolean removeComment(String field) {
+    public void removeComment(String field) {
         VorbisCommentBlock vorbisComment = getBlock(BLOCK_TYPE_VORBIS_COMMENT);
         if (vorbisComment != null) {
             vorbisComment.removeComment(field);
-            return true;
         }
-        return false;
     }
 
     public void setComment(String field, String value) {
@@ -153,7 +151,6 @@ public class FlacTag extends Tag implements PaddingTag {
 
     @Override
     protected <T> void setFieldValue(String fieldId, T value) {
-
         if (fieldId.equals(Tag.PICTURE)) {
 
             PictureBlock pictureBlock = getBlock(BLOCK_TYPE_PICTURE);
@@ -165,31 +162,21 @@ public class FlacTag extends Tag implements PaddingTag {
             pictureBlock.setPicture((AttachedPicture) value);
             return;
         }
-
-        VorbisCommentBlock commentBlock = getBlock(BLOCK_TYPE_VORBIS_COMMENT);
-        if (commentBlock == null) {
-            commentBlock = new VorbisCommentBlock();
-            metadataBlocks.add(commentBlock);
-        }
-        commentBlock.setComment(fieldId, (String) value);
+        setComment(fieldId, (String) value);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     protected <T> T getFieldValue(String fieldId) {
-
         if (fieldId.equals(Tag.PICTURE)) {
             PictureBlock pictureBlock = getBlock(BLOCK_TYPE_PICTURE);
             return pictureBlock != null ? (T) pictureBlock.getPicture() : null;
         }
-
-        VorbisCommentBlock commentBlock = getBlock(BLOCK_TYPE_VORBIS_COMMENT);
-        return commentBlock != null ? (T) commentBlock.getComment(fieldId) : null;
+        return (T) getComment(fieldId);
     }
 
     @Override
     public void removeField(String fieldId) {
-        VorbisCommentBlock commentBlock = getBlock(BLOCK_TYPE_VORBIS_COMMENT);
-        if (commentBlock != null) commentBlock.removeComment(fieldId);
+        removeComment(fieldId);
     }
 }

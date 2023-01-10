@@ -29,16 +29,16 @@ public class OggPacket {
         index += appendedData.length;
     }
 
-    void setPacketData(byte[] packetData) {
+    public void setPacketData(byte[] packetData) {
         this.index = packetData.length;
         this.packetData = packetData;
     }
 
-    byte[] getPacketData() {
+    public byte[] getPacketData() {
         return Arrays.copyOf(packetData, index);
     }
 
-    boolean isEmpty() {
+    public boolean isEmpty() {
         return getPacketData().length == 0;
     }
 }
