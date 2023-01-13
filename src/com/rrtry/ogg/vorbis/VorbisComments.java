@@ -124,7 +124,7 @@ public class VorbisComments extends Tag {
 
     @Override
     protected <T> void setFieldValue(String fieldId, T value) {
-        if (fieldId.equals(PICTURE)) {
+        if (fieldId.equals(Tag.PICTURE)) {
 
             PictureBlock pictureBlock = new PictureBlock();
             pictureBlock.setPicture((AttachedPicture) value);
@@ -141,7 +141,7 @@ public class VorbisComments extends Tag {
     @Override
     @SuppressWarnings("unchecked")
     protected <T> T getFieldValue(String fieldId) {
-        if (fieldId.equals(PICTURE)) {
+        if (fieldId.equals(Tag.PICTURE)) {
 
             String value = getComment(VorbisComments.PICTURE);
             if (value == null) return null;

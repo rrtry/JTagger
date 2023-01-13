@@ -22,7 +22,7 @@ public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
 
         FlacTagParser parser = new FlacTagParser();
 
-        this.tag = parser.parse(file);
+        this.tag = parser.parseTag(file);
         this.streamInfo = tag.getBlock(AbstractMetadataBlock.BLOCK_TYPE_STREAMINFO);
 
         if (tag != null) {

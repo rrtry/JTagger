@@ -11,7 +11,7 @@ import static com.rrtry.flac.AbstractMetadataBlock.*;
 public class FlacTagParser implements TagParser<FlacTag> {
 
     @Override
-    public FlacTag parse(RandomAccessFile file) throws IOException {
+    public FlacTag parseTag(RandomAccessFile file) throws IOException {
 
         FlacTag tag = new FlacTag();
 

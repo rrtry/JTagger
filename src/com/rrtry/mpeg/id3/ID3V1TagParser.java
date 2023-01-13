@@ -11,7 +11,7 @@ import static com.rrtry.mpeg.id3.ID3V1Tag.*;
 
 public class ID3V1TagParser implements TagParser<ID3V1Tag> {
 
-    public ID3V1Tag parse(RandomAccessFile file) throws IOException {
+    public ID3V1Tag parseTag(RandomAccessFile file) throws IOException {
 
         byte[] buffer = new byte[128];
 

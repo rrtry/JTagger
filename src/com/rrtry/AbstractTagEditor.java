@@ -30,7 +30,8 @@ public abstract class AbstractTagEditor<T extends Tag> {
         this.path = path;
         if (file != null) release();
 
-        if (Files.probeContentType(Paths.get(path)).equals(getFileMimeType())) {
+        String mimeType = Files.probeContentType(Paths.get(path));
+        if (mimeType.equals(getFileMimeType())) {
 
             this.file     = new RandomAccessFile(path, "rw");
             this.mimeType = mimeType;

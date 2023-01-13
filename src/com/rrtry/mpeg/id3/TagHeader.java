@@ -96,10 +96,6 @@ public class TagHeader implements Component {
     @Override
     public byte[] assemble(byte version) {
 
-        System.out.println(
-                String.format("Assembling frame, flags: %d", flags)
-        );
-
         byte[] header = new byte[HEADER_LENGTH];
         byte[] id = new byte[] { 0x49, 0x44, 0x33 };
         byte[] size = fromUInt32BE(toSynchSafeInteger(tagSize));

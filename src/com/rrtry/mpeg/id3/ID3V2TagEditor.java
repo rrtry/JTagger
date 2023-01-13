@@ -24,7 +24,7 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
         FrameParser frameParser = new FrameParser();
 
         ID3V2TagParser id3V2TagParser = new ID3V2TagParser(tagHeaderParser, frameParser);
-        tag = id3V2TagParser.parse(file);
+        tag = id3V2TagParser.parseTag(file);
 
         if (tag != null) {
 
@@ -38,7 +38,7 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
         }
 
         ID3V1TagParser parser = new ID3V1TagParser();
-        ID3V1Tag id3V1Tag = parser.parse(file);
+        ID3V1Tag id3V1Tag = parser.parseTag(file);
 
         if (id3V1Tag != null) {
             isID3V1Present = true;

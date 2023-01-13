@@ -30,10 +30,10 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
     }
 
     @Override
-    protected void parseTag() {
+    protected void parseTag() throws IOException {
 
         this.parser = getOggParser(mimeType);
-        this.tag    = parser.parseVorbisComments(file);
+        this.tag    = parser.parseTag(file);
 
         this.pages   = parser.parsePages(file);
         this.packets = parser.parsePackets(pages);

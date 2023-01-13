@@ -1,5 +1,6 @@
 package com.rrtry.ogg;
 
+import com.rrtry.TagParser;
 import com.rrtry.ogg.vorbis.VorbisComments;
 import com.rrtry.utils.IntegerUtils;
 
@@ -8,13 +9,11 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-abstract public class OggParser {
+abstract public class OggParser implements TagParser<VorbisComments> {
 
     protected ArrayList<OggPage> pages;
     protected ArrayList<OggPacket> packets;
     private int PCMPageIndex = 3;
-
-    abstract protected VorbisComments parseVorbisComments(RandomAccessFile file);
 
     public int getSerialNumber() {
         return pages.get(0).getHeader().getSerialNumber();

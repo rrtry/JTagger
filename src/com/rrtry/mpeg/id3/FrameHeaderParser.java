@@ -61,10 +61,7 @@ public class FrameHeaderParser {
             }
             return header;
 
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-            return null;
-        } catch (NotImplementedException e) {
+        } catch (IllegalArgumentException | NotImplementedException e) {
             return null;
         }
     }

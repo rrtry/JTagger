@@ -23,7 +23,7 @@ public class OggVorbisParser extends OggParser {
     }
 
     @Override
-    public VorbisComments parseVorbisComments(RandomAccessFile file) {
+    public VorbisComments parseTag(RandomAccessFile file) {
         return parseVorbisCommentHeader(file).getVorbisComments();
     }
 

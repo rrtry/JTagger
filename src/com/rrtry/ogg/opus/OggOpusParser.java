@@ -67,7 +67,7 @@ public class OggOpusParser extends OggParser {
     }
 
     @Override
-    public VorbisComments parseVorbisComments(RandomAccessFile file) {
+    public VorbisComments parseTag(RandomAccessFile file) {
 
         parsePackets(parsePages(file));
 
