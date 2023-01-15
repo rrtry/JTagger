@@ -108,30 +108,30 @@ abstract public class OggParser implements TagParser<VorbisComments> {
 
             OggPageHeader header = page.getHeader();
 
-            boolean isFreshPage   = header.isFreshPage();
-            byte[] segmentTable   = header.getSegmentTable();
-            byte[] pageData       = page.getPageData();
+            boolean isFreshPage = header.isFreshPage();
+            byte[] segmentTable = header.getSegmentTable();
+            byte[] pageData     = page.getPageData();
 
             OggPacket packet = !isFreshPage && !packets.isEmpty() ? packets.get(packets.size() - 1) : new OggPacket();
             int offset = 0;
 
-            for (int i = 0; i < segmentTable.length; i++) {
+            for (byte b : segmentTable) {
 
-                int segmentSize = Byte.toUnsignedInt(segmentTable[i]);
+                int segmentSize = Byte.toUnsignedInt(b);
+
                 if (segmentSize > 0) {
                     byte[] segment = Arrays.copyOfRange(pageData, offset, offset + segmentSize);
                     offset += segmentSize;
                     packet.appendPacketData(segment);
                 }
-
                 if (segmentSize < 255) {
                     if (!packets.contains(packet)) packets.add(packet);
                     packet = new OggPacket();
                 }
-                if (segmentSize == 255 && i == segmentTable.length - 1) {
-                    packets.add(packet);
-                }
             }
+
+            int lastSegment = Byte.toUnsignedInt(segmentTable[segmentTable.length - 1]);
+            if (lastSegment == 255 && !packets.contains(packet)) packets.add(packet);
         }
 
         this.packets = packets;

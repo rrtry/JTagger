@@ -1,6 +1,7 @@
 package com.rrtry.flac;
 
 import com.rrtry.AbstractTagEditor;
+import com.rrtry.Tag;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,8 +9,7 @@ import java.io.RandomAccessFile;
 
 import static com.rrtry.PaddingTag.MAX_PADDING;
 import static com.rrtry.PaddingTag.MIN_PADDING;
-import static com.rrtry.flac.AbstractMetadataBlock.BLOCK_HEADER_LENGTH;
-import static com.rrtry.flac.AbstractMetadataBlock.BLOCK_TYPE_PADDING;
+import static com.rrtry.flac.AbstractMetadataBlock.*;
 import static com.rrtry.flac.FlacTag.MAGIC;
 
 public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
@@ -22,24 +22,27 @@ public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
 
         FlacTagParser parser = new FlacTagParser();
 
-        this.tag = parser.parseTag(file);
-        this.streamInfo = tag.getBlock(AbstractMetadataBlock.BLOCK_TYPE_STREAMINFO);
+        this.tag        = parser.parseTag(file);
+        this.streamInfo = tag.getBlock(BLOCK_TYPE_STREAMINFO);
 
         if (tag != null) {
-
-            this.isTagPresent = true;
+            this.isTagPresent    = true;
             this.originalTagSize = tag.getBlockDataSize();
         }
     }
 
-    @Override
-    public void removeTag() {
+    private void setEmptyTag() {
 
         FlacTag tag = new FlacTag();
         tag.addBlock(streamInfo); // remove all blocks except STREAMINFO
         tag.assemble();
 
         this.tag = tag;
+    }
+
+    @Override
+    public void removeTag() {
+        setEmptyTag();
     }
 
     @Override
@@ -99,8 +102,16 @@ public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
     }
 
     @Override
-    public void setTag(FlacTag tag) {
-        tag.assemble();
-        this.tag = tag;
+    public void setTag(Tag tag) {
+
+        if (tag instanceof FlacTag) {
+            tag.assemble();
+            this.tag = (FlacTag) tag;
+            return;
+        }
+
+        setEmptyTag();
+        convertTag(tag, this.tag);
+        this.tag.assemble();
     }
 }

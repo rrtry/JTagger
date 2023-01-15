@@ -1,6 +1,8 @@
 package com.rrtry.mpeg.id3;
 
 import com.rrtry.AbstractTagEditor;
+import com.rrtry.Tag;
+
 import java.io.IOException;
 
 public class ID3V1TagEditor extends AbstractTagEditor<ID3V1Tag> {
@@ -24,9 +26,14 @@ public class ID3V1TagEditor extends AbstractTagEditor<ID3V1Tag> {
     }
 
     @Override
-    public void setTag(ID3V1Tag tag) {
-        this.tag = ID3V1Tag.newBuilder(tag)
-                .build(tag.getVersion());
+    public void setTag(Tag tag) {
+        if (tag instanceof ID3V1Tag) {
+            ID3V1Tag id3V1Tag = (ID3V1Tag) tag;
+            this.tag = ID3V1Tag.newBuilder(id3V1Tag)
+                    .build(id3V1Tag.getVersion());
+            return;
+        }
+        throw new RuntimeException();
     }
 
     @Override

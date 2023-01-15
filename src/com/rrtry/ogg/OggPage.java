@@ -140,9 +140,7 @@ public class OggPage implements Component {
             final int sequenceNumber)
     {
 
-        boolean isFreshPage = true;
-        int pageSequence    = sequenceNumber;
-
+        int pageSequence = sequenceNumber;
         ArrayList<OggPage> pages = new ArrayList<>();
 
         OggPage page = new OggPage();
@@ -151,36 +149,27 @@ public class OggPage implements Component {
 
         for (OggPacket packet : packets) {
 
-            byte[] packetData = packet.getPacketData();
+            byte[] packetData   = packet.getPacketData();
             int packetBytesRead = 0;
-
-            final int packetSize = packet.getPacketData().length;
-            final int pageSpan   = packetSize < OggPage.PAGE_MAX_SIZE ? 0 : (int) Math.ceil(packetSize / (255.0 * 255.0));
-            final int remainder = packetSize % 255;
-
-            final boolean isDivisible = remainder == 0;
+            int packetSize      = packet.getPacketData().length;
 
             if (!page.getHeader().hasAvailableSegments()) {
 
-                isFreshPage = true;
-
                 page = new OggPage();
                 page.getHeader().setSerialNumber(serial);
-                page.getHeader().setPageSegments(pageSequence++);
+                page.getHeader().setSequenceNumber(pageSequence++);
                 page.getHeader().setFreshPage(true);
             }
 
             while (packetBytesRead < packetSize) {
 
-                final int chunkBytesRead  = page.addPacket(packetData);
-                final int remaining       = packetData.length - chunkBytesRead;
-                final boolean isFullyRead = remaining == 0;
+                final int chunkBytesRead        = page.addPacket(packetData);
+                final int remaining             = packetData.length - chunkBytesRead;
+                final boolean isChunkFullyRead  = remaining == 0;
 
                 packetBytesRead += chunkBytesRead;
 
-                if (!isFullyRead) {
-
-                    isFreshPage = false;
+                if (!isChunkFullyRead) {
 
                     packetData = Arrays.copyOfRange(packet.getPacketData(), packetBytesRead, packetSize);
                     if (!pages.contains(page)) pages.add(page);
@@ -189,27 +178,26 @@ public class OggPage implements Component {
                     page.getHeader().setSerialNumber(serial);
                     page.getHeader().setSequenceNumber(pageSequence++);
                     page.getHeader().setFreshPage(false);
-
-                    pages.add(page);
-                }
-
-                boolean hasAvailableSegments = page.getHeader().hasAvailableSegments();
-                if (isFullyRead) {
-
-                    if (isDivisible && hasAvailableSegments) page.getHeader().addSegment(0);
-                    if (isDivisible && !hasAvailableSegments) {
-
-                        pages.add(page);
-
-                        page = new OggPage();
-                        page.getHeader().setSerialNumber(serial);
-                        page.getHeader().setFreshPage(false);
-                        page.getHeader().setSequenceNumber(pageSequence++);
-                        page.getHeader().addSegment(0);
-                    }
                 }
             }
-            if (!pages.contains(page)) pages.add(page);
+
+            if (packetSize % 255 == 0) {
+                if (page.getHeader().hasAvailableSegments()) {
+                    page.getHeader().addSegment(0);
+                } else {
+
+                    if (!pages.contains(page)) pages.add(page);
+
+                    page = new OggPage();
+                    page.getHeader().setSerialNumber(serial);
+                    page.getHeader().setFreshPage(false);
+                    page.getHeader().setSequenceNumber(pageSequence++);
+                    page.getHeader().addSegment(0);
+                }
+            }
+            if (!pages.contains(page)) {
+                pages.add(page);
+            }
         }
         return pages;
     }
@@ -270,7 +258,6 @@ public class OggPage implements Component {
 
         getHeader().setChecksum(crc32);
         System.arraycopy(fromUInt32LE(crc32), 0, bytes, checksumOffset, Integer.BYTES);
-
         return bytes;
     }
 

@@ -23,7 +23,22 @@ public abstract class AbstractTagEditor<T extends Tag> {
     abstract protected String getFileMimeType();
 
     abstract public void commit() throws IOException;
-    abstract public void setTag(T tag);
+    abstract public void setTag(Tag tag);
+
+    protected final void convertTag(Tag from, T to) {
+
+        AttachedPicture picture = from.getPictureField();
+        if (picture != null) to.setPictureField(picture);
+
+        for (String field : Tag.FIELDS) {
+            if (field.equals(Tag.PICTURE)) continue;
+
+            String value = from.getStringField(field);
+            if (value != null && !value.isEmpty()) {
+                to.setStringField(field, value);
+            }
+        }
+    }
 
     public void load(String path) throws IOException {
 

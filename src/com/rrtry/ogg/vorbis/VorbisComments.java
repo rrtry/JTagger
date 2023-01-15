@@ -144,7 +144,7 @@ public class VorbisComments extends Tag {
         if (fieldId.equals(Tag.PICTURE)) {
 
             String value = getComment(VorbisComments.PICTURE);
-            if (value == null) return null;
+            if (value.isEmpty()) return null;
 
             PictureBlockParser parser = new PictureBlockParser();
             PictureBlock pictureBlock = parser.parse(Base64.getDecoder().decode(value));

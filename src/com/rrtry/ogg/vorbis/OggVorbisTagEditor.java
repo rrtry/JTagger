@@ -36,9 +36,4 @@ public class OggVorbisTagEditor extends OggTagEditor {
 
         return oggPackets;
     }
-
-    @Override
-    public void setTag(VorbisComments tag) {
-        tag.assemble(); this.tag = tag;
-    }
 }

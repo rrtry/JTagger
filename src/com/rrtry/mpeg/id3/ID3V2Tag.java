@@ -183,6 +183,10 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
         frames.set(index, frame);
     }
 
+    public void setTagHeader(TagHeader header) {
+        this.tagHeader = header;
+    }
+
     public void setFrame(AbstractFrame frame) {
         int index = indexOf(frame.getIdentifier());
         if (index != -1) setFrameAtIndex(indexOf(frame.getIdentifier()), frame);

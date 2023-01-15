@@ -1,7 +1,6 @@
 package com.rrtry.flac;
 
 import com.rrtry.ogg.vorbis.VorbisComments;
-import java.util.LinkedHashMap;
 
 public class VorbisCommentBlock extends AbstractMetadataBlock {
 

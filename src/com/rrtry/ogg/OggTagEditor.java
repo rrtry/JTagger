@@ -1,6 +1,7 @@
 package com.rrtry.ogg;
 
 import com.rrtry.AbstractTagEditor;
+import com.rrtry.Tag;
 import com.rrtry.ogg.opus.OggOpusParser;
 import com.rrtry.ogg.vorbis.OggVorbisParser;
 import com.rrtry.ogg.vorbis.VorbisComments;
@@ -73,7 +74,20 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
     }
 
     @Override
-    public void setTag(VorbisComments tag) {
-        tag.assemble(); this.tag = tag;
+    public void setTag(Tag tag) {
+
+        if (tag instanceof VorbisComments) {
+            tag.assemble();
+            this.tag = (VorbisComments) tag;
+            return;
+        }
+
+        VorbisComments vorbisComments = new VorbisComments(
+                mimeType.equals(OGG_VORBIS_MIME_TYPE)
+        );
+
+        convertTag(tag, vorbisComments);
+        vorbisComments.assemble();
+        this.tag = vorbisComments;
     }
 }
