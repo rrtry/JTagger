@@ -2,6 +2,7 @@ package com.rrtry.mpeg.id3;
 
 import com.rrtry.AbstractTagEditor;
 import com.rrtry.Tag;
+import com.rrtry.utils.FileContentTypeDetector;
 
 import java.io.*;
 
@@ -49,7 +50,7 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
 
     @Override
     protected String getFileMimeType() {
-        return MPEG_MIME_TYPE;
+        return FileContentTypeDetector.MPEG_MIME_TYPE;
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.rrtry.flac;
 
 import com.rrtry.AbstractTagEditor;
 import com.rrtry.Tag;
+import com.rrtry.utils.FileContentTypeDetector;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,7 +48,7 @@ public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
 
     @Override
     protected String getFileMimeType() {
-        return FLAC_MIME_TYPE;
+        return FileContentTypeDetector.FLAC_MIME_TYPE;
     }
 
     @Override

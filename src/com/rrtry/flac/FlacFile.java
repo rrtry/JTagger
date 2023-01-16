@@ -2,7 +2,7 @@ package com.rrtry.flac;
 
 import com.rrtry.MediaFile;
 
-import static com.rrtry.AbstractTagEditor.FLAC_MIME_TYPE;
+import static com.rrtry.utils.FileContentTypeDetector.FLAC_MIME_TYPE;
 import static com.rrtry.flac.AbstractMetadataBlock.BLOCK_TYPE_STREAMINFO;
 
 public class FlacFile extends MediaFile<FlacTag> {

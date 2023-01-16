@@ -1,22 +1,17 @@
 package com.rrtry;
 
+import com.rrtry.utils.FileContentTypeDetector;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.File;
 
 public abstract class AbstractTagEditor<T extends Tag> {
-
-    public static final String MPEG_MIME_TYPE       = "audio/mpeg";
-    public static final String FLAC_MIME_TYPE       = "audio/flac";
-    public static final String OGG_VORBIS_MIME_TYPE = "audio/x-vorbis+ogg";
-    public static final String OGG_OPUS_MIME_TYPE   = "audio/x-opus+ogg";
 
     protected RandomAccessFile file;
     protected T tag;
     protected boolean isTagPresent = false;
 
-    protected String path;
     protected String mimeType;
 
     abstract protected void parseTag() throws IOException;
@@ -31,7 +26,10 @@ public abstract class AbstractTagEditor<T extends Tag> {
         if (picture != null) to.setPictureField(picture);
 
         for (String field : Tag.FIELDS) {
-            if (field.equals(Tag.PICTURE)) continue;
+
+            if (field.equals(Tag.PICTURE)) {
+                continue;
+            }
 
             String value = from.getStringField(field);
             if (value != null && !value.isEmpty()) {
@@ -40,12 +38,18 @@ public abstract class AbstractTagEditor<T extends Tag> {
         }
     }
 
-    public void load(String path) throws IOException {
+    public void load(File file) throws IOException {
 
-        this.path = path;
-        if (file != null) release();
+        if (this.file != null) {
+            release();
+        }
 
-        String mimeType = Files.probeContentType(Paths.get(path));
+        String path     = file.getAbsolutePath();
+        String mimeType = FileContentTypeDetector.getFileContentType(file);
+
+        if (mimeType == null) {
+            throw new IllegalStateException("Could not determine content type for: " + file.getName());
+        }
         if (mimeType.equals(getFileMimeType())) {
 
             this.file     = new RandomAccessFile(path, "rw");
@@ -54,7 +58,7 @@ public abstract class AbstractTagEditor<T extends Tag> {
             parseTag();
             return;
         }
-        throw new IllegalArgumentException(path + " has invalid mime type");
+        throw new IllegalArgumentException(mimeType + " format is not yet supported");
     }
 
     void load(RandomAccessFile file, String mimeType) throws IOException {

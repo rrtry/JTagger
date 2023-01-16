@@ -1,7 +1,7 @@
 package com.rrtry.ogg.vorbis;
 
 import com.rrtry.MediaFile;
-import static com.rrtry.AbstractTagEditor.OGG_VORBIS_MIME_TYPE;
+import static com.rrtry.utils.FileContentTypeDetector.OGG_VORBIS_MIME_TYPE;
 
 public class OggVorbisFile extends MediaFile<VorbisComments> {
 

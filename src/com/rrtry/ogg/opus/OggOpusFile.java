@@ -3,7 +3,7 @@ package com.rrtry.ogg.opus;
 import com.rrtry.MediaFile;
 import com.rrtry.ogg.vorbis.VorbisComments;
 
-import static com.rrtry.AbstractTagEditor.OGG_OPUS_MIME_TYPE;
+import static com.rrtry.utils.FileContentTypeDetector.OGG_OPUS_MIME_TYPE;
 
 public class OggOpusFile extends MediaFile<VorbisComments> {
 

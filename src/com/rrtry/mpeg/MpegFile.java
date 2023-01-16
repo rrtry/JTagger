@@ -5,7 +5,7 @@ import com.rrtry.mpeg.id3.ID3V2Tag;
 import com.rrtry.mpeg.id3.ID3V2TagEditor;
 
 import java.io.File;
-import static com.rrtry.AbstractTagEditor.MPEG_MIME_TYPE;
+import static com.rrtry.utils.FileContentTypeDetector.MPEG_MIME_TYPE;
 
 public class MpegFile extends MediaFile<ID3V2Tag> {
 

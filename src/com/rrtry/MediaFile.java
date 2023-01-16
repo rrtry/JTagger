@@ -1,12 +1,10 @@
 package com.rrtry;
 
-import com.rrtry.mpeg.id3.ID3V2Tag;
+import com.rrtry.utils.FileContentTypeDetector;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 public class MediaFile<T extends Tag> {
 
@@ -18,7 +16,11 @@ public class MediaFile<T extends Tag> {
         try {
 
             String path     = f.getAbsolutePath();
-            String mimeType = Files.probeContentType(Paths.get(path));
+            String mimeType = FileContentTypeDetector.getFileContentType(f);
+
+            if (mimeType == null) {
+                throw new IllegalStateException("Could not determine content type for: " + f.getName());
+            }
 
             editor = getEditor(mimeType);
             file   = new RandomAccessFile(path, "rw");

@@ -5,6 +5,7 @@ import com.rrtry.Tag;
 import com.rrtry.ogg.opus.OggOpusParser;
 import com.rrtry.ogg.vorbis.OggVorbisParser;
 import com.rrtry.ogg.vorbis.VorbisComments;
+import com.rrtry.utils.FileContentTypeDetector;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.IOException;
@@ -21,8 +22,8 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
     abstract protected ArrayList<OggPacket> getPackets();
 
     private static OggParser getOggParser(String mimeType) {
-        if (mimeType.equals(OGG_OPUS_MIME_TYPE)) return new OggOpusParser();
-        if (mimeType.equals(OGG_VORBIS_MIME_TYPE)) return new OggVorbisParser();
+        if (mimeType.equals(FileContentTypeDetector.OGG_OPUS_MIME_TYPE)) return new OggOpusParser();
+        if (mimeType.equals(FileContentTypeDetector.OGG_VORBIS_MIME_TYPE)) return new OggVorbisParser();
         throw new NotImplementedException();
     }
 
@@ -83,7 +84,7 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
         }
 
         VorbisComments vorbisComments = new VorbisComments(
-                mimeType.equals(OGG_VORBIS_MIME_TYPE)
+                mimeType.equals(FileContentTypeDetector.OGG_VORBIS_MIME_TYPE)
         );
 
         convertTag(tag, vorbisComments);
