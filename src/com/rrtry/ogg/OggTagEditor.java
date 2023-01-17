@@ -5,11 +5,13 @@ import com.rrtry.Tag;
 import com.rrtry.ogg.opus.OggOpusParser;
 import com.rrtry.ogg.vorbis.OggVorbisParser;
 import com.rrtry.ogg.vorbis.VorbisComments;
-import com.rrtry.utils.FileContentTypeDetector;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+
+import static com.rrtry.utils.FileContentTypeDetector.OGG_OPUS_MIME_TYPE;
+import static com.rrtry.utils.FileContentTypeDetector.OGG_VORBIS_MIME_TYPE;
 
 abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
 
@@ -22,8 +24,8 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
     abstract protected ArrayList<OggPacket> getPackets();
 
     private static OggParser getOggParser(String mimeType) {
-        if (mimeType.equals(FileContentTypeDetector.OGG_OPUS_MIME_TYPE)) return new OggOpusParser();
-        if (mimeType.equals(FileContentTypeDetector.OGG_VORBIS_MIME_TYPE)) return new OggVorbisParser();
+        if (mimeType.equals(OGG_OPUS_MIME_TYPE))   return new OggOpusParser();
+        if (mimeType.equals(OGG_VORBIS_MIME_TYPE)) return new OggVorbisParser();
         throw new NotImplementedException();
     }
 
@@ -45,7 +47,6 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
     public void commit() throws IOException {
 
         final long originalFileSize = file.length();
-
         final int PCMPageIndex      = parser.getPCMPageIndex();
         final int serialNumber      = parser.getSerialNumber();
         final int startingSeqNum    = 1;
@@ -84,7 +85,7 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
         }
 
         VorbisComments vorbisComments = new VorbisComments(
-                mimeType.equals(FileContentTypeDetector.OGG_VORBIS_MIME_TYPE)
+                mimeType.equals(OGG_VORBIS_MIME_TYPE)
         );
 
         convertTag(tag, vorbisComments);

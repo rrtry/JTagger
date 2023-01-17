@@ -4,7 +4,6 @@ import com.rrtry.ogg.CommentHeader;
 import com.rrtry.ogg.OggPacket;
 import com.rrtry.ogg.OggTagEditor;
 import com.rrtry.utils.FileContentTypeDetector;
-
 import java.util.ArrayList;
 
 public class OggOpusTagEditor extends OggTagEditor {

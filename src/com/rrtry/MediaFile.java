@@ -12,25 +12,19 @@ public class MediaFile<T extends Tag> {
     protected AbstractTagEditor<T> editor;
     protected T tag;
 
-    public void scan(File f) {
-        try {
+    public void scan(File f) throws IOException {
 
-            String path     = f.getAbsolutePath();
-            String mimeType = FileContentTypeDetector.getFileContentType(f);
+        String path     = f.getAbsolutePath();
+        String mimeType = FileContentTypeDetector.getFileContentType(f);
 
-            if (mimeType == null) {
-                throw new IllegalStateException("Could not determine content type for: " + f.getName());
-            }
+        if (mimeType == null) return;
 
-            editor = getEditor(mimeType);
-            file   = new RandomAccessFile(path, "rw");
-            editor.load(file, mimeType);
+        editor = getEditor(mimeType);
+        if (editor == null) return;
 
-            tag = editor.getTag();
-
-        } catch (IOException e) {
-            throw new RuntimeException();
-        }
+        file   = new RandomAccessFile(path, "rw");
+        editor.load(file, mimeType);
+        tag = editor.getTag();
     }
 
     @SuppressWarnings("unchecked")

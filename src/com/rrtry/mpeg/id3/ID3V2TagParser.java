@@ -27,7 +27,7 @@ public class ID3V2TagParser implements TagParser<ID3V2Tag> {
 
     @Override
     @SuppressWarnings("rawtypes")
-    public ID3V2Tag parseTag(RandomAccessFile file) throws IOException {
+    public ID3V2Tag parseTag(RandomAccessFile file) {
         try {
 
             byte[] tagHeader = new byte[HEADER_LENGTH];
@@ -64,7 +64,8 @@ public class ID3V2TagParser implements TagParser<ID3V2Tag> {
                     .setHeader(header)
                     .build(header.getMajorVersion());
 
-        } catch (InvalidTagException e) {
+        } catch (IOException | InvalidTagException e) {
+            e.printStackTrace();
             return null;
         }
     }

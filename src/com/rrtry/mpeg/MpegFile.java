@@ -5,6 +5,8 @@ import com.rrtry.mpeg.id3.ID3V2Tag;
 import com.rrtry.mpeg.id3.ID3V2TagEditor;
 
 import java.io.File;
+import java.io.IOException;
+
 import static com.rrtry.utils.FileContentTypeDetector.MPEG_MIME_TYPE;
 
 public class MpegFile extends MediaFile<ID3V2Tag> {
@@ -20,7 +22,7 @@ public class MpegFile extends MediaFile<ID3V2Tag> {
     }
 
     @Override
-    public void scan(File file) {
+    public void scan(File file) throws IOException {
         super.scan(file);
         parseMpegFrameHeader();
     }

@@ -3,7 +3,7 @@ package com.rrtry.ogg.opus;
 import com.rrtry.ogg.CommentHeader;
 import com.rrtry.ogg.vorbis.VorbisComments;
 
-import static com.rrtry.ogg.opus.OggOpusParser.OPUS_HEADER_MAGIC;
+import static com.rrtry.ogg.opus.OggOpusParser.OPUS_IDENTIFICATION_HEADER_MAGIC;
 
 public class OpusCommentHeader implements CommentHeader {
 
@@ -14,10 +14,10 @@ public class OpusCommentHeader implements CommentHeader {
     public byte[] assemble(byte version) {
 
         byte[] comments = vorbisComments.assemble();
-        byte[] header   = new byte[comments.length + OPUS_HEADER_MAGIC.length];
+        byte[] header   = new byte[comments.length + OPUS_IDENTIFICATION_HEADER_MAGIC.length];
 
-        System.arraycopy(OPUS_HEADER_MAGIC, 0, header, 0, OPUS_HEADER_MAGIC.length);
-        System.arraycopy(comments, 0, header, OPUS_HEADER_MAGIC.length, comments.length);
+        System.arraycopy(OPUS_IDENTIFICATION_HEADER_MAGIC, 0, header, 0, OPUS_IDENTIFICATION_HEADER_MAGIC.length);
+        System.arraycopy(comments, 0, header, OPUS_IDENTIFICATION_HEADER_MAGIC.length, comments.length);
 
         this.bytes = header;
         return header;

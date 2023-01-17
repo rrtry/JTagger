@@ -36,9 +36,6 @@ public class FileContentTypeDetector {
             throw new IllegalArgumentException("Argument must be a regular file");
         }
 
-        String contentType = probeContentType(file);
-        if (contentType != null) return contentType;
-
         String name = file.getName();
         String extension;
 

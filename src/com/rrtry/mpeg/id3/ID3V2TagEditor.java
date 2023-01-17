@@ -23,7 +23,7 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
         isTagPresent    = false;
 
         TagHeaderParser tagHeaderParser = new TagHeaderParser();
-        FrameParser frameParser = new FrameParser();
+        FrameParser frameParser         = new FrameParser();
 
         ID3V2TagParser id3V2TagParser = new ID3V2TagParser(tagHeaderParser, frameParser);
         tag = id3V2TagParser.parseTag(file);
@@ -55,6 +55,7 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
 
     @Override
     public void setTag(Tag tag) {
+
         if (tag instanceof ID3V2Tag) {
 
             ID3V2Tag id3V2Tag = (ID3V2Tag) tag;
@@ -97,8 +98,8 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
         }
 
         final int bufferSize = 4096;
-        final String prefix = "ID3";
-        final String suffix = ".tmp";
+        final String prefix  = "ID3";
+        final String suffix  = ".tmp";
 
         File temp = File.createTempFile(prefix, suffix);
         byte[] tempBuffer = new byte[bufferSize];
@@ -130,6 +131,7 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
             while (tempFile.read(tempBuffer, 0, tempBuffer.length) != -1) {
                 file.write(tempBuffer, 0, tempBuffer.length);
             }
+
         } finally {
             temp.delete();
         }

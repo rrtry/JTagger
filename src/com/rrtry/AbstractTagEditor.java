@@ -47,18 +47,14 @@ public abstract class AbstractTagEditor<T extends Tag> {
         String path     = file.getAbsolutePath();
         String mimeType = FileContentTypeDetector.getFileContentType(file);
 
-        if (mimeType == null) {
-            throw new IllegalStateException("Could not determine content type for: " + file.getName());
-        }
+        if (mimeType == null) return;
         if (mimeType.equals(getFileMimeType())) {
 
             this.file     = new RandomAccessFile(path, "rw");
             this.mimeType = mimeType;
 
             parseTag();
-            return;
         }
-        throw new IllegalArgumentException(mimeType + " format is not yet supported");
     }
 
     void load(RandomAccessFile file, String mimeType) throws IOException {

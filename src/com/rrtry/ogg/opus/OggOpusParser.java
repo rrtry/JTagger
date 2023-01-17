@@ -12,14 +12,18 @@ import static com.rrtry.utils.IntegerUtils.toUInt32LE;
 
 public class OggOpusParser extends OggParser {
 
-    public static final byte[] OPUS_HEADER_MAGIC = new byte[] {
+    public static final byte[] OPUS_IDENTIFICATION_HEADER_MAGIC = new byte[] {
             0x4F, 0x70, 0x75, 0x73, 0x48, 0x65, 0x61, 0x64
     };
 
-    private boolean verifyOpusHeader(byte[] header) {
-        return Arrays.equals(
-                Arrays.copyOfRange(header, 0, OPUS_HEADER_MAGIC.length),
-                OPUS_HEADER_MAGIC
+    public static final byte[] OPUS_COMMENT_HEADER_MAGIC = new byte[] {
+            0x4F, 0x70, 0x75, 0x73, 0x54, 0x61, 0x67, 0x73
+    };
+
+    private boolean isHeaderSignatureInvalid(byte[] header, byte[] magic) {
+        return !Arrays.equals(
+                Arrays.copyOfRange(header, 0, magic.length),
+                magic
         );
     }
 
@@ -30,11 +34,11 @@ public class OggOpusParser extends OggParser {
         OggPacket packet = packets.get(0);
         byte[] header    = packet.getPacketData();
 
-        if (!verifyOpusHeader(header)) {
+        if (isHeaderSignatureInvalid(header, OPUS_IDENTIFICATION_HEADER_MAGIC)) {
             throw new IllegalStateException("Header signature mismatch");
         }
 
-        int offset = OPUS_HEADER_MAGIC.length;
+        int offset = OPUS_IDENTIFICATION_HEADER_MAGIC.length;
 
         byte version      = header[offset++];
         byte channelCount = header[offset++];
@@ -74,11 +78,11 @@ public class OggOpusParser extends OggParser {
         OggPacket packet = packets.get(1);
         byte[] header    = packet.getPacketData();
 
-        if (!verifyOpusHeader(header)) {
+        if (isHeaderSignatureInvalid(header, OPUS_COMMENT_HEADER_MAGIC)) {
             throw new IllegalArgumentException("Header signature mismatch");
         }
 
         VorbisCommentsParser parser = new VorbisCommentsParser();
-        return parser.parse(Arrays.copyOfRange(header, OPUS_HEADER_MAGIC.length, header.length), false);
+        return parser.parse(Arrays.copyOfRange(header, OPUS_IDENTIFICATION_HEADER_MAGIC.length, header.length), false);
     }
 }

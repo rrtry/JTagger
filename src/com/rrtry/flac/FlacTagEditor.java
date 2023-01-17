@@ -22,17 +22,18 @@ public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
     protected void parseTag() throws IOException {
 
         FlacTagParser parser = new FlacTagParser();
-
-        this.tag        = parser.parseTag(file);
-        this.streamInfo = tag.getBlock(BLOCK_TYPE_STREAMINFO);
+        this.tag = parser.parseTag(file);
 
         if (tag != null) {
+            this.streamInfo      = tag.getBlock(BLOCK_TYPE_STREAMINFO);
             this.isTagPresent    = true;
             this.originalTagSize = tag.getBlockDataSize();
         }
     }
 
     private void setEmptyTag() {
+
+        if (streamInfo == null) return;
 
         FlacTag tag = new FlacTag();
         tag.addBlock(streamInfo); // remove all blocks except STREAMINFO
@@ -53,6 +54,8 @@ public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
 
     @Override
     public void commit() throws IOException {
+
+        if (tag == null) return;
 
         int padding;
         int paddingBlockSize = 0;
@@ -109,6 +112,9 @@ public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
             tag.assemble();
             this.tag = (FlacTag) tag;
             return;
+        }
+        if (streamInfo == null) {
+            throw new IllegalStateException("STREAMINFO block should be present");
         }
 
         setEmptyTag();

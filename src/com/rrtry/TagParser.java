@@ -5,5 +5,5 @@ import java.io.RandomAccessFile;
 
 public interface TagParser <T extends Tag> {
 
-    T parseTag(RandomAccessFile file) throws IOException;
+    T parseTag(RandomAccessFile file);
 }

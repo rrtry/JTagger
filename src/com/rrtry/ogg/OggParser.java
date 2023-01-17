@@ -95,7 +95,8 @@ abstract public class OggParser implements TagParser<VorbisComments> {
             return pages;
 
         } catch (IOException e) {
-            throw new RuntimeException();
+            e.printStackTrace();
+            return null;
         }
     }
 
