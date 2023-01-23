@@ -55,6 +55,10 @@ public class ID3V2TagParser implements TagParser<ID3V2Tag> {
                 }
             }
 
+            byte[] tag = new byte[tagHeader.length + frameData.length];
+            System.arraycopy(tagHeader, 0, tag, 0, tagHeader.length);
+            System.arraycopy(frameData, 0, tag, tagHeader.length, frameData.length);
+
             frameParser.setTagHeader(header);
             frameParser.setFrames(Arrays.copyOfRange(frameData, frameDataOffset, frameData.length));
             ArrayList<AbstractFrame> frames = frameParser.parseFrames();
@@ -62,7 +66,7 @@ public class ID3V2TagParser implements TagParser<ID3V2Tag> {
             return ID3V2Tag.newBuilder()
                     .setFrames(frames)
                     .setHeader(header)
-                    .build(header.getMajorVersion());
+                    .buildExisting(tag);
 
         } catch (IOException | InvalidTagException e) {
             e.printStackTrace();

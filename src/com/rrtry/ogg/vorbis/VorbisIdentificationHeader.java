@@ -1,8 +1,9 @@
 package com.rrtry.ogg.vorbis;
 
+import com.rrtry.StreamInfo;
 import com.rrtry.utils.IntegerUtils;
 
-public class VorbisIdentificationHeader extends VorbisHeader {
+public class VorbisIdentificationHeader extends VorbisHeader implements StreamInfo {
 
     private final int version;
     private final byte channels;
@@ -11,6 +12,8 @@ public class VorbisIdentificationHeader extends VorbisHeader {
     private final int nominalBitrate;
     private final int minBitrate;
     private final byte blockSize;
+
+    private int duration;
 
     public VorbisIdentificationHeader(
             int version,
@@ -40,8 +43,33 @@ public class VorbisIdentificationHeader extends VorbisHeader {
         return channels;
     }
 
+    @Override
+    public int getDuration() {
+        return duration;
+    }
+
+    @Override
+    public byte getChannelCount() {
+        return getChannels();
+    }
+
+    @Override
+    public int getBitrate() {
+        return getNominalBitrate() / 1000;
+    }
+
     public int getSampleRate() {
         return sampleRate;
+    }
+
+    @Override
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
+
+    @Override
+    public void setBitrate(int bitrate) {
+
     }
 
     public int getMaxBitrate() {

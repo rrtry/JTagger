@@ -1,5 +1,6 @@
 package com.rrtry.ogg;
 
+import com.rrtry.StreamInfo;
 import com.rrtry.TagParser;
 import com.rrtry.ogg.vorbis.VorbisComments;
 import com.rrtry.utils.IntegerUtils;
@@ -21,6 +22,16 @@ abstract public class OggParser implements TagParser<VorbisComments> {
 
     public int getPCMPageIndex() {
         return PCMPageIndex;
+    }
+
+    protected int getDuration(StreamInfo streamInfo) {
+
+        OggPage lastPage  = pages.get(pages.size() - 1);
+
+        final long totalSamples = lastPage.getHeader().getGranulePosition();
+        final int sampleRate    = streamInfo.getSampleRate();
+
+        return (int) (totalSamples / sampleRate);
     }
 
     public ArrayList<OggPage> parsePages(RandomAccessFile file) {

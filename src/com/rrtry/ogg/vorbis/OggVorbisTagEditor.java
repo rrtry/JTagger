@@ -25,7 +25,7 @@ public class OggVorbisTagEditor extends OggTagEditor {
     }
 
     @Override
-    protected ArrayList<OggPacket> getPackets() {
+    protected ArrayList<OggPacket> getHeaderPackets() {
 
         ArrayList<OggPacket> oggPackets = new ArrayList<>();
 

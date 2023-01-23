@@ -21,7 +21,7 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
     protected ArrayList<OggPacket> packets;
 
     abstract protected CommentHeader getCommentHeader();
-    abstract protected ArrayList<OggPacket> getPackets();
+    abstract protected ArrayList<OggPacket> getHeaderPackets();
 
     private static OggParser getOggParser(String mimeType) {
         if (mimeType.equals(OGG_OPUS_MIME_TYPE))   return new OggOpusParser();
@@ -31,6 +31,14 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
 
     public OggParser getParser() {
         return parser;
+    }
+
+    public ArrayList<OggPage> getPages() {
+        return pages;
+    }
+
+    public ArrayList<OggPacket> getPackets() {
+        return packets;
     }
 
     @Override
@@ -54,7 +62,7 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
         ArrayList<OggPage> paginatedPackets;
         ArrayList<OggPage> oggPages  = new ArrayList<>();
 
-        paginatedPackets = OggPage.paginatePackets(getPackets(), serialNumber, startingSeqNum);
+        paginatedPackets = OggPage.paginatePackets(getHeaderPackets(), serialNumber, startingSeqNum);
 
         oggPages.add(pages.get(0));
         oggPages.addAll(paginatedPackets);

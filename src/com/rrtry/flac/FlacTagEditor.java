@@ -15,20 +15,27 @@ import static com.rrtry.flac.FlacTag.MAGIC;
 
 public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
 
+    private FlacParser parser;
     private StreamInfoBlock streamInfo;
     private int originalTagSize;
 
     @Override
     protected void parseTag() throws IOException {
 
-        FlacTagParser parser = new FlacTagParser();
-        this.tag = parser.parseTag(file);
+        FlacParser parser = new FlacParser();
+
+        this.parser = parser;
+        this.tag    = parser.parseTag(file);
 
         if (tag != null) {
             this.streamInfo      = tag.getBlock(BLOCK_TYPE_STREAMINFO);
             this.isTagPresent    = true;
             this.originalTagSize = tag.getBlockDataSize();
         }
+    }
+
+    public FlacParser getParser() {
+        return parser;
     }
 
     private void setEmptyTag() {

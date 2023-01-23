@@ -6,25 +6,39 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-public class MediaFile<T extends Tag> {
+public class MediaFile<T extends Tag, I extends StreamInfo> {
 
     protected RandomAccessFile file;
-    protected AbstractTagEditor<T> editor;
+
+    protected AbstractTagEditor<T> tagEditor;
+    protected StreamInfoParser<I> streamInfoParser;
+
     protected T tag;
+    protected I streamInfo;
 
-    public void scan(File f) throws IOException {
+    public void scan(File fileObj) throws IOException {
 
-        String path     = f.getAbsolutePath();
-        String mimeType = FileContentTypeDetector.getFileContentType(f);
+        if (file != null) file.close();
+        if (!fileObj.exists()) return;
 
-        if (mimeType == null) return;
+        String path     = fileObj.getAbsolutePath();
+        String mimeType = FileContentTypeDetector.getFileContentType(fileObj);
 
-        editor = getEditor(mimeType);
-        if (editor == null) return;
+        if (mimeType == null) {
+            return;
+        }
 
-        file   = new RandomAccessFile(path, "rw");
-        editor.load(file, mimeType);
-        tag = editor.getTag();
+        tagEditor = getEditor(mimeType);
+        if (tagEditor == null) {
+            return;
+        }
+
+        file = new RandomAccessFile(path, "rw");
+        tagEditor.load(file, mimeType);
+        tag = tagEditor.getTag();
+
+        streamInfoParser = getParser(mimeType);
+        streamInfo       = streamInfoParser.parseStreamInfo(file);
     }
 
     @SuppressWarnings("unchecked")
@@ -32,19 +46,28 @@ public class MediaFile<T extends Tag> {
         return TagEditorFactory.getEditor(mimeType);
     }
 
+    @SuppressWarnings("unchecked")
+    protected StreamInfoParser<I> getParser(String mimeType) {
+        return StreamInfoParserFactory.getStreamInfoParser(mimeType, tag);
+    }
+
     public void setTag(T tag) {
-        editor.setTag(tag);
+        tagEditor.setTag(tag);
     }
 
     public T getTag() {
         return tag;
     }
 
+    public I getStreamInfo() {
+        return streamInfo;
+    }
+
     public void save() throws IOException {
-        editor.commit();
+        tagEditor.commit();
     }
 
     public void close() throws IOException {
-        editor.release();
+        tagEditor.release();
     }
 }

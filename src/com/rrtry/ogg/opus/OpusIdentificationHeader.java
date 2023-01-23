@@ -1,8 +1,9 @@
 package com.rrtry.ogg.opus;
 
 import com.rrtry.Component;
+import com.rrtry.StreamInfo;
 
-public class OpusIdentificationHeader implements Component {
+public class OpusIdentificationHeader implements Component, StreamInfo {
 
     private final byte channelCount;
     private final byte channelMappingFamily;
@@ -16,6 +17,9 @@ public class OpusIdentificationHeader implements Component {
 
     private byte[] channelMappingTable;
     private byte[] bytes;
+
+    private int duration;
+    private int bitrate;
 
     public OpusIdentificationHeader(
             byte channelCount,
@@ -65,6 +69,36 @@ public class OpusIdentificationHeader implements Component {
     }
 
     @Override
+    public int getDuration() {
+        return duration;
+    }
+
+    @Override
+    public byte getChannelCount() {
+        return channelCount;
+    }
+
+    @Override
+    public int getBitrate() {
+        return bitrate;
+    }
+
+    @Override
+    public int getSampleRate() {
+        return sampleRate;
+    }
+
+    @Override
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
+
+    @Override
+    public void setBitrate(int bitrate) {
+        this.bitrate = bitrate;
+    }
+
+    @Override
     public byte[] getBytes() {
         return bytes;
     }
@@ -73,20 +107,12 @@ public class OpusIdentificationHeader implements Component {
         this.bytes = bytes;
     }
 
-    public byte getChannelCount() {
-        return channelCount;
-    }
-
     public byte channelMappingFamily() {
         return channelCount;
     }
 
     public short getPreSkip() {
         return preSkip;
-    }
-
-    public int getSampleRate() {
-        return sampleRate;
     }
 
     private byte[] getChannelMappingTable() {

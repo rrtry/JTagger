@@ -1,5 +1,6 @@
 package com.rrtry.ogg.vorbis;
 
+import com.rrtry.StreamInfoParser;
 import com.rrtry.ogg.OggPacket;
 import com.rrtry.ogg.OggParser;
 import com.rrtry.utils.IntegerUtils;
@@ -7,11 +8,21 @@ import com.rrtry.utils.IntegerUtils;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
 
-public class OggVorbisParser extends OggParser {
+public class OggVorbisParser extends OggParser implements StreamInfoParser<VorbisIdentificationHeader> {
 
     public static final byte INVALID_HEADER_TYPE        = 0x1;
     public static final byte INVALID_HEADER_MAGIC       = 0x2;
     public static final byte INVALID_HEADER_FRAMING_BIT = 0x3;
+
+    private VorbisComments tag;
+
+    public OggVorbisParser(VorbisComments tag) {
+        this.tag = tag;
+    }
+
+    public OggVorbisParser() {
+
+    }
 
     private byte verifyHeader(byte[] packetData, byte type) {
 
@@ -24,10 +35,20 @@ public class OggVorbisParser extends OggParser {
 
     @Override
     public VorbisComments parseTag(RandomAccessFile file) {
+        if (tag != null) return tag;
         return parseVorbisCommentHeader(file).getVorbisComments();
     }
 
-    public VorbisCommentHeader parseVorbisCommentHeader(RandomAccessFile file) {
+    @Override
+    public VorbisIdentificationHeader parseStreamInfo(RandomAccessFile file) {
+
+        VorbisIdentificationHeader header = parseVorbisIdentificationHeader(file);
+        header.setDuration(getDuration(header));
+
+        return header;
+    }
+
+    private VorbisCommentHeader parseVorbisCommentHeader(RandomAccessFile file) {
 
         parsePackets(parsePages(file));
 
@@ -50,7 +71,7 @@ public class OggVorbisParser extends OggParser {
         return commentHeader;
     }
 
-    public VorbisIdentificationHeader parseVorbisIdentificationHeader(RandomAccessFile file) {
+    private VorbisIdentificationHeader parseVorbisIdentificationHeader(RandomAccessFile file) {
 
         parsePackets(parsePages(file));
         OggPacket oggPacket = packets.get(0);

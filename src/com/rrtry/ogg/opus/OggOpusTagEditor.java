@@ -24,7 +24,7 @@ public class OggOpusTagEditor extends OggTagEditor {
     }
 
     @Override
-    protected ArrayList<OggPacket> getPackets() {
+    protected ArrayList<OggPacket> getHeaderPackets() {
 
         ArrayList<OggPacket> oggPackets = new ArrayList<>();
         oggPackets.add(new OggPacket(getCommentHeader().getBytes()));

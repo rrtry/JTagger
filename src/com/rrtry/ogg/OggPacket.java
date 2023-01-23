@@ -38,6 +38,10 @@ public class OggPacket {
         return Arrays.copyOf(packetData, index);
     }
 
+    public int getSize() {
+        return getPacketData().length;
+    }
+
     public boolean isEmpty() {
         return getPacketData().length == 0;
     }

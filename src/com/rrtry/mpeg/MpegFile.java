@@ -4,35 +4,19 @@ import com.rrtry.MediaFile;
 import com.rrtry.mpeg.id3.ID3V2Tag;
 import com.rrtry.mpeg.id3.ID3V2TagEditor;
 
-import java.io.File;
-import java.io.IOException;
-
 import static com.rrtry.utils.FileContentTypeDetector.MPEG_MIME_TYPE;
 
-public class MpegFile extends MediaFile<ID3V2Tag> {
-
-    private MpegFrameHeader mpegHeader;
+public class MpegFile extends MediaFile<ID3V2Tag, MpegStreamInfo> {
 
     @Override
-    public ID3V2TagEditor getEditor(String mimeType) {
-        if (!mimeType.equals(MPEG_MIME_TYPE)) {
-            throw new IllegalArgumentException("Not a MPEG file");
-        }
+    protected MpegStreamInfoParser getParser(String mimeType) {
+        if (!mimeType.equals(MPEG_MIME_TYPE)) throw new IllegalArgumentException("Not a MP3 file");
+        return new MpegStreamInfoParser(tag);
+    }
+
+    @Override
+    protected ID3V2TagEditor getEditor(String mimeType) {
+        if (!mimeType.equals(MPEG_MIME_TYPE)) throw new IllegalArgumentException("Not a MPEG file");
         return new ID3V2TagEditor();
-    }
-
-    @Override
-    public void scan(File file) throws IOException {
-        super.scan(file);
-        parseMpegFrameHeader();
-    }
-
-    private void parseMpegFrameHeader() {
-        MpegFrameHeaderParser parser = new MpegFrameHeaderParser();
-        mpegHeader = parser.parse(file);
-    }
-
-    public MpegFrameHeader getMpegHeader() {
-        return mpegHeader;
     }
 }

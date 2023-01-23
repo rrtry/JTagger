@@ -1,5 +1,7 @@
 package com.rrtry.ogg.opus;
 
+import com.rrtry.StreamInfo;
+import com.rrtry.StreamInfoParser;
 import com.rrtry.ogg.*;
 import com.rrtry.ogg.vorbis.VorbisComments;
 import com.rrtry.ogg.vorbis.VorbisCommentsParser;
@@ -10,7 +12,7 @@ import java.util.Arrays;
 import static com.rrtry.utils.IntegerUtils.toUInt16LE;
 import static com.rrtry.utils.IntegerUtils.toUInt32LE;
 
-public class OggOpusParser extends OggParser {
+public class OggOpusParser extends OggParser implements StreamInfoParser<OpusIdentificationHeader> {
 
     public static final byte[] OPUS_IDENTIFICATION_HEADER_MAGIC = new byte[] {
             0x4F, 0x70, 0x75, 0x73, 0x48, 0x65, 0x61, 0x64
@@ -20,6 +22,16 @@ public class OggOpusParser extends OggParser {
             0x4F, 0x70, 0x75, 0x73, 0x54, 0x61, 0x67, 0x73
     };
 
+    private VorbisComments tag;
+
+    public OggOpusParser(VorbisComments tag) {
+        this.tag = tag;
+    }
+
+    public OggOpusParser() {
+
+    }
+
     private boolean isHeaderSignatureInvalid(byte[] header, byte[] magic) {
         return !Arrays.equals(
                 Arrays.copyOfRange(header, 0, magic.length),
@@ -27,7 +39,18 @@ public class OggOpusParser extends OggParser {
         );
     }
 
-    public OpusIdentificationHeader parseOpusIdentificationHeader(RandomAccessFile file) {
+    private int getBitrate(StreamInfo streamInfo) {
+
+        int length = 0;
+        for (int i = 2; i < packets.size(); i++) {
+            length += packets.get(i).getSize();
+        }
+
+        return (int) Math.ceil((length * 8f) / (getDuration(streamInfo) * 1000f));
+    }
+
+    @Override
+    public OpusIdentificationHeader parseStreamInfo(RandomAccessFile file) {
 
         parsePackets(parsePages(file));
 
@@ -49,8 +72,10 @@ public class OggOpusParser extends OggParser {
 
         byte channelMappingFamily = header[offset++];
 
+        OpusIdentificationHeader opusHeader;
         if (channelMappingFamily == 0x0) {
-            return new OpusIdentificationHeader(
+
+            opusHeader = new OpusIdentificationHeader(
                     channelCount,
                     channelMappingFamily,
                     preSkip,
@@ -58,21 +83,32 @@ public class OggOpusParser extends OggParser {
                     sampleRate,
                     header
             );
+
+            opusHeader.setBitrate(getBitrate(opusHeader));
+            opusHeader.setDuration(getDuration(opusHeader));
+
+            return opusHeader;
         }
 
         byte streamCount      = header[offset++];
         byte coupledCount     = header[offset++];
         byte[] channelMapping = Arrays.copyOfRange(header, offset, offset + Byte.toUnsignedInt(channelCount));
 
-        return new OpusIdentificationHeader(
+        opusHeader = new OpusIdentificationHeader(
                 channelCount, channelMappingFamily, streamCount, coupledCount,
                 preSkip, outputGain, sampleRate, channelMapping, header
         );
+
+        opusHeader.setDuration(getDuration(opusHeader));
+        opusHeader.setBitrate(getBitrate(opusHeader));
+
+        return opusHeader;
     }
 
     @Override
     public VorbisComments parseTag(RandomAccessFile file) {
 
+        if (tag != null) return tag;
         parsePackets(parsePages(file));
 
         OggPacket packet = packets.get(1);

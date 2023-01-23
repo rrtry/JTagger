@@ -1,6 +1,8 @@
 package com.rrtry.flac;
 
-public class StreamInfoBlock extends AbstractMetadataBlock {
+import com.rrtry.StreamInfo;
+
+public class StreamInfoBlock extends AbstractMetadataBlock implements StreamInfo {
 
     private StreamInfoBlock() {
         // private constructor
@@ -17,6 +19,7 @@ public class StreamInfoBlock extends AbstractMetadataBlock {
     private byte bitsPerSample;
 
     private int totalSamples;
+    private int bitrate;
     private String signature;
 
     public short getMinBlockSize() {
@@ -35,10 +38,6 @@ public class StreamInfoBlock extends AbstractMetadataBlock {
         return maxFrameSize;
     }
 
-    public byte getNumOfChannels() {
-        return numOfChannels;
-    }
-
     public byte getBitsPerSample() {
         return bitsPerSample;
     }
@@ -48,7 +47,39 @@ public class StreamInfoBlock extends AbstractMetadataBlock {
     }
 
     @Override
-    public byte[] assemble(byte version) { return blockBody; }
+    public byte getChannelCount() {
+        return numOfChannels;
+    }
+
+    @Override
+    public int getDuration() {
+        return (int) ((float) totalSamples / sampleRate);
+    }
+
+    @Override
+    public int getBitrate() {
+        return bitrate;
+    }
+
+    @Override
+    public int getSampleRate() {
+        return sampleRate;
+    }
+
+    @Override
+    public void setDuration(int duration) {
+        return;
+    }
+
+    @Override
+    public void setBitrate(int bitrate) {
+        this.bitrate = bitrate;
+    }
+
+    @Override
+    public byte[] assemble(byte version) {
+        return blockBody;
+    }
 
     @Override
     public int getBlockType() {

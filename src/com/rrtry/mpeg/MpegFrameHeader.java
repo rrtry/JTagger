@@ -1,6 +1,10 @@
 package com.rrtry.mpeg;
 
+import java.util.HashMap;
+
 public class MpegFrameHeader {
+
+    public static final HashMap<Byte, Byte> PADDING = new HashMap<>();
 
     public static final byte MPEG_VERSION_2_5 = 0x00;
     public static final byte MPEG_VERSION_2   = 0x02;
@@ -19,7 +23,7 @@ public class MpegFrameHeader {
     public static final byte EMPHASIS_50_15_MS = 0x01;
     public static final byte EMPHASIS_CCIT_J17 = 0x03;
 
-    public static final byte BITRATE_VBR = 0x00;
+    public static final byte BITRATE_VBR  = 0x00;
     public static final byte BITRATE_BAD  = 0x01;
 
     private final byte version;
@@ -36,6 +40,14 @@ public class MpegFrameHeader {
 
     private final int bitrate;
     private final int sampleRate;
+    private final int offset;
+    private final int samplesPerFrame;
+
+    static {
+        PADDING.put(MPEG_LAYER_1, (byte) 0x4);
+        PADDING.put(MPEG_LAYER_2, (byte) 0x1);
+        PADDING.put(MPEG_LAYER_3, (byte) 0x1);
+    }
 
     public MpegFrameHeader(
 
@@ -52,7 +64,9 @@ public class MpegFrameHeader {
             boolean isMidSideStereo,
 
             int bitrate,
-            int sampleRate)
+            int sampleRate,
+            int offset,
+            int samplesPerFrame)
     {
         this.version           = version;
         this.layer             = layer;
@@ -66,6 +80,20 @@ public class MpegFrameHeader {
         this.isMidSideStereo   = isMidSideStereo;
         this.bitrate           = bitrate;
         this.sampleRate        = sampleRate;
+        this.offset            = offset;
+        this.samplesPerFrame   = samplesPerFrame;
+    }
+
+    public byte getPadding() {
+        return !isPadded ? 0 : PADDING.get(layer);
+    }
+
+    public int getSamplesPerFrame() {
+        return samplesPerFrame;
+    }
+
+    public int getOffset() {
+        return offset;
     }
 
     public byte getVersion() {

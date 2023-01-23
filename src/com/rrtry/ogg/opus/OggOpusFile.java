@@ -5,18 +5,17 @@ import com.rrtry.ogg.vorbis.VorbisComments;
 
 import static com.rrtry.utils.FileContentTypeDetector.OGG_OPUS_MIME_TYPE;
 
-public class OggOpusFile extends MediaFile<VorbisComments> {
+public class OggOpusFile extends MediaFile<VorbisComments, OpusIdentificationHeader> {
 
-    public OpusIdentificationHeader getOpusIdentificationHeader() {
-        OggOpusParser opusParser = (OggOpusParser) ((OggOpusTagEditor) editor).getParser();
-        return opusParser.parseOpusIdentificationHeader(file);
+    @Override
+    protected OggOpusParser getParser(String mimeType) {
+        if (!mimeType.equals(OGG_OPUS_MIME_TYPE)) throw new IllegalArgumentException("Not an Ogg Opus file");
+        return (OggOpusParser) ((OggOpusTagEditor) tagEditor).getParser();
     }
 
     @Override
     protected OggOpusTagEditor getEditor(String mimeType) {
-        if (!mimeType.equals(OGG_OPUS_MIME_TYPE)) {
-            throw new IllegalArgumentException("Not an Ogg Opus file");
-        }
+        if (!mimeType.equals(OGG_OPUS_MIME_TYPE)) throw new IllegalArgumentException("Not an Ogg Opus file");
         return new OggOpusTagEditor();
     }
 }
