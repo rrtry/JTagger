@@ -1,11 +1,12 @@
 package com.rrtry.mpeg;
 
-import com.rrtry.mpeg.id3.AbstractFrame;
 import com.rrtry.mpeg.id3.ID3V2Tag;
 import com.rrtry.mpeg.id3.TagHeader;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -13,7 +14,7 @@ import java.util.List;
 import static com.rrtry.mpeg.MpegFrameHeader.*;
 import static java.lang.Byte.toUnsignedInt;
 
-public class MpegFrameHeaderParser {
+public class MpegFrameParser {
 
     private static final HashMap<Byte, List<Boolean>> MODE_EXTENSION    = new HashMap<>();
     private static final HashMap<Byte, List<Integer>> SAMPLE_RATE       = new HashMap<>();
@@ -54,13 +55,23 @@ public class MpegFrameHeaderParser {
     }
 
     private ID3V2Tag id3V2Tag;
+    private ArrayList<MpegFrame> frames = new ArrayList<>();
+    private float totalDuration;
 
-    public MpegFrameHeaderParser() {
+    public MpegFrameParser() {
         /* empty constructor */
     }
 
-    public MpegFrameHeaderParser(ID3V2Tag tag) {
+    public MpegFrameParser(ID3V2Tag tag) {
         this.id3V2Tag = tag;
+    }
+
+    public ArrayList<MpegFrame> getFrames() {
+        return frames;
+    }
+
+    public int getTotalDuration() {
+        return (int) totalDuration;
     }
 
     private int getFrameHeaderOffset(RandomAccessFile file) {
@@ -78,18 +89,22 @@ public class MpegFrameHeaderParser {
                 startPosition += 10;
             }
 
-            byte[] buffer = new byte[4];
+            byte[] buffer = new byte[1024];
             file.seek(startPosition);
 
-            while (true) {
+            outer:
+            while (file.getFilePointer() < file.length()) {
 
-                int totalRead = file.read(buffer, 0, buffer.length);
-                if (totalRead == -1) break;
+                long position = file.getFilePointer();
+                file.read(buffer);
 
-                boolean isSync = toUnsignedInt(buffer[0]) == 0xFF && toUnsignedInt(buffer[1]) >> 4 == 0xF;
-                if (isSync) {
-                    startPosition = (int) file.getFilePointer() - 4;
-                    break;
+                for (int i = 0; i < buffer.length - 1; i++) {
+                    if (toUnsignedInt(buffer[i]) == 0xFF &&
+                        toUnsignedInt(buffer[i + 1]) >> 4 == 0xF)
+                    {
+                        startPosition = (int) (position + i);
+                        break outer;
+                    }
                 }
             }
 
@@ -101,15 +116,15 @@ public class MpegFrameHeaderParser {
         }
     }
 
-    int getDuration(RandomAccessFile file) {
+    public void parseFrames(RandomAccessFile file) {
         try {
 
-            int offset     = getFrameHeaderOffset(file);
-            float duration = 0f;
+            int offset = getFrameHeaderOffset(file);
+            while (file.getFilePointer() < file.length()) {
 
-            while (offset < file.length()) {
+                MpegFrameHeader header = parseFrameHeader(file, offset);
+                byte[] frameData;
 
-                MpegFrameHeader header = parse(file, offset);
                 if (header == null) break;
 
                 int frameSize;
@@ -119,35 +134,33 @@ public class MpegFrameHeaderParser {
                 final int bitrate         = header.getBitrate();
                 final int samplingRate    = header.getSampleRate();
 
-                frameSize = (int) Math.floor(samplesPerFrame * ((bitrate * 1000f) / (samplingRate * 8f)));
-                if (header.isPadded()) frameSize += header.getPadding();
-
+                frameSize     = (int) Math.floor(samplesPerFrame * ((bitrate * 1000f) / (samplingRate * 8f)));
+                frameSize     = frameSize + header.getPadding();
                 frameDuration = ((8 * frameSize) / (bitrate * 1000f));
-                duration += frameDuration;
-                offset   += frameSize;
 
-                if (header.isProtected()) offset += 2; // Do not include checksum
-                file.seek(offset);
+                if (header.isProtected()) {
+                    frameSize += 2;
+                }
+
+                totalDuration += frameDuration;
+                offset += frameSize;
+
+                frameData = new byte[frameSize];
+                file.read(frameData, 0, frameData.length);
+                frames.add(new MpegFrame(header, frameData, frameDuration));
             }
 
-            return (int) duration;
+        } catch (IOException ignored) {
 
-        } catch (IOException e) {
-            e.printStackTrace();
-            return -1;
         }
     }
 
-    public MpegFrameHeader parse(RandomAccessFile file) {
-        return parse(file, getFrameHeaderOffset(file));
-    }
-
-    private MpegFrameHeader parse(RandomAccessFile file, int headerOffset) {
+    private MpegFrameHeader parseFrameHeader(RandomAccessFile file, int offset) {
         try {
 
             int[] header = new int[4];
 
-            file.seek(headerOffset);
+            file.seek(offset);
             header[0] = file.readUnsignedByte();
             header[1] = file.readUnsignedByte();
             header[2] = file.readUnsignedByte();
@@ -205,7 +218,6 @@ public class MpegFrameHeaderParser {
                     isMidSideStereo,
                     bitrate,
                     sampleRate,
-                    headerOffset,
                     samplesPerFrame
             );
 

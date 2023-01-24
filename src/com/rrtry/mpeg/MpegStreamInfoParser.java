@@ -4,6 +4,7 @@ import com.rrtry.StreamInfoParser;
 import com.rrtry.mpeg.id3.ID3V2Tag;
 
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 
 public class MpegStreamInfoParser implements StreamInfoParser<MpegStreamInfo> {
 
@@ -20,16 +21,24 @@ public class MpegStreamInfoParser implements StreamInfoParser<MpegStreamInfo> {
     @Override
     public MpegStreamInfo parseStreamInfo(RandomAccessFile file) {
 
-        MpegFrameHeaderParser mpegHeaderParser = new MpegFrameHeaderParser(tag);
-        XingHeaderParser xingHeaderParser      = new XingHeaderParser();
-        VBRIHeaderParser vbriHeaderParser      = new VBRIHeaderParser();
+        MpegFrameParser mpegFrameParser   = new MpegFrameParser(tag);
+        XingHeaderParser xingHeaderParser = new XingHeaderParser();
 
-        MpegFrameHeader mpegHeader = mpegHeaderParser.parse(file);
-        XingHeader xingHeader      = xingHeaderParser.parse(file, mpegHeader);
-        VBRIHeader vbriHeader      = vbriHeaderParser.parse(file, mpegHeader);
+        mpegFrameParser.parseFrames(file);
+        ArrayList<MpegFrame> frames = mpegFrameParser.getFrames();
+        MpegFrame mpegFrame         = frames.get(0);
+
+        MpegFrameHeader mpegHeader = mpegFrame.getMpegHeader();
+        XingHeader xingHeader      = xingHeaderParser.parse(mpegFrame);
+        VBRIHeader vbriHeader      = null;
+
+        if (xingHeader == null) {
+            VBRIHeaderParser vbriHeaderParser = new VBRIHeaderParser();
+            vbriHeader = vbriHeaderParser.parse(mpegFrame);
+        }
 
         MpegStreamInfo.Builder builder = MpegStreamInfo.newBuilder();
-        builder = builder.setMpegHeader(mpegHeader);
+        builder = builder.setMpegHeader(mpegFrame.getMpegHeader());
 
         if (xingHeader != null) builder = builder.setXingHeader(xingHeader);
         if (vbriHeader != null) builder = builder.setVBRIHeader(vbriHeader);
@@ -48,7 +57,7 @@ public class MpegStreamInfoParser implements StreamInfoParser<MpegStreamInfo> {
 
             duration = (samplesPerFrame * totalFrames) / sampleRate;
         } else {
-            duration = mpegHeaderParser.getDuration(file);
+            duration = mpegFrameParser.getTotalDuration();
         }
 
         mpegStreamInfo.setDuration(duration);

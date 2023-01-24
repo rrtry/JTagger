@@ -40,7 +40,6 @@ public class MpegFrameHeader {
 
     private final int bitrate;
     private final int sampleRate;
-    private final int offset;
     private final int samplesPerFrame;
 
     static {
@@ -65,7 +64,6 @@ public class MpegFrameHeader {
 
             int bitrate,
             int sampleRate,
-            int offset,
             int samplesPerFrame)
     {
         this.version           = version;
@@ -80,7 +78,6 @@ public class MpegFrameHeader {
         this.isMidSideStereo   = isMidSideStereo;
         this.bitrate           = bitrate;
         this.sampleRate        = sampleRate;
-        this.offset            = offset;
         this.samplesPerFrame   = samplesPerFrame;
     }
 
@@ -90,10 +87,6 @@ public class MpegFrameHeader {
 
     public int getSamplesPerFrame() {
         return samplesPerFrame;
-    }
-
-    public int getOffset() {
-        return offset;
     }
 
     public byte getVersion() {
