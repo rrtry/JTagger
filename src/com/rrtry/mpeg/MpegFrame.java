@@ -4,16 +4,10 @@ public class MpegFrame {
 
     private final MpegFrameHeader header;
     private final byte[] frameBody;
-    private final float duration;
 
-    public MpegFrame(MpegFrameHeader header, byte[] frameBody, float duration) {
+    public MpegFrame(MpegFrameHeader header, byte[] frameBody) {
         this.header    = header;
         this.frameBody = frameBody;
-        this.duration  = duration;
-    }
-
-    public float getDuration() {
-        return duration;
     }
 
     public MpegFrameHeader getMpegHeader() {
