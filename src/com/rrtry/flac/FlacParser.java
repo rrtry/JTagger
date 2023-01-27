@@ -22,11 +22,20 @@ public class FlacParser implements TagParser<FlacTag>, StreamInfoParser<StreamIn
     }
 
     @Override
-    public StreamInfoBlock parseStreamInfo(RandomAccessFile file) {
+    public StreamInfoBlock parseStreamInfo(RandomAccessFile file) throws IOException {
 
-        if (tag == null) parseTag(file);
+        if (tag == null) {
+            parseTag(file);
+        }
+
+        int streamLength;
+        int bitRate;
+
         StreamInfoBlock streamInfo = tag.getBlock(BLOCK_TYPE_STREAMINFO);
-        streamInfo.setBitrate(-1); // TODO: implement
+
+        streamLength = (int) (file.length() - tag.getBytes().length);
+        bitRate      = (int) ((streamLength * 8f) / (streamInfo.getDuration() * 1000f));
+        streamInfo.setBitrate(bitRate);
 
         return streamInfo;
     }
@@ -79,7 +88,6 @@ public class FlacParser implements TagParser<FlacTag>, StreamInfoParser<StreamIn
 
             tag.assemble();
             this.tag = tag;
-
             return tag;
 
         } catch (IOException e) {
