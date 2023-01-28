@@ -14,7 +14,7 @@ import static com.rrtry.utils.FileContentTypeDetector.OGG_OPUS_MIME_TYPE;
 public class StreamInfoParserFactory {
 
     @SuppressWarnings("rawtypes")
-    public static StreamInfoParser getStreamInfoParser(String mimeType, Tag tag) {
+    public static StreamInfoParser getStreamInfoParser(String mimeType, AbstractTag tag) {
         if (mimeType.equals(MPEG_MIME_TYPE))       return new MpegStreamInfoParser((ID3V2Tag) tag);
         if (mimeType.equals(FLAC_MIME_TYPE))       return new FlacParser((FlacTag) tag);
         if (mimeType.equals(OGG_VORBIS_MIME_TYPE)) return new OggVorbisParser((VorbisComments) tag);

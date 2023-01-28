@@ -1,6 +1,6 @@
 package com.rrtry.mpeg.id3;
 
-import com.rrtry.Tag;
+import com.rrtry.AbstractTag;
 import com.rrtry.AttachedPicture;
 import com.rrtry.PaddingTag;
 
@@ -35,97 +35,97 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
     private static final HashMap<String, String> FIELD_MAP_V24 = new HashMap<>();
 
     static {
-        FIELD_MAP_V23.put(Tag.TITLE            ,"TIT2");
-        FIELD_MAP_V23.put(Tag.ARTIST           ,"TPE1");
-        FIELD_MAP_V23.put(Tag.ALBUM            ,"TALB");
-        FIELD_MAP_V23.put(Tag.COMMENT          ,"COMM");
-        FIELD_MAP_V23.put(Tag.YEAR             ,"TYER");
-        FIELD_MAP_V23.put(Tag.TRACK_NUMBER     ,"TRCK");
-        FIELD_MAP_V23.put(Tag.GENRE            ,"TCON");
-        FIELD_MAP_V23.put(Tag.ALBUM_ARTIST     ,"TPE2");
-        FIELD_MAP_V23.put(Tag.ARRANGER         ,"IPLS");
-        FIELD_MAP_V23.put(Tag.AUTHOR           ,"TOLY");
-        FIELD_MAP_V23.put(Tag.BPM              ,"TBPM");
-        FIELD_MAP_V23.put(Tag.COMPILATION      ,"TCMP");
-        FIELD_MAP_V23.put(Tag.COMPOSER         ,"TCOM");
-        FIELD_MAP_V23.put(Tag.CONDUCTOR        ,"TPE3");
-        FIELD_MAP_V23.put(Tag.COPYRIGHT        ,"TCOP");
-        FIELD_MAP_V23.put(Tag.DESCRIPTION      ,"TIT3");
-        FIELD_MAP_V23.put(Tag.DISC_NUMBER      ,"TPOS");
-        FIELD_MAP_V23.put(Tag.ENCODED_BY       ,"TENC");
-        FIELD_MAP_V23.put(Tag.ENCODER_SETTINGS ,"TSSE");
-        FIELD_MAP_V23.put(Tag.GROUPING         ,"GRP1");
-        FIELD_MAP_V23.put(Tag.INITIAL_KEY      ,"TKEY");
-        FIELD_MAP_V23.put(Tag.ISRC             ,"TSRC");
-        FIELD_MAP_V23.put(Tag.LANGUAGE         ,"TLAN");
-        FIELD_MAP_V23.put(Tag.LYRICIST         ,"TEXT");
-        FIELD_MAP_V23.put(Tag.LYRICS           ,"USLT");
-        FIELD_MAP_V23.put(Tag.MEDIA            ,"TMED");
-        FIELD_MAP_V23.put(Tag.ORIGINAL_ALBUM   ,"TOAL");
-        FIELD_MAP_V23.put(Tag.ORIGINAL_ARTIST  ,"TOPE");
-        FIELD_MAP_V23.put(Tag.ORIGINAL_DATE    ,"TORY");
-        FIELD_MAP_V23.put(Tag.PERFORMER        ,"IPLS");
-        FIELD_MAP_V23.put(Tag.PICTURE          ,"APIC");
-        FIELD_MAP_V23.put(Tag.PUBLISHER        ,"TPUB");
-        FIELD_MAP_V23.put(Tag.RATING           ,"POPM");
-        FIELD_MAP_V23.put(Tag.REMIXER          ,"TPE4");
-        FIELD_MAP_V23.put(Tag.SORT_ALBUM       ,"TSOA");
-        FIELD_MAP_V23.put(Tag.SORT_ALBUM_ARTIST,"TSO2");
-        FIELD_MAP_V23.put(Tag.SORT_ARTIST      ,"TSOP");
-        FIELD_MAP_V23.put(Tag.SORT_COMPOSER    ,"TSOC");
-        FIELD_MAP_V23.put(Tag.SORT_NAME        ,"TSOT");
-        FIELD_MAP_V23.put(Tag.WEBSITE          ,"WOAR");
-        FIELD_MAP_V23.put(Tag.WORK             ,"TIT1");
-        FIELD_MAP_V23.put(Tag.WWW_AUDIO_FILE   ,"WOAF");
-        FIELD_MAP_V23.put(Tag.WWW_AUDIO_SOURCE ,"WOAS");
+        FIELD_MAP_V23.put(AbstractTag.TITLE            ,"TIT2");
+        FIELD_MAP_V23.put(AbstractTag.ARTIST           ,"TPE1");
+        FIELD_MAP_V23.put(AbstractTag.ALBUM            ,"TALB");
+        FIELD_MAP_V23.put(AbstractTag.COMMENT          ,"COMM");
+        FIELD_MAP_V23.put(AbstractTag.YEAR             ,"TYER");
+        FIELD_MAP_V23.put(AbstractTag.TRACK_NUMBER     ,"TRCK");
+        FIELD_MAP_V23.put(AbstractTag.GENRE            ,"TCON");
+        FIELD_MAP_V23.put(AbstractTag.ALBUM_ARTIST     ,"TPE2");
+        FIELD_MAP_V23.put(AbstractTag.ARRANGER         ,"IPLS");
+        FIELD_MAP_V23.put(AbstractTag.AUTHOR           ,"TOLY");
+        FIELD_MAP_V23.put(AbstractTag.BPM              ,"TBPM");
+        FIELD_MAP_V23.put(AbstractTag.COMPILATION      ,"TCMP");
+        FIELD_MAP_V23.put(AbstractTag.COMPOSER         ,"TCOM");
+        FIELD_MAP_V23.put(AbstractTag.CONDUCTOR        ,"TPE3");
+        FIELD_MAP_V23.put(AbstractTag.COPYRIGHT        ,"TCOP");
+        FIELD_MAP_V23.put(AbstractTag.DESCRIPTION      ,"TIT3");
+        FIELD_MAP_V23.put(AbstractTag.DISC_NUMBER      ,"TPOS");
+        FIELD_MAP_V23.put(AbstractTag.ENCODED_BY       ,"TENC");
+        FIELD_MAP_V23.put(AbstractTag.ENCODER_SETTINGS ,"TSSE");
+        FIELD_MAP_V23.put(AbstractTag.GROUPING         ,"GRP1");
+        FIELD_MAP_V23.put(AbstractTag.INITIAL_KEY      ,"TKEY");
+        FIELD_MAP_V23.put(AbstractTag.ISRC             ,"TSRC");
+        FIELD_MAP_V23.put(AbstractTag.LANGUAGE         ,"TLAN");
+        FIELD_MAP_V23.put(AbstractTag.LYRICIST         ,"TEXT");
+        FIELD_MAP_V23.put(AbstractTag.LYRICS           ,"USLT");
+        FIELD_MAP_V23.put(AbstractTag.MEDIA            ,"TMED");
+        FIELD_MAP_V23.put(AbstractTag.ORIGINAL_ALBUM   ,"TOAL");
+        FIELD_MAP_V23.put(AbstractTag.ORIGINAL_ARTIST  ,"TOPE");
+        FIELD_MAP_V23.put(AbstractTag.ORIGINAL_DATE    ,"TORY");
+        FIELD_MAP_V23.put(AbstractTag.PERFORMER        ,"IPLS");
+        FIELD_MAP_V23.put(AbstractTag.PICTURE          ,"APIC");
+        FIELD_MAP_V23.put(AbstractTag.PUBLISHER        ,"TPUB");
+        FIELD_MAP_V23.put(AbstractTag.RATING           ,"POPM");
+        FIELD_MAP_V23.put(AbstractTag.REMIXER          ,"TPE4");
+        FIELD_MAP_V23.put(AbstractTag.SORT_ALBUM       ,"TSOA");
+        FIELD_MAP_V23.put(AbstractTag.SORT_ALBUM_ARTIST,"TSO2");
+        FIELD_MAP_V23.put(AbstractTag.SORT_ARTIST      ,"TSOP");
+        FIELD_MAP_V23.put(AbstractTag.SORT_COMPOSER    ,"TSOC");
+        FIELD_MAP_V23.put(AbstractTag.SORT_NAME        ,"TSOT");
+        FIELD_MAP_V23.put(AbstractTag.WEBSITE          ,"WOAR");
+        FIELD_MAP_V23.put(AbstractTag.WORK             ,"TIT1");
+        FIELD_MAP_V23.put(AbstractTag.WWW_AUDIO_FILE   ,"WOAF");
+        FIELD_MAP_V23.put(AbstractTag.WWW_AUDIO_SOURCE ,"WOAS");
 
-        FIELD_MAP_V24.put(Tag.TITLE            ,"TIT2");
-        FIELD_MAP_V24.put(Tag.ARTIST           ,"TPE1");
-        FIELD_MAP_V24.put(Tag.ALBUM            ,"TALB");
-        FIELD_MAP_V24.put(Tag.COMMENT          ,"COMM");
-        FIELD_MAP_V24.put(Tag.YEAR             ,"TDRC");
-        FIELD_MAP_V24.put(Tag.TRACK_NUMBER     ,"TRCK");
-        FIELD_MAP_V24.put(Tag.GENRE            ,"TCON");
-        FIELD_MAP_V24.put(Tag.ALBUM_ARTIST     ,"TPE2");
-        FIELD_MAP_V24.put(Tag.ARRANGER         ,"TIPL");
-        FIELD_MAP_V24.put(Tag.AUTHOR           ,"TOLY");
-        FIELD_MAP_V24.put(Tag.BPM              ,"TBPM");
-        FIELD_MAP_V24.put(Tag.COMPILATION      ,"TCMP");
-        FIELD_MAP_V24.put(Tag.COMPOSER         ,"TCOM");
-        FIELD_MAP_V24.put(Tag.CONDUCTOR        ,"TPE3");
-        FIELD_MAP_V24.put(Tag.COPYRIGHT        ,"TCOP");
-        FIELD_MAP_V24.put(Tag.DESCRIPTION      ,"TIT3");
-        FIELD_MAP_V24.put(Tag.DISC_NUMBER      ,"TPOS");
-        FIELD_MAP_V24.put(Tag.ENCODED_BY       ,"TENC");
-        FIELD_MAP_V24.put(Tag.ENCODER_SETTINGS ,"TSSE");
-        FIELD_MAP_V24.put(Tag.ENCODING_TIME    ,"TDEN");
-        FIELD_MAP_V24.put(Tag.GROUPING         ,"GRP1");
-        FIELD_MAP_V24.put(Tag.INITIAL_KEY      ,"TKEY");
-        FIELD_MAP_V24.put(Tag.ISRC             ,"TSRC");
-        FIELD_MAP_V24.put(Tag.LANGUAGE         ,"TLAN");
-        FIELD_MAP_V24.put(Tag.LYRICIST         ,"TEXT");
-        FIELD_MAP_V24.put(Tag.LYRICS           ,"USLT");
-        FIELD_MAP_V24.put(Tag.MEDIA            ,"TMED");
-        FIELD_MAP_V24.put(Tag.MOOD             ,"TMOO");
-        FIELD_MAP_V24.put(Tag.ORIGINAL_ALBUM   ,"TOAL");
-        FIELD_MAP_V24.put(Tag.ORIGINAL_ARTIST  ,"TOPE");
-        FIELD_MAP_V24.put(Tag.ORIGINAL_DATE    ,"TDOR");
-        FIELD_MAP_V24.put(Tag.PERFORMER        ,"TMCL");
-        FIELD_MAP_V24.put(Tag.PICTURE          ,"APIC");
-        FIELD_MAP_V24.put(Tag.PUBLISHER        ,"TPUB");
-        FIELD_MAP_V24.put(Tag.RATING           ,"POPM");
-        FIELD_MAP_V24.put(Tag.RELEASE_DATE     ,"TDRL");
-        FIELD_MAP_V24.put(Tag.REMIXER          ,"TPE4");
-        FIELD_MAP_V24.put(Tag.SORT_ALBUM       ,"TSOA");
-        FIELD_MAP_V24.put(Tag.SORT_ALBUM_ARTIST,"TSO2");
-        FIELD_MAP_V24.put(Tag.SORT_ARTIST      ,"TSOP");
-        FIELD_MAP_V24.put(Tag.SORT_COMPOSER    ,"TSOC");
-        FIELD_MAP_V24.put(Tag.SORT_NAME        ,"TSOT");
-        FIELD_MAP_V24.put(Tag.SUBTITLE         ,"TSST");
-        FIELD_MAP_V24.put(Tag.WEBSITE          ,"WOAR");
-        FIELD_MAP_V24.put(Tag.WORK             ,"TIT1");
-        FIELD_MAP_V24.put(Tag.WWW_AUDIO_FILE   ,"WOAF");
-        FIELD_MAP_V24.put(Tag.WWW_AUDIO_SOURCE ,"WOAS");
+        FIELD_MAP_V24.put(AbstractTag.TITLE            ,"TIT2");
+        FIELD_MAP_V24.put(AbstractTag.ARTIST           ,"TPE1");
+        FIELD_MAP_V24.put(AbstractTag.ALBUM            ,"TALB");
+        FIELD_MAP_V24.put(AbstractTag.COMMENT          ,"COMM");
+        FIELD_MAP_V24.put(AbstractTag.YEAR             ,"TDRC");
+        FIELD_MAP_V24.put(AbstractTag.TRACK_NUMBER     ,"TRCK");
+        FIELD_MAP_V24.put(AbstractTag.GENRE            ,"TCON");
+        FIELD_MAP_V24.put(AbstractTag.ALBUM_ARTIST     ,"TPE2");
+        FIELD_MAP_V24.put(AbstractTag.ARRANGER         ,"TIPL");
+        FIELD_MAP_V24.put(AbstractTag.AUTHOR           ,"TOLY");
+        FIELD_MAP_V24.put(AbstractTag.BPM              ,"TBPM");
+        FIELD_MAP_V24.put(AbstractTag.COMPILATION      ,"TCMP");
+        FIELD_MAP_V24.put(AbstractTag.COMPOSER         ,"TCOM");
+        FIELD_MAP_V24.put(AbstractTag.CONDUCTOR        ,"TPE3");
+        FIELD_MAP_V24.put(AbstractTag.COPYRIGHT        ,"TCOP");
+        FIELD_MAP_V24.put(AbstractTag.DESCRIPTION      ,"TIT3");
+        FIELD_MAP_V24.put(AbstractTag.DISC_NUMBER      ,"TPOS");
+        FIELD_MAP_V24.put(AbstractTag.ENCODED_BY       ,"TENC");
+        FIELD_MAP_V24.put(AbstractTag.ENCODER_SETTINGS ,"TSSE");
+        FIELD_MAP_V24.put(AbstractTag.ENCODING_TIME    ,"TDEN");
+        FIELD_MAP_V24.put(AbstractTag.GROUPING         ,"GRP1");
+        FIELD_MAP_V24.put(AbstractTag.INITIAL_KEY      ,"TKEY");
+        FIELD_MAP_V24.put(AbstractTag.ISRC             ,"TSRC");
+        FIELD_MAP_V24.put(AbstractTag.LANGUAGE         ,"TLAN");
+        FIELD_MAP_V24.put(AbstractTag.LYRICIST         ,"TEXT");
+        FIELD_MAP_V24.put(AbstractTag.LYRICS           ,"USLT");
+        FIELD_MAP_V24.put(AbstractTag.MEDIA            ,"TMED");
+        FIELD_MAP_V24.put(AbstractTag.MOOD             ,"TMOO");
+        FIELD_MAP_V24.put(AbstractTag.ORIGINAL_ALBUM   ,"TOAL");
+        FIELD_MAP_V24.put(AbstractTag.ORIGINAL_ARTIST  ,"TOPE");
+        FIELD_MAP_V24.put(AbstractTag.ORIGINAL_DATE    ,"TDOR");
+        FIELD_MAP_V24.put(AbstractTag.PERFORMER        ,"TMCL");
+        FIELD_MAP_V24.put(AbstractTag.PICTURE          ,"APIC");
+        FIELD_MAP_V24.put(AbstractTag.PUBLISHER        ,"TPUB");
+        FIELD_MAP_V24.put(AbstractTag.RATING           ,"POPM");
+        FIELD_MAP_V24.put(AbstractTag.RELEASE_DATE     ,"TDRL");
+        FIELD_MAP_V24.put(AbstractTag.REMIXER          ,"TPE4");
+        FIELD_MAP_V24.put(AbstractTag.SORT_ALBUM       ,"TSOA");
+        FIELD_MAP_V24.put(AbstractTag.SORT_ALBUM_ARTIST,"TSO2");
+        FIELD_MAP_V24.put(AbstractTag.SORT_ARTIST      ,"TSOP");
+        FIELD_MAP_V24.put(AbstractTag.SORT_COMPOSER    ,"TSOC");
+        FIELD_MAP_V24.put(AbstractTag.SORT_NAME        ,"TSOT");
+        FIELD_MAP_V24.put(AbstractTag.SUBTITLE         ,"TSST");
+        FIELD_MAP_V24.put(AbstractTag.WEBSITE          ,"WOAR");
+        FIELD_MAP_V24.put(AbstractTag.WORK             ,"TIT1");
+        FIELD_MAP_V24.put(AbstractTag.WWW_AUDIO_FILE   ,"WOAF");
+        FIELD_MAP_V24.put(AbstractTag.WWW_AUDIO_SOURCE ,"WOAS");
     }
 
     public static final byte ID3V2   = 0x02;
@@ -432,8 +432,10 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
     }
 
     public void setGenre(int genre) {
-        String genreString = ID3V1Tag.GENRES[genre];
-        setTextFrame(AbstractFrame.GENRE, genreString, ENCODING_LATIN_1);
+        if (genre < ID3V1Tag.GENRES.length - 1) {
+            String genreString = ID3V1Tag.GENRES[genre];
+            setTextFrame(AbstractFrame.GENRE, genreString, ENCODING_LATIN_1);
+        }
     }
 
     public void setGenre(String genre) {
@@ -711,7 +713,8 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
         String frameId = getFrameIdFromFieldName(field);
 
         if (frameId == null) return;
-        if (field.equals(Tag.PICTURE)) {
+        if (field.equals(AbstractTag.PICTURE)) {
+
             AttachedPicture picture = (AttachedPicture) value;
             AttachedPictureFrame pictureFrame = AttachedPictureFrame.createInstance(
                     picture.getDescription(), picture.getMimeType(),
@@ -719,13 +722,25 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
                     getVersion()
             );
             frames.add(pictureFrame);
+
         } else if (TimestampFrame.isTimestampFrame(frameId)) {
+
             Year year = Year.parse((String) value);
             TimestampFrame timestampFrame = TimestampFrame.createBuilder()
                     .setYear(year)
                     .setHeader(FrameHeader.createFrameHeader(frameId, getVersion()))
                     .build(getVersion());
             frames.add(timestampFrame);
+
+        } else if (CommentFrame.isCommentFrame(frameId)) {
+
+            CommentFrame commentFrame = CommentFrame.createInstance(
+                    (String) value,
+                    "XXX",
+                    getVersion()
+            );
+            frames.add(commentFrame);
+
         } else {
             TextFrame textFrame = TextFrame.createInstance(
                     frameId,

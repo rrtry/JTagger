@@ -6,7 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-public class MediaFile<T extends Tag, I extends StreamInfo> {
+public class MediaFile<T extends AbstractTag, I extends StreamInfo> {
 
     protected RandomAccessFile file;
 
@@ -53,6 +53,10 @@ public class MediaFile<T extends Tag, I extends StreamInfo> {
 
     public void setTag(T tag) {
         tagEditor.setTag(tag);
+    }
+
+    public void removeTag() {
+        tagEditor.removeTag();
     }
 
     public T getTag() {

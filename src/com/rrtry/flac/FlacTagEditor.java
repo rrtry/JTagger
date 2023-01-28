@@ -1,7 +1,7 @@
 package com.rrtry.flac;
 
 import com.rrtry.AbstractTagEditor;
-import com.rrtry.Tag;
+import com.rrtry.AbstractTag;
 import com.rrtry.utils.FileContentTypeDetector;
 
 import java.io.File;
@@ -113,7 +113,7 @@ public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
     }
 
     @Override
-    public void setTag(Tag tag) {
+    public void setTag(AbstractTag tag) {
 
         if (tag instanceof FlacTag) {
             tag.assemble();

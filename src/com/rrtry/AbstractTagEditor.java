@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.File;
 
-public abstract class AbstractTagEditor<T extends Tag> {
+public abstract class AbstractTagEditor<T extends AbstractTag> {
 
     protected RandomAccessFile file;
     protected T tag;
@@ -18,16 +18,16 @@ public abstract class AbstractTagEditor<T extends Tag> {
     abstract protected String getFileMimeType();
 
     abstract public void commit() throws IOException;
-    abstract public void setTag(Tag tag);
+    abstract public void setTag(AbstractTag tag);
 
-    protected final void convertTag(Tag from, T to) {
+    protected final void convertTag(AbstractTag from, T to) {
 
         AttachedPicture picture = from.getPictureField();
         if (picture != null) to.setPictureField(picture);
 
-        for (String field : Tag.FIELDS) {
+        for (String field : AbstractTag.FIELDS) {
 
-            if (field.equals(Tag.PICTURE)) {
+            if (field.equals(AbstractTag.PICTURE)) {
                 continue;
             }
 

@@ -1,9 +1,8 @@
 package com.rrtry;
 
-import java.io.IOException;
 import java.io.RandomAccessFile;
 
-public interface TagParser <T extends Tag> {
+public interface TagParser <T extends AbstractTag> {
 
     T parseTag(RandomAccessFile file);
 }

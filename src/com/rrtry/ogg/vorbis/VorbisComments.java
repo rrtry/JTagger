@@ -1,7 +1,7 @@
 package com.rrtry.ogg.vorbis;
 
 import com.rrtry.AttachedPicture;
-import com.rrtry.Tag;
+import com.rrtry.AbstractTag;
 import com.rrtry.flac.PictureBlock;
 import com.rrtry.flac.PictureBlockParser;
 import com.rrtry.utils.IntegerUtils;
@@ -11,7 +11,7 @@ import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class VorbisComments extends Tag {
+public class VorbisComments extends AbstractTag {
 
     public static final String VENDOR_STRING = "reference libFLAC 1.3.1 20141125";
     public static final String PICTURE       = "METADATA_BLOCK_PICTURE";
@@ -124,7 +124,7 @@ public class VorbisComments extends Tag {
 
     @Override
     protected <T> void setFieldValue(String fieldId, T value) {
-        if (fieldId.equals(Tag.PICTURE)) {
+        if (fieldId.equals(AbstractTag.PICTURE)) {
 
             PictureBlock pictureBlock = new PictureBlock();
             pictureBlock.setPicture((AttachedPicture) value);
@@ -141,7 +141,7 @@ public class VorbisComments extends Tag {
     @Override
     @SuppressWarnings("unchecked")
     protected <T> T getFieldValue(String fieldId) {
-        if (fieldId.equals(Tag.PICTURE)) {
+        if (fieldId.equals(AbstractTag.PICTURE)) {
 
             String value = getComment(VorbisComments.PICTURE);
             if (value.isEmpty()) return null;
@@ -156,6 +156,9 @@ public class VorbisComments extends Tag {
 
     @Override
     public void removeField(String fieldId) {
+        if (AbstractTag.PICTURE.equals(fieldId)) {
+            fieldId = PICTURE;
+        }
         removeComment(fieldId);
     }
 }

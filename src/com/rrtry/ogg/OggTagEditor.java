@@ -1,7 +1,7 @@
 package com.rrtry.ogg;
 
 import com.rrtry.AbstractTagEditor;
-import com.rrtry.Tag;
+import com.rrtry.AbstractTag;
 import com.rrtry.ogg.opus.OggOpusParser;
 import com.rrtry.ogg.vorbis.OggVorbisParser;
 import com.rrtry.ogg.vorbis.VorbisComments;
@@ -84,7 +84,7 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
     }
 
     @Override
-    public void setTag(Tag tag) {
+    public void setTag(AbstractTag tag) {
 
         if (tag instanceof VorbisComments) {
             tag.assemble();

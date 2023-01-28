@@ -55,7 +55,9 @@ public class CommentFrame extends AbstractFrame<String> {
         return frame;
     }
 
-    public String getComment() { return comment; }
+    public String getComment() {
+        return comment;
+    }
 
     public void setComment(String comment) {
         this.comment = comment;
@@ -75,6 +77,10 @@ public class CommentFrame extends AbstractFrame<String> {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public static boolean isCommentFrame(String id) {
+        return id.equals(COMMENT);
     }
 
     public static Builder newBuilder() { return new CommentFrame().new Builder(); }

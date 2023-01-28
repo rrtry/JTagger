@@ -1,6 +1,6 @@
 package com.rrtry.mpeg.id3;
 
-import com.rrtry.Tag;
+import com.rrtry.AbstractTag;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.nio.charset.StandardCharsets;
@@ -430,26 +430,26 @@ public class ID3V1Tag extends ID3Tag {
 
         String fieldValue = (String) value;
 
-        if (fieldId.equals(Tag.TITLE))   setTitle(fieldValue);
-        if (fieldId.equals(Tag.ARTIST))  setArtist(fieldValue);
-        if (fieldId.equals(Tag.ALBUM))   setAlbum(fieldValue);
-        if (fieldId.equals(Tag.YEAR))    setYear(fieldValue);
-        if (fieldId.equals(Tag.COMMENT)) setComment(fieldValue);
-        if (fieldId.equals(Tag.GENRE))   setGenre(Integer.parseInt(fieldValue));
-        if (fieldId.equals(Tag.TRACK_NUMBER)) setAlbumTrack(Integer.parseInt(fieldValue));
+        if (fieldId.equals(AbstractTag.TITLE))   setTitle(fieldValue);
+        if (fieldId.equals(AbstractTag.ARTIST))  setArtist(fieldValue);
+        if (fieldId.equals(AbstractTag.ALBUM))   setAlbum(fieldValue);
+        if (fieldId.equals(AbstractTag.YEAR))    setYear(fieldValue);
+        if (fieldId.equals(AbstractTag.COMMENT)) setComment(fieldValue);
+        if (fieldId.equals(AbstractTag.GENRE))   setGenre(Integer.parseInt(fieldValue));
+        if (fieldId.equals(AbstractTag.TRACK_NUMBER)) setAlbumTrack(Integer.parseInt(fieldValue));
     }
 
     @Override
     @SuppressWarnings("unchecked")
     protected <T> T getFieldValue(String fieldId) {
 
-        if (fieldId.equals(Tag.TITLE))   return (T) title;
-        if (fieldId.equals(Tag.ARTIST))  return (T) artist;
-        if (fieldId.equals(Tag.ALBUM))   return (T) album;
-        if (fieldId.equals(Tag.YEAR))    return (T) String.valueOf(year);
-        if (fieldId.equals(Tag.COMMENT)) return (T) comment;
-        if (fieldId.equals(Tag.GENRE))   return (T) String.valueOf(genre);
-        if (fieldId.equals(Tag.TRACK_NUMBER)) return (T) String.valueOf(trackNumber);
+        if (fieldId.equals(AbstractTag.TITLE))   return (T) title;
+        if (fieldId.equals(AbstractTag.ARTIST))  return (T) artist;
+        if (fieldId.equals(AbstractTag.ALBUM))   return (T) album;
+        if (fieldId.equals(AbstractTag.YEAR))    return (T) String.valueOf(year);
+        if (fieldId.equals(AbstractTag.COMMENT)) return (T) comment;
+        if (fieldId.equals(AbstractTag.GENRE))   return (T) String.valueOf(genre);
+        if (fieldId.equals(AbstractTag.TRACK_NUMBER)) return (T) String.valueOf(trackNumber);
 
         return null;
     }

@@ -1,6 +1,6 @@
 package com.rrtry.flac;
 
-import com.rrtry.Tag;
+import com.rrtry.AbstractTag;
 import com.rrtry.AttachedPicture;
 import com.rrtry.PaddingTag;
 
@@ -10,7 +10,7 @@ import java.util.Comparator;
 
 import static com.rrtry.flac.AbstractMetadataBlock.*;
 
-public class FlacTag extends Tag implements PaddingTag {
+public class FlacTag extends AbstractTag implements PaddingTag {
 
     public static final byte NUMBER_OF_BLOCKS = 7;
     public static final String MAGIC = "fLaC";
@@ -151,7 +151,7 @@ public class FlacTag extends Tag implements PaddingTag {
 
     @Override
     protected <T> void setFieldValue(String fieldId, T value) {
-        if (fieldId.equals(Tag.PICTURE)) {
+        if (fieldId.equals(AbstractTag.PICTURE)) {
 
             PictureBlock pictureBlock = getBlock(BLOCK_TYPE_PICTURE);
             if (pictureBlock == null) {
@@ -168,7 +168,7 @@ public class FlacTag extends Tag implements PaddingTag {
     @Override
     @SuppressWarnings("unchecked")
     protected <T> T getFieldValue(String fieldId) {
-        if (fieldId.equals(Tag.PICTURE)) {
+        if (fieldId.equals(AbstractTag.PICTURE)) {
             PictureBlock pictureBlock = getBlock(BLOCK_TYPE_PICTURE);
             return pictureBlock != null ? (T) pictureBlock.getPicture() : null;
         }
