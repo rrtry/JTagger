@@ -97,7 +97,9 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
             }
         }
 
-        final int bufferSize = 4096;
+        final long initialLength = file.length();
+        final int bufferSize     = 4096;
+
         final String prefix  = "ID3";
         final String suffix  = ".tmp";
 
@@ -121,15 +123,20 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
 
             file.seek(streamOffset);
 
-            while (file.read(tempBuffer, 0, tempBuffer.length) != -1) {
-                tempFile.write(tempBuffer, 0, tempBuffer.length);
+            while (file.read(tempBuffer) != -1) {
+                tempFile.write(tempBuffer);
             }
 
             file.seek(0);
             tempFile.seek(0);
 
-            while (tempFile.read(tempBuffer, 0, tempBuffer.length) != -1) {
-                file.write(tempBuffer, 0, tempBuffer.length);
+            while (tempFile.read(tempBuffer) != -1) {
+                file.write(tempBuffer);
+            }
+
+            long tempLength = tempFile.length();
+            if (tempLength < initialLength) {
+                file.setLength(tempLength);
             }
 
         } finally {

@@ -83,7 +83,8 @@ public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
             return;
         }
 
-        final int bufferSize = 4096;
+        final long initialLength = file.length();
+        final int bufferSize     = 4096;
         final String suffix = ".tmp";
 
         File temp = File.createTempFile(MAGIC, suffix);
@@ -105,6 +106,11 @@ public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
 
             while (tempFile.read(tempBuffer, 0, tempBuffer.length) != -1) {
                 file.write(tempBuffer, 0, tempBuffer.length);
+            }
+
+            long tempLength = tempFile.length();
+            if (tempLength < initialLength) {
+                file.setLength(tempLength);
             }
 
         } finally {
