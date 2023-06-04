@@ -21,10 +21,11 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> {
         if (file != null) file.close();
         if (!fileObj.exists()) return;
 
-        String path     = fileObj.getAbsolutePath();
-        String mimeType = FileContentTypeDetector.getFileContentType(fileObj);
+        file = new RandomAccessFile(fileObj.getAbsolutePath(), "rw");
+        String mimeType = FileContentTypeDetector.getFileContentType(file);
 
         if (mimeType == null) {
+            file.close();
             return;
         }
 
@@ -33,10 +34,8 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> {
             return;
         }
 
-        file = new RandomAccessFile(path, "rw");
         tagEditor.load(file, mimeType);
-        tag = tagEditor.getTag();
-
+        tag              = tagEditor.getTag();
         streamInfoParser = getParser(mimeType);
         streamInfo       = streamInfoParser.parseStreamInfo(file);
     }

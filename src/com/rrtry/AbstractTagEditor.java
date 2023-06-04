@@ -38,25 +38,6 @@ public abstract class AbstractTagEditor<T extends AbstractTag> {
         }
     }
 
-    public void load(File file) throws IOException {
-
-        if (this.file != null) {
-            release();
-        }
-
-        String path     = file.getAbsolutePath();
-        String mimeType = FileContentTypeDetector.getFileContentType(file);
-
-        if (mimeType == null) return;
-        if (mimeType.equals(getFileMimeType())) {
-
-            this.file     = new RandomAccessFile(path, "rw");
-            this.mimeType = mimeType;
-
-            parseTag();
-        }
-    }
-
     void load(RandomAccessFile file, String mimeType) throws IOException {
 
         if (this.file != null) release();
