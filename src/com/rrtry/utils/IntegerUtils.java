@@ -73,6 +73,13 @@ public class IntegerUtils {
         };
     }
 
+    public static byte[] fromUInt16BE(long in) {
+        return new byte[] {
+                (byte) (in >>> 8),
+                (byte) in
+        };
+    }
+
     public static short toUInt16LE(byte[] bytes) {
         return (short) ((bytes[1] & 0xFF << 8) | (bytes[0] & 0xFF));
     }

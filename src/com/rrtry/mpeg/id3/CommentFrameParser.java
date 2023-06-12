@@ -19,14 +19,14 @@ public class CommentFrameParser implements FrameBodyParser<CommentFrame> {
     public final int LANGUAGE_LENGTH = 3;
     public final int DESCRIPTION_OFFSET = 4;
 
-    private String parseComment(byte[] frameData, Charset charset) {
+    protected String parseComment(byte[] frameData, Charset charset) {
         return new String(
                 Arrays.copyOfRange(frameData, ++position, frameData.length),
                 charset
         ).replace("\0", "");
     }
 
-    private String parseCommentDescription(byte[] frameData, Charset charset) {
+    protected String parseCommentDescription(byte[] frameData, Charset charset) {
 
         final int from = DESCRIPTION_OFFSET;
         position = from;
@@ -44,26 +44,26 @@ public class CommentFrameParser implements FrameBodyParser<CommentFrame> {
         return description.replace("\0", "");
     }
 
-    private String parseLanguageCode(byte[] frameData) {
+    protected String parseLanguageCode(byte[] frameData) {
         return new String(Arrays.copyOfRange(frameData, LANGUAGE_OFFSET, LANGUAGE_OFFSET + LANGUAGE_LENGTH));
     }
 
     @Override
     public CommentFrame parse(String identifier, FrameHeader frameHeader, byte[] frameData, TagHeader tagHeader) {
 
-        byte encoding = frameData[ENCODING_OFFSET];
+        byte encoding   = frameData[ENCODING_OFFSET];
         Charset charset = TextEncoding.getCharset(encoding);
 
-        String language = parseLanguageCode(frameData);
+        String language    = parseLanguageCode(frameData);
         String description = parseCommentDescription(frameData, charset);
-        String comment = parseComment(frameData, charset);
+        String comment     = parseComment(frameData, charset);
 
         return CommentFrame.newBuilder()
                 .setEncoding(encoding)
                 .setHeader(frameHeader)
                 .setLanguage(language)
                 .setDescription(description)
-                .setComment(comment)
+                .setText(comment)
                 .build(frameData);
     }
 }

@@ -1,4 +1,6 @@
 import com.rrtry.*;
+import com.rrtry.mpeg.MpegFile;
+import com.rrtry.mpeg.id3.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -8,6 +10,64 @@ import java.util.HashMap;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class Main {
+
+    private static void getFrames(File fileObj) throws IOException {
+
+        MpegFile mpegFile = new MpegFile();
+        mpegFile.scan(fileObj);
+
+        ID3V2Tag tag = mpegFile.getTag();
+        for (AbstractFrame frame : tag.getFrames()) {
+            System.out.println(frame.toString());
+        }
+    }
+
+    private static void removeUnsychLyrics(File fileObj) throws IOException {
+
+        MpegFile mpegFile = new MpegFile();
+        mpegFile.scan(fileObj);
+
+        ID3V2Tag tag = mpegFile.getTag();
+        tag.removeFrame(AbstractFrame.U_LYRICS);
+
+        mpegFile.setTag(tag);
+        mpegFile.save();
+        mpegFile.close();
+    }
+
+    private static void addSynchLyrics(File fileObj, HashMap<Integer, String> lyrics) throws IOException {
+
+        MpegFile mpegFile = new MpegFile();
+        mpegFile.scan(fileObj);
+
+        ID3V2Tag tag = mpegFile.getTag();
+        SynchronisedLyricsFrame lyricsFrame = SynchronisedLyricsFrame.createInstance(
+                lyrics, "ENG",  tag.getVersion()
+        );
+
+        tag.addFrame(lyricsFrame);
+
+        mpegFile.setTag(tag);
+        mpegFile.save();
+        mpegFile.close();
+    }
+
+    private static void addUnsynchLyrics(File fileObj, String lyrics) throws IOException {
+
+        MpegFile mpegFile = new MpegFile();
+        mpegFile.scan(fileObj);
+
+        ID3V2Tag tag = mpegFile.getTag();
+        UnsynchronisedLyricsFrame lyricsFrame = UnsynchronisedLyricsFrame.createInstance(
+                lyrics, "eng", tag.getVersion()
+        );
+        tag.addFrame(lyricsFrame);
+        tag.assemble(tag.getVersion());
+
+        mpegFile.setTag(tag);
+        mpegFile.save();
+        mpegFile.close();
+    }
 
     private static void setAlbumCoverFromArray(File fileObj, byte[] bytes) throws IOException {
 
@@ -153,13 +213,19 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        if (args.length == 0) {
-            System.out.println("Usage: Main <file_path>");
+        if (args.length != 2) {
+            System.out.println("Usage: Main <file_path>, <lyrics_path>");
             return;
         }
 
-        File file = new File(args[0]);
-        if (!file.isFile()) return;
-        parseMediaFile(file);
+        File mediaFile  = new File(args[0]);
+        File lyricsFile = new File(args[1]);
+
+        if (!mediaFile.isFile() || !lyricsFile.isFile()) {
+            return;
+        }
+
+        HashMap<Integer, String> lyrics = LRCParser.parseSynchronisedLyrics(lyricsFile);
+        addSynchLyrics(mediaFile, lyrics);
     }
 }

@@ -18,6 +18,8 @@ public abstract class AbstractFrame<T> implements Component {
     public static final String RECORDING_DATES       = "TRDA";
     public static final String SIZE                  = "TSIZ";
     public static final String YEAR                  = "TYER";
+    public static final String U_LYRICS              = "USLT";
+    public static final String S_LYRICS              = "SYLT";
 
     public static final String ALBUM                 = "TALB";
     public static final String COMMENT               = "COMM";
@@ -78,7 +80,8 @@ public abstract class AbstractFrame<T> implements Component {
             FILE_OWNER, BAND, CONDUCTOR, REMIXED_BY, PART_OF_SET,
             PUBLISHER, RADIO_STATION_NAME, RADIO_STATION_OWNER,RECORDING_CODE,
             SOFTWARE_CONFIG, YEAR, ORIGINAL_RELEASE_YEAR, CUSTOM, RECORDING_DATES,
-            SIZE, DATE, TIME, RELATIVE_VOL_ADJUST, INVOLVED_PEOPLE, EQUALIZATION
+            SIZE, DATE, TIME, RELATIVE_VOL_ADJUST, INVOLVED_PEOPLE, EQUALIZATION,
+            U_LYRICS, S_LYRICS
     };
 
     public static final String[] V2_4_FRAMES = new String[] {
@@ -92,7 +95,7 @@ public abstract class AbstractFrame<T> implements Component {
             CONDUCTOR, REMIXED_BY, PART_OF_SET, PRODUCED_NOTICE,
             PUBLISHER, RADIO_STATION_NAME, RADIO_STATION_OWNER, ALBUM_SORT_ORDER,
             PERFORMER_SORT_ORDER, TITLE_SORT_ORDER, RECORDING_CODE,
-            SOFTWARE_CONFIG, SET_SUBTITLE, CUSTOM
+            SOFTWARE_CONFIG, SET_SUBTITLE, CUSTOM, U_LYRICS, S_LYRICS
     };
 
     protected FrameHeader header;

@@ -12,25 +12,25 @@ import java.nio.charset.StandardCharsets;
 
 public class CommentFrame extends AbstractFrame<String> {
 
-    private byte encoding;
-    private String language;
-    private String description;
-    private String comment;
+    protected byte encoding;
+    protected String language;
+    protected String description;
+    protected String text;
 
     @Override
     public String toString() {
         return String.format(
                 "ID: COMM, LANG: %s, DESC: %s, COMMENT: %s, ENCODING: %d",
-                language, description, comment, encoding
+                language, description, text, encoding
         );
     }
 
     @Override
     public final byte[] assemble(byte version) {
 
-        byte[] languageBuffer = language.getBytes(StandardCharsets.ISO_8859_1);
+        byte[] languageBuffer    = language.getBytes(StandardCharsets.ISO_8859_1);
         byte[] descriptionBuffer = TextEncoding.getStringBytes(description, encoding);
-        byte[] commentBuffer = TextEncoding.getStringBytes(comment, encoding);
+        byte[] commentBuffer     = TextEncoding.getStringBytes(text, encoding);
 
         int size = 1 + languageBuffer.length + descriptionBuffer.length + commentBuffer.length;
 
@@ -55,12 +55,12 @@ public class CommentFrame extends AbstractFrame<String> {
         return frame;
     }
 
-    public String getComment() {
-        return comment;
+    public String getText() {
+        return text;
     }
 
-    public void setComment(String comment) {
-        this.comment = comment;
+    public void setText(String comment) {
+        this.text = comment;
     }
 
     public void setEncoding(byte encoding) {
@@ -71,7 +71,7 @@ public class CommentFrame extends AbstractFrame<String> {
     }
 
     public void setLanguage(String language) {
-        if (language.length() > 3) throw new IllegalArgumentException("Invalid language code: " + language);
+        if (language.length() != 3) throw new IllegalArgumentException("Invalid language code: " + language);
         this.language = language;
     }
 
@@ -83,26 +83,31 @@ public class CommentFrame extends AbstractFrame<String> {
         return id.equals(COMMENT);
     }
 
-    public static Builder newBuilder() { return new CommentFrame().new Builder(); }
-    public static Builder newBuilder(CommentFrame frame) { return frame.new Builder(); }
+    public static Builder newBuilder() {
+        return new CommentFrame().new Builder();
+    }
+
+    public static Builder newBuilder(CommentFrame frame) {
+        return frame.new Builder();
+    }
 
     public static CommentFrame createInstance(String comment, String language, byte version) {
         return CommentFrame.newBuilder()
                 .setHeader(FrameHeader.createFrameHeader(COMMENT, version))
                 .setLanguage(language)
                 .setDescription("")
-                .setComment(comment)
+                .setText(comment)
                 .build(version);
     }
 
     @Override
     public String getFrameData() {
-        return comment;
+        return text;
     }
 
     @Override
     public void setFrameData(String comment) {
-        this.comment = comment;
+        this.text = comment;
     }
 
     public class Builder {
@@ -112,8 +117,8 @@ public class CommentFrame extends AbstractFrame<String> {
             return this;
         }
 
-        public Builder setComment(String comment) {
-            CommentFrame.this.setComment(comment);
+        public Builder setText(String comment) {
+            CommentFrame.this.setText(comment);
             return this;
         }
 
