@@ -1,2 +1,2 @@
 # JTagger
-JTagger is a Java library for editing and parsing metadata in audio files. The only supported tag format at the moment is ID3 (v1.0, v1.1, v2.3, v2.4).
+JTagger is a Java library for editing and parsing metadata in audio files. Supports FLAC, Ogg Vorbis, Ogg Opus, MP3(ID3v1, ID3v1.1, ID3v2.3, ID3v2.4)
