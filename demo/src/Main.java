@@ -1,6 +1,6 @@
-import com.rrtry.*;
-import com.rrtry.mpeg.MpegFile;
-import com.rrtry.mpeg.id3.*;
+import com.jtagger.*;
+import com.jtagger.mp3.MpegFile;
+import com.jtagger.mp3.id3.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -22,19 +22,6 @@ public class Main {
         }
     }
 
-    private static void removeUnsychLyrics(File fileObj) throws IOException {
-
-        MpegFile mpegFile = new MpegFile();
-        mpegFile.scan(fileObj);
-
-        ID3V2Tag tag = mpegFile.getTag();
-        tag.removeFrame(AbstractFrame.U_LYRICS);
-
-        mpegFile.setTag(tag);
-        mpegFile.save();
-        mpegFile.close();
-    }
-
     private static void addSynchLyrics(File fileObj, HashMap<Integer, String> lyrics) throws IOException {
 
         MpegFile mpegFile = new MpegFile();
@@ -45,24 +32,20 @@ public class Main {
                 lyrics, "ENG",  tag.getVersion()
         );
 
-        tag.addFrame(lyricsFrame);
+        tag.setFrame(lyricsFrame);
 
         mpegFile.setTag(tag);
         mpegFile.save();
         mpegFile.close();
     }
 
-    private static void addUnsynchLyrics(File fileObj, String lyrics) throws IOException {
+    private static void removeSynchLyrics(File fileObj) throws IOException {
 
         MpegFile mpegFile = new MpegFile();
         mpegFile.scan(fileObj);
 
         ID3V2Tag tag = mpegFile.getTag();
-        UnsynchronisedLyricsFrame lyricsFrame = UnsynchronisedLyricsFrame.createInstance(
-                lyrics, "eng", tag.getVersion()
-        );
-        tag.addFrame(lyricsFrame);
-        tag.assemble(tag.getVersion());
+        tag.removeFrame(AbstractFrame.U_LYRICS);
 
         mpegFile.setTag(tag);
         mpegFile.save();
@@ -213,19 +196,12 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        if (args.length != 2) {
-            System.out.println("Usage: Main <file_path>, <lyrics_path>");
+        File fileObj = new File(args[0]);
+        if (!fileObj.isFile() || !fileObj.canRead()) {
+            System.err.println("IO Error");
             return;
         }
 
-        File mediaFile  = new File(args[0]);
-        File lyricsFile = new File(args[1]);
-
-        if (!mediaFile.isFile() || !lyricsFile.isFile()) {
-            return;
-        }
-
-        HashMap<Integer, String> lyrics = LRCParser.parseSynchronisedLyrics(lyricsFile);
-        addSynchLyrics(mediaFile, lyrics);
+        parseMediaFile(fileObj);
     }
 }
