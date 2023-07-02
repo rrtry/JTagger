@@ -146,7 +146,7 @@ public class Main {
         mediaFile.close();
     }
 
-    private static void parseMediaFile(File fileObj) throws IOException {
+    private static boolean parseMediaFile(File fileObj) throws IOException {
 
         MediaFile mediaFile = new MediaFile<>();
         mediaFile.scan(fileObj);
@@ -155,33 +155,36 @@ public class Main {
         StreamInfo streamInfo = mediaFile.getStreamInfo();
         System.out.println(fileObj.getName());
 
-        if (tag != null) {
-
-            for (String field : AbstractTag.FIELDS) {
-
-                if (field.equals(AbstractTag.PICTURE)) continue;
-                String value = tag.getStringField(field);
-
-                if (value == null) continue;
-                if (value.isEmpty()) continue;
-
-                System.out.printf("\t%s=%s\n", field, value);
-            }
-
-            AttachedPicture picture = tag.getPictureField();
-            if (picture != null) {
-
-                final String mimeType  = picture.getMimeType();
-                final String extension = "." + mimeType.substring(mimeType.indexOf("/") + 1);
-                final String path      = System.getProperty("user.home") + File.separator + "cover" + extension;
-
-                FileOutputStream out = new FileOutputStream(path);
-                out.write(picture.getPictureData());
-                out.close();
-            }
+        if (tag == null) {
+            return false;
         }
 
-        if (streamInfo == null) return;
+        for (String field : AbstractTag.FIELDS) {
+
+            if (field.equals(AbstractTag.PICTURE)) continue;
+            String value = tag.getStringField(field);
+
+            if (value == null) continue;
+            if (value.isEmpty()) continue;
+
+            System.out.printf("\t%s=%s\n", field, value);
+        }
+
+        AttachedPicture picture = tag.getPictureField();
+        if (picture != null) {
+
+            final String mimeType  = picture.getMimeType();
+            final String extension = "." + mimeType.substring(mimeType.indexOf("/") + 1);
+            final String path      = System.getProperty("user.home") + File.separator + "cover" + extension;
+
+            FileOutputStream out = new FileOutputStream(path);
+            out.write(picture.getPictureData());
+            out.close();
+        }
+
+        if (streamInfo == null) {
+            return false;
+        }
 
         System.out.println();
         int duration = streamInfo.getDuration();
@@ -192,16 +195,10 @@ public class Main {
         System.out.printf("\tChannels: %d\n", streamInfo.getChannelCount());
 
         mediaFile.close();
+        return true;
     }
 
     public static void main(String[] args) throws IOException {
-
-        File fileObj = new File(args[0]);
-        if (!fileObj.isFile() || !fileObj.canRead()) {
-            System.err.println("IO Error");
-            return;
-        }
-
-        parseMediaFile(fileObj);
+        
     }
 }

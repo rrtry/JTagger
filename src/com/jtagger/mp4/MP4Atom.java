@@ -15,6 +15,7 @@ public class MP4Atom implements Component {
     protected byte[] data;
 
     private ArrayList<MP4Atom> childAtoms = new ArrayList<>();
+    private boolean isTopLevelAtom = false;
 
     public MP4Atom(String type, byte[] data) {
         this.type = type;
@@ -75,6 +76,10 @@ public class MP4Atom implements Component {
         return type;
     }
 
+    public boolean isTopLevelAtom() {
+        return isTopLevelAtom;
+    }
+
     public boolean hasChildAtoms() {
         return childAtoms.size() > 0;
     }
@@ -89,6 +94,10 @@ public class MP4Atom implements Component {
 
     public void setChildAtoms(ArrayList<MP4Atom> childAtoms) {
         this.childAtoms = childAtoms;
+    }
+
+    public void setTopLevelAtom(boolean isTopLevelAtom) {
+        this.isTopLevelAtom = isTopLevelAtom;
     }
 
     public void removeAllChildAtoms() {

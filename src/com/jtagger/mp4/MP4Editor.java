@@ -33,22 +33,28 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
         byte[] mp4Buffer  = tag.getBytes();
         byte[] tempBuffer = new byte[1024];
 
-        if (mp4Buffer.length == tag.getInitialSize()) {
-            file.seek(0);
-            file.write(mp4Buffer);
-            return;
-        }
+        final int mdatStart = tag.getMdatStart();
+        final int mdatEnd   = tag.getMdatEnd();
 
         File temp = File.createTempFile("M4A", ".tmp");
         RandomAccessFile tempFile = new RandomAccessFile(temp.getAbsolutePath(), "rw");
 
         tempFile.write(mp4Buffer);
-        file.seek(getTag().getInitialSize());
+        file.seek(mdatStart);
 
-        while (file.read(tempBuffer) != -1) {
+        while (file.getFilePointer() + 1024 < mdatEnd) {
+
+            int read = file.read(tempBuffer);
+            if (read == -1) break;
+            tempFile.write(tempBuffer);
+        }
+        if (file.getFilePointer() < mdatEnd) {
+            tempBuffer = new byte[(int) (mdatEnd - file.getFilePointer())];
+            file.read(tempBuffer);
             tempFile.write(tempBuffer);
         }
 
+        tempBuffer = new byte[1024];
         file.seek(0);
         tempFile.seek(0);
 
@@ -56,10 +62,10 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
             file.write(tempBuffer);
         }
 
+        file.setLength(tempFile.length());
         tempFile.close();
-        if (!temp.delete()) {
-            System.err.println("Could not delete temp file");
-        }
+
+        if (!temp.delete()) System.err.println("Could not delete temp file");
     }
 
     @Override

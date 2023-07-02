@@ -37,10 +37,7 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> {
         tagEditor.load(file, mimeType);
         tag              = tagEditor.getTag();
         streamInfoParser = getParser(mimeType);
-
-        if (streamInfoParser != null) {
-            streamInfo = streamInfoParser.parseStreamInfo(file);
-        }
+        streamInfo       = streamInfoParser.parseStreamInfo(file);
     }
 
     @SuppressWarnings("unchecked")

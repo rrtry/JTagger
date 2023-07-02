@@ -1,18 +1,114 @@
 package com.jtagger.mp4;
 
+import com.jtagger.StreamInfoParser;
 import com.jtagger.TagParser;
 import com.jtagger.utils.IntegerUtils;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
-public class MP4Parser implements TagParser<MP4> {
+public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
 
     private MP4 mp4;
+
+    public MP4Parser(MP4 mp4) {
+        this.mp4 = mp4;
+    }
+
+    public MP4Parser() {
+
+    }
+
+    private MdhdAtom parseMdhdAtom(byte[] atom) {
+
+        int i = 8;
+        byte version = atom[i]; i += 4;
+
+        final long dateCreated;
+        final long dateModified;
+        final long duration;
+        final long timescale;
+
+        if (version == 1) {
+            dateCreated  = IntegerUtils.toUInt64BE(Arrays.copyOfRange(atom, i, i + 8)); i += 8;
+            dateModified = IntegerUtils.toUInt64BE(Arrays.copyOfRange(atom, i, i + 8)); i += 8;
+            timescale    = Integer.toUnsignedLong(IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, i, i + 4))); i += 4;
+            duration     = IntegerUtils.toUInt64BE(Arrays.copyOfRange(atom, i, i + 8)); i += 8;
+        } else {
+            dateCreated  = Integer.toUnsignedLong(IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, i, i + 4))); i += 4;
+            dateModified = Integer.toUnsignedLong(IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, i, i + 4))); i += 4;
+            timescale    = Integer.toUnsignedLong(IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, i, i + 4))); i += 4;
+            duration     = Integer.toUnsignedLong(IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, i, i + 4))); i += 4;
+        }
+
+        return new MdhdAtom("mdhd", atom, dateCreated, dateModified, duration, timescale, version);
+    }
+
+    private StsdAtom parseStsdAtom(byte[] atom) throws InvalidAtomException {
+
+        final int channels;
+        final int sampleSize;
+
+        final String audioFormat;
+        final int sampleRate;
+
+        List<String> audioFormats = Arrays.asList(
+                "mp4a", "enca", "samr", "sawb"
+        );
+
+        byte[] startTag = new byte[] {(byte) 0x80, (byte) 0x80, (byte) 0x80};
+        byte[] endTag   = new byte[] {(byte) 0xFE, (byte) 0xFE, (byte) 0xFE};
+
+        int i = 12;
+        int descCount = IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, i, i + 4)); i += 8;
+
+        if (descCount < 1) {
+            throw new InvalidAtomException("Invalid number of descriptions");
+        }
+
+        audioFormat = new String(Arrays.copyOfRange(atom, i, i + 4), ISO_8859_1);  i += 20;
+        if (!audioFormats.contains(audioFormat)) {
+            throw new InvalidAtomException("Unexpected audio format");
+        }
+
+        channels   = Short.toUnsignedInt(IntegerUtils.toUInt16BE(Arrays.copyOfRange(atom, i, i + 2))); i += 2;
+        sampleSize = Short.toUnsignedInt(IntegerUtils.toUInt16BE(Arrays.copyOfRange(atom, i, i + 2))); i += 6;
+        sampleRate = Short.toUnsignedInt(IntegerUtils.toUInt16BE(Arrays.copyOfRange(atom, i, i + 2))); i += 16;
+
+        byte[] typeTag;
+        if (atom[i++] != 0x03) throw new InvalidAtomException("Invalid ES descriptor tag type");
+
+        typeTag = Arrays.copyOfRange(atom, i, i + 3);
+        if (Arrays.equals(typeTag, startTag)) i += 3;
+        if (Arrays.equals(typeTag, endTag))   i += 3;
+
+        i += 4;
+        if (atom[i++] != 0x04) throw new InvalidAtomException("Invalid decoder config type tag");
+
+        typeTag = Arrays.copyOfRange(atom, i, i + 3);
+        if (Arrays.equals(typeTag, startTag)) i += 3;
+        if (Arrays.equals(typeTag, endTag))   i += 3;
+        i++;
+
+        int codec      = Byte.toUnsignedInt(atom[i++]);
+        int flags      = Byte.toUnsignedInt(atom[i++]);
+        int streamType = flags >> 2;
+        int bufSize    = IntegerUtils.toUInt24BE(Arrays.copyOfRange(atom, i, i + 3)); i += 3;
+        int maxBitrate = IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, i, i + 4)); i += 4;
+        int avgBitrate = IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, i, i + 4)); i += 4;
+
+        return new StsdAtom(
+                "stsd", atom, channels, sampleSize, sampleRate,
+                bufSize, maxBitrate, avgBitrate, streamType, codec
+        );
+    }
 
     private FreeFormAtom parseFreeFormAtom(byte[] atom) throws InvalidAtomException {
 
@@ -48,8 +144,8 @@ public class MP4Parser implements TagParser<MP4> {
         int[] offsets  = new int[entryCount];
         byte[] entries = Arrays.copyOfRange(atom, 16, atom.length);
 
-        for (int i = 4; i < entries.length; i += 4) {
-            offsets[i / 4 - 1] = IntegerUtils.toUInt32BE(Arrays.copyOfRange(entries, i - 4, i));
+        for (int i = 0; i < entries.length; i += 4) {
+            offsets[i / 4] = IntegerUtils.toUInt32BE(Arrays.copyOfRange(entries, i, i + 4));
         }
 
         stco.setOffsets(offsets);
@@ -134,6 +230,16 @@ public class MP4Parser implements TagParser<MP4> {
                 parentAtom.appendChildAtom(stcoAtom);
                 atoms.add(stcoAtom);
             }
+            else if (atomType.equals("stsd")) {
+                StsdAtom stsdAtom = parseStsdAtom(atomData);
+                parentAtom.appendChildAtom(stsdAtom);
+                atoms.add(stsdAtom);
+            }
+            else if (atomType.equals("mdhd")) {
+                MdhdAtom mdhdAtom = parseMdhdAtom(atomData);
+                parentAtom.appendChildAtom(mdhdAtom);
+                atoms.add(mdhdAtom);
+            }
             else if (Arrays.asList(MP4.ATOMS).contains(atomType)) {
                 parentAtom.appendChildAtom(atom);
                 atoms.add(atom);
@@ -157,47 +263,53 @@ public class MP4Parser implements TagParser<MP4> {
         try {
 
             ArrayList<MP4Atom> atoms = new ArrayList<>();
-            int initialSize = 0;
-            file.seek(0);
+            int mdatStart   = 0;
+            int mdatEnd     = 0;
 
+            file.seek(0);
             while (file.getFilePointer() < file.length()) {
 
                 byte[] sizeBytes = new byte[4];
                 byte[] typeBytes = new byte[4];
 
-                file.read(sizeBytes, 0, 4);
-                file.read(typeBytes, 0, 4);
+                if (file.read(sizeBytes, 0, 4) == -1) break;
+                if (file.read(typeBytes, 0, 4) == -1) break;
 
                 int atomSize    = IntegerUtils.toUInt32BE(sizeBytes);
                 String atomType = new String(typeBytes, ISO_8859_1);
 
                 if (atomType.equals("mdat")) {
-                    initialSize = (int) file.getFilePointer() - 8;
-                    break;
-                }
+                    mdatStart = (int) file.getFilePointer() - 8;
+                    mdatEnd   = mdatStart + atomSize;
+                    file.skipBytes(atomSize - 8);
+                } else {
 
-                byte[] atomData = new byte[atomSize];
-                System.arraycopy(sizeBytes, 0, atomData, 0, 4);
-                System.arraycopy(typeBytes, 0, atomData, 4, 4);
+                    byte[] atomData = new byte[atomSize];
+                    System.arraycopy(sizeBytes, 0, atomData, 0, 4);
+                    System.arraycopy(typeBytes, 0, atomData, 4, 4);
 
-                file.read(atomData, 8, atomSize - 8);
-                MP4Atom mp4Atom = new MP4Atom(atomType, atomData);
-                atoms.add(mp4Atom);
+                    file.read(atomData, 8, atomSize - 8);
+                    MP4Atom mp4Atom = new MP4Atom(atomType, atomData);
+                    mp4Atom.setTopLevelAtom(true);
+                    atoms.add(mp4Atom);
 
-                if (atomType.equals("moov")) {
-                    parseAtom(mp4Atom, atomData, false, atoms);
+                    if (atomType.equals("moov")) {
+                        parseAtom(mp4Atom, atomData, false, atoms);
+                    }
                 }
             }
 
-            atoms.get(0).assemble();
-            atoms.get(1).assemble();
-
-            this.mp4 = new MP4(new ArrayList<>(atoms.subList(0, 2)), initialSize);
-            return mp4;
+            atoms.removeIf(atom -> !atom.isTopLevelAtom());
+            return new MP4(atoms, mdatStart, mdatEnd);
 
         } catch (IOException | InvalidAtomException e) {
             e.printStackTrace();
             return null;
         }
+    }
+
+    @Override
+    public MP4 parseStreamInfo(RandomAccessFile file) {
+        return mp4;
     }
 }
