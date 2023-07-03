@@ -1,8 +1,6 @@
 package com.jtagger.mp3.id3;
 
 import com.jtagger.AbstractTag;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -456,7 +454,7 @@ public class ID3V1Tag extends ID3Tag {
 
     @Override
     public void removeField(String fieldId) {
-        throw new NotImplementedException();
+
     }
 
     @Override

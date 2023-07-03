@@ -5,7 +5,6 @@ import com.jtagger.AbstractTag;
 import com.jtagger.ogg.opus.OggOpusParser;
 import com.jtagger.ogg.vorbis.OggVorbisParser;
 import com.jtagger.ogg.vorbis.VorbisComments;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,7 +25,7 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
     private static OggParser getOggParser(String mimeType) {
         if (mimeType.equals(OGG_OPUS_MIME_TYPE))   return new OggOpusParser();
         if (mimeType.equals(OGG_VORBIS_MIME_TYPE)) return new OggVorbisParser();
-        throw new NotImplementedException();
+        throw new IllegalStateException();
     }
 
     public OggParser getParser() {

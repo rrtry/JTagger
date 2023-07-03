@@ -199,6 +199,21 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException {
-        
+
+        File fileObj = new File(args[0]);
+        if (!fileObj.canRead()) return;
+
+        if (fileObj.isFile()) {
+            parseMediaFile(fileObj);
+        }
+        else if (fileObj.isDirectory()) {
+
+            File[] files = fileObj.listFiles();
+            assert files != null;
+
+            for (File file : files) {
+                parseMediaFile(file);
+            }
+        }
     }
 }

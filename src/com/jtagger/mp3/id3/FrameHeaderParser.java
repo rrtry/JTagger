@@ -1,7 +1,5 @@
 package com.jtagger.mp3.id3;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -57,11 +55,11 @@ public class FrameHeaderParser {
                     .build(version);
 
             if (header.isFrameEncrypted()) {
-                throw new NotImplementedException();
+                throw new IllegalStateException();
             }
             return header;
 
-        } catch (IllegalArgumentException | NotImplementedException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return null;
         }
     }
