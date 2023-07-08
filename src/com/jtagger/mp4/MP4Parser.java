@@ -167,12 +167,23 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
         }
 
         ItunesAtom itunesAtom = null;
-        if (dataType == ItunesAtom.TYPE_UTF8)     itunesAtom = new TextAtom(type, atom);
-        if (dataType == ItunesAtom.TYPE_IMPLICIT) itunesAtom = new TrackNumberAtom(type, atom);
-        if (dataType == ItunesAtom.TYPE_JPEG)     itunesAtom = new PictureAtom(type, atom);
-        if (dataType == ItunesAtom.TYPE_INTEGER)  itunesAtom = new NumberAtom(type, atom);
+        if (MP4.BYTE_ATOMS.contains(type))     itunesAtom = new NumberAtom(type, atom);
+        if (MP4.INT_ATOMS.contains(type))      itunesAtom = new NumberAtom(type, atom);
+        if (MP4.INT_PAIR_ATOMS.contains(type)) itunesAtom = new TrackNumberAtom(type, atom, dataType);
 
-        if (itunesAtom == null) itunesAtom = new TextAtom(type, atom);
+        if (itunesAtom == null) {
+            if (dataType == ItunesAtom.TYPE_UTF8)     itunesAtom = new TextAtom(type, atom, dataType);
+            if (dataType == ItunesAtom.TYPE_UTF16)    itunesAtom = new TextAtom(type, atom, dataType);
+            if (dataType == ItunesAtom.TYPE_JPEG)     itunesAtom = new PictureAtom(type, atom, dataType);
+            if (dataType == ItunesAtom.TYPE_BMP)      itunesAtom = new PictureAtom(type, atom, dataType);
+            if (dataType == ItunesAtom.TYPE_PNG)      itunesAtom = new PictureAtom(type, atom, dataType);
+            if (dataType == ItunesAtom.TYPE_IMPLICIT) itunesAtom = new TrackNumberAtom(type, atom, dataType);
+            if (dataType == ItunesAtom.TYPE_INTEGER)  itunesAtom = new NumberAtom(type, atom);
+        }
+        if (itunesAtom == null) {
+            itunesAtom = new UnknownAtom(type, atom, dataType);
+        }
+
         itunesAtom.setAtomData(Arrays.copyOfRange(atom, 24, 8 + size));
         return itunesAtom;
     }

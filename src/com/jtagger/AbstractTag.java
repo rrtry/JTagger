@@ -9,6 +9,7 @@ public abstract class AbstractTag implements Component {
     public static final String YEAR              = "DATE";
     public static final String TRACK_NUMBER      = "TRACKNUMBER";
     public static final String GENRE             = "GENRE";
+    public static final String ID3_GENRE         = "ID3GENRE";
     public static final String ALBUM_ARTIST      = "ALBUMARTIST";
     public static final String ARRANGER          = "ARRANGER";
     public static final String AUTHOR            = "AUTHOR";
@@ -60,6 +61,7 @@ public abstract class AbstractTag implements Component {
             YEAR,
             TRACK_NUMBER,
             GENRE,
+            ID3_GENRE,
             ALBUM_ARTIST,
             ARRANGER,
             AUTHOR,

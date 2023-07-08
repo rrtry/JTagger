@@ -42,6 +42,7 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
         FIELD_MAP_V23.put(AbstractTag.YEAR             ,"TYER");
         FIELD_MAP_V23.put(AbstractTag.TRACK_NUMBER     ,"TRCK");
         FIELD_MAP_V23.put(AbstractTag.GENRE            ,"TCON");
+        FIELD_MAP_V23.put(AbstractTag.ID3_GENRE        ,"TCON");
         FIELD_MAP_V23.put(AbstractTag.ALBUM_ARTIST     ,"TPE2");
         FIELD_MAP_V23.put(AbstractTag.ARRANGER         ,"IPLS");
         FIELD_MAP_V23.put(AbstractTag.AUTHOR           ,"TOLY");
@@ -86,6 +87,7 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
         FIELD_MAP_V24.put(AbstractTag.YEAR             ,"TDRC");
         FIELD_MAP_V24.put(AbstractTag.TRACK_NUMBER     ,"TRCK");
         FIELD_MAP_V24.put(AbstractTag.GENRE            ,"TCON");
+        FIELD_MAP_V24.put(AbstractTag.ID3_GENRE        ,"TCON");
         FIELD_MAP_V24.put(AbstractTag.ALBUM_ARTIST     ,"TPE2");
         FIELD_MAP_V24.put(AbstractTag.ARRANGER         ,"TIPL");
         FIELD_MAP_V24.put(AbstractTag.AUTHOR           ,"TOLY");

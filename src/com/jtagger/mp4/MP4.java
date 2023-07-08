@@ -36,6 +36,7 @@ public class MP4 extends AbstractTag implements StreamInfo {
     public static final String ALBUM             = "©alb";
     public static final String COMMENT           = "©cmt";
     public static final String GENRE             = "©gen";
+    public static final String ID3_GENRE         = "gnre";
     public static final String DATE              = "©day";
     public static final String WRITER            = "©wrt";
     public static final String GROUPING          = "©grp";
@@ -69,9 +70,9 @@ public class MP4 extends AbstractTag implements StreamInfo {
 
     private static final HashMap<String, String> FIELD_MAP = new HashMap<>();
 
-    private static final List<String> INT_PAIR_ATOMS = Arrays.asList("trkn", "disk");
-    private static final List<String> BYTE_ATOMS     = Arrays.asList("cpil", "pgap", "pcst", "hdvd", "shwm", "stik", "rtng", "akID");
-    public static final List<String> INT_ATOMS       = Arrays.asList("tmpo", "©mvi", "©mvc", "tvsn", "tves", "cnID", "sfID", "atID", "geID", "cmID");
+    public static final List<String> INT_PAIR_ATOMS = Arrays.asList("trkn", "disk");
+    public static final List<String> BYTE_ATOMS     = Arrays.asList("cpil", "pgap", "pcst", "hdvd", "shwm", "stik", "rtng", "akID");
+    public static final List<String> INT_ATOMS      = Arrays.asList("tmpo", "©mvi", "©mvc", "tvsn", "tves", "cnID", "sfID", "atID", "geID", "cmID", "gnre");
 
     static {
         FIELD_MAP.put(AbstractTag.TITLE            ,TITLE);
@@ -81,6 +82,7 @@ public class MP4 extends AbstractTag implements StreamInfo {
         FIELD_MAP.put(AbstractTag.YEAR             ,DATE);
         FIELD_MAP.put(AbstractTag.TRACK_NUMBER     ,TRACK_NUMBER);
         FIELD_MAP.put(AbstractTag.GENRE            ,GENRE);
+        FIELD_MAP.put(AbstractTag.ID3_GENRE        ,ID3_GENRE);
         FIELD_MAP.put(AbstractTag.ALBUM_ARTIST     ,ALBUM_ARTIST);
         FIELD_MAP.put(AbstractTag.ARRANGER         ,ARRANGER);
         FIELD_MAP.put(AbstractTag.BPM              ,BPM);

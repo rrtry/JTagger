@@ -9,9 +9,11 @@ import static java.nio.charset.StandardCharsets.ISO_8859_1;
 public class TrackNumberAtom extends MP4Atom implements ItunesAtom<TrackNumber> {
 
     private TrackNumber trackNumber;
+    private int atomType;
 
-    public TrackNumberAtom(String type, byte[] atomBytes) {
+    public TrackNumberAtom(String type, byte[] atomBytes, int atomType) {
         super(type, atomBytes);
+        this.atomType = atomType;
     }
 
     public TrackNumberAtom(String type) {
@@ -47,6 +49,11 @@ public class TrackNumberAtom extends MP4Atom implements ItunesAtom<TrackNumber> 
     @Override
     public TrackNumber getAtomData() {
         return trackNumber;
+    }
+
+    @Override
+    public int getAtomType() {
+        return atomType;
     }
 
     @Override

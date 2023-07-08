@@ -39,6 +39,11 @@ public class FreeFormAtom extends MP4Atom implements ItunesAtom<String> {
     }
 
     @Override
+    public int getAtomType() {
+        return ItunesAtom.TYPE_UTF8;
+    }
+
+    @Override
     public void setAtomData(byte[] data) {
         this.text = new String(data, UTF_8);
     }

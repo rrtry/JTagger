@@ -3,14 +3,18 @@ package com.jtagger.mp4;
 import com.jtagger.AttachedPicture;
 import com.jtagger.utils.IntegerUtils;
 
+import java.util.HashMap;
+
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 public class PictureAtom extends MP4Atom implements ItunesAtom<AttachedPicture> {
 
     private AttachedPicture picture;
+    private int atomType = ItunesAtom.TYPE_PNG;
 
-    public PictureAtom(String type, byte[] data) {
+    public PictureAtom(String type, byte[] data, int atomType) {
         super(type, data);
+        this.atomType = atomType;
     }
 
     public PictureAtom(String type) {
@@ -47,14 +51,28 @@ public class PictureAtom extends MP4Atom implements ItunesAtom<AttachedPicture> 
     }
 
     @Override
+    public int getAtomType() {
+        return atomType;
+    }
+
+    @Override
     public void setAtomData(byte[] pictureData) {
+
         AttachedPicture picture = new AttachedPicture();
         picture.setPictureData(pictureData);
+
+        if (ItunesAtom.TYPE_PNG  == atomType) picture.setMimeType("image/png");
+        if (ItunesAtom.TYPE_BMP  == atomType) picture.setMimeType("image/bmp");
+        if (ItunesAtom.TYPE_JPEG == atomType) picture.setMimeType("image/jpeg");
         this.picture = picture;
     }
 
     @Override
     public void setAtomData(AttachedPicture picture) {
-        this.picture = picture;
+        this.picture    = picture;
+        String mimeType = picture.getMimeType();
+        if (mimeType.equals("image/png"))  atomType = ItunesAtom.TYPE_PNG;
+        if (mimeType.equals("image/bmp"))  atomType = ItunesAtom.TYPE_BMP;
+        if (mimeType.equals("image/jpeg")) atomType = ItunesAtom.TYPE_JPEG;
     }
 }

@@ -57,6 +57,11 @@ public class NumberAtom extends MP4Atom implements ItunesAtom<Number> {
     }
 
     @Override
+    public int getAtomType() {
+        return ItunesAtom.TYPE_INTEGER;
+    }
+
+    @Override
     public void setAtomData(byte[] data) {
         switch (data.length) {
             case 1: number = data[0]; break;

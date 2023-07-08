@@ -167,7 +167,11 @@ public class Main {
             if (value == null) continue;
             if (value.isEmpty()) continue;
 
-            System.out.printf("\t%s=%s\n", field, value);
+            if (field.equals(AbstractTag.ID3_GENRE)) {
+                System.out.printf("\tGENRE = %s\n", ID3V1Tag.GENRES[Integer.parseInt(value)]);
+                continue;
+            }
+            System.out.printf("\t%s = %s\n", field, value);
         }
 
         AttachedPicture picture = tag.getPictureField();
@@ -212,13 +216,10 @@ public class Main {
     public static void main(String[] args) throws IOException {
 
         File fileObj = new File(args[0]);
-        if (!fileObj.canRead()) return;
-
-        if (fileObj.isFile()) {
-            parseMediaFile(fileObj);
+        if (!fileObj.isFile()) {
+            System.err.println("Specify a file");
+            return;
         }
-        else if (fileObj.isDirectory()) {
-            parseFiles(fileObj);
-        }
+        parseMediaFile(fileObj);
     }
 }

@@ -34,10 +34,10 @@ public class AttachedPicture {
 
     private int pictureType = PICTURE_TYPE_OTHER;
 
-    private String mimeType = "";
+    private String mimeType    = "image/png";
     private String description = "";
 
-    private int width = 0;
+    private int width  = 0;
     private int height = 0;
     private int colorDepth = 24;
 
