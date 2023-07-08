@@ -4,12 +4,10 @@ import com.jtagger.StreamInfoParser;
 import com.jtagger.TagParser;
 import com.jtagger.utils.IntegerUtils;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
@@ -17,14 +15,6 @@ import static java.nio.charset.StandardCharsets.ISO_8859_1;
 public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
 
     private MP4 mp4;
-
-    public MP4Parser(MP4 mp4) {
-        this.mp4 = mp4;
-    }
-
-    public MP4Parser() {
-
-    }
 
     private MdhdAtom parseMdhdAtom(byte[] atom) {
 
@@ -300,7 +290,8 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
             }
 
             atoms.removeIf(atom -> !atom.isTopLevelAtom());
-            return new MP4(atoms, mdatStart, mdatEnd);
+            this.mp4 = new MP4(atoms, mdatStart, mdatEnd);
+            return mp4;
 
         } catch (IOException | InvalidAtomException e) {
             e.printStackTrace();

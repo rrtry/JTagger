@@ -22,16 +22,6 @@ public class OggOpusParser extends OggParser implements StreamInfoParser<OpusIde
             0x4F, 0x70, 0x75, 0x73, 0x54, 0x61, 0x67, 0x73
     };
 
-    private VorbisComments tag;
-
-    public OggOpusParser(VorbisComments tag) {
-        this.tag = tag;
-    }
-
-    public OggOpusParser() {
-
-    }
-
     private boolean isHeaderSignatureInvalid(byte[] header, byte[] magic) {
         return !Arrays.equals(
                 Arrays.copyOfRange(header, 0, magic.length),
@@ -108,7 +98,6 @@ public class OggOpusParser extends OggParser implements StreamInfoParser<OpusIde
     @Override
     public VorbisComments parseTag(RandomAccessFile file) {
 
-        if (tag != null) return tag;
         parsePackets(parsePages(file));
 
         OggPacket packet = packets.get(1);

@@ -198,6 +198,17 @@ public class Main {
         return true;
     }
 
+    private static void parseFiles(File directory) throws IOException {
+
+        File[] files = directory.listFiles();
+        assert files != null;
+
+        for (File file : files) {
+            if (file.isFile()) parseMediaFile(file);
+            else parseFiles(file);
+        }
+    }
+
     public static void main(String[] args) throws IOException {
 
         File fileObj = new File(args[0]);
@@ -207,13 +218,7 @@ public class Main {
             parseMediaFile(fileObj);
         }
         else if (fileObj.isDirectory()) {
-
-            File[] files = fileObj.listFiles();
-            assert files != null;
-
-            for (File file : files) {
-                parseMediaFile(file);
-            }
+            parseFiles(fileObj);
         }
     }
 }

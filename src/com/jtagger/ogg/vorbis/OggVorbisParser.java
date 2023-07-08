@@ -2,6 +2,7 @@ package com.jtagger.ogg.vorbis;
 
 import com.jtagger.StreamInfoParser;
 import com.jtagger.ogg.OggPacket;
+import com.jtagger.ogg.OggPage;
 import com.jtagger.ogg.OggParser;
 import com.jtagger.utils.IntegerUtils;
 
@@ -14,16 +15,6 @@ public class OggVorbisParser extends OggParser implements StreamInfoParser<Vorbi
     public static final byte INVALID_HEADER_MAGIC       = 0x2;
     public static final byte INVALID_HEADER_FRAMING_BIT = 0x3;
 
-    private VorbisComments tag;
-
-    public OggVorbisParser(VorbisComments tag) {
-        this.tag = tag;
-    }
-
-    public OggVorbisParser() {
-
-    }
-
     private byte verifyHeader(byte[] packetData, byte type) {
 
         if (packetData[0] != type) return INVALID_HEADER_TYPE;
@@ -35,7 +26,6 @@ public class OggVorbisParser extends OggParser implements StreamInfoParser<Vorbi
 
     @Override
     public VorbisComments parseTag(RandomAccessFile file) {
-        if (tag != null) return tag;
         return parseVorbisCommentHeader(file).getVorbisComments();
     }
 

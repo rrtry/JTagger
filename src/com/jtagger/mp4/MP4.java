@@ -323,7 +323,7 @@ public class MP4 extends AbstractTag implements StreamInfo {
     @Override
     public int getBitrate() {
         if (stsdAtom == null) stsdAtom = (StsdAtom) findMetadataAtom("stsd", findTopLevelAtom("moov"));
-        return stsdAtom.getAvgBitrate();
+        return stsdAtom.getAvgBitrate() / 1000;
     }
 
     @Override

@@ -11,9 +11,15 @@ import static com.jtagger.utils.FileContentTypeDetector.M4A_MIME_TYPE;
 
 public class MP4Editor extends AbstractTagEditor<MP4> {
 
+    private MP4Parser parser;
+
+    public MP4Parser getParser() {
+        return parser;
+    }
+
     @Override
     protected void parseTag() {
-        MP4Parser parser = new MP4Parser();
+        parser = new MP4Parser();
         this.tag = parser.parseTag(file);
     }
 
