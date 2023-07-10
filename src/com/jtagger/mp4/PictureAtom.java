@@ -33,7 +33,7 @@ public class PictureAtom extends MP4Atom implements ItunesAtom<AttachedPicture> 
         System.arraycopy(IntegerUtils.fromUInt32BE(dataAtom.length), 0, dataAtom, 0, 4); index += 4;
         System.arraycopy("data".getBytes(ISO_8859_1), 0, dataAtom, index, 4); index += 4;
 
-        System.arraycopy(IntegerUtils.fromUInt32BE(TYPE_JPEG), 0, dataAtom, index, 4); index += 4;
+        System.arraycopy(IntegerUtils.fromUInt32BE(getAtomType()), 0, dataAtom, index, 4); index += 4;
         System.arraycopy(IntegerUtils.fromUInt32BE(0x000000), 0, dataAtom, index, 4); index += 4;
         System.arraycopy(pictureBytes, 0, dataAtom, index, pictureBytes.length);
 

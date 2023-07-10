@@ -13,14 +13,6 @@ public class FlacParser implements TagParser<FlacTag>, StreamInfoParser<StreamIn
 
     private FlacTag tag;
 
-    public FlacParser(FlacTag tag) {
-        this.tag = tag;
-    }
-
-    public FlacParser() {
-
-    }
-
     @Override
     public StreamInfoBlock parseStreamInfo(RandomAccessFile file) throws IOException {
 

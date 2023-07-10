@@ -167,9 +167,12 @@ public class Main {
             if (value == null) continue;
             if (value.isEmpty()) continue;
 
-            if (field.equals(AbstractTag.ID3_GENRE)) {
-                System.out.printf("\tGENRE = %s\n", ID3V1Tag.GENRES[Integer.parseInt(value)]);
-                continue;
+            try {
+                if (field.equals(AbstractTag.ID3_GENRE)) {
+                    System.out.printf("\t%s =  %s\n", field, ID3V1Tag.GENRES[Integer.parseInt(value)]);
+                }
+            } catch (NumberFormatException ignored) {
+
             }
             System.out.printf("\t%s = %s\n", field, value);
         }
@@ -215,11 +218,56 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        File fileObj = new File(args[0]);
-        if (!fileObj.isFile()) {
-            System.err.println("Specify a file");
+        File mp3Dir = new File(args[0]);
+        File m4aDir = new File(args[1]);
+
+        if (!mp3Dir.isDirectory() || !m4aDir.isDirectory()) {
+            System.err.println("Specify a directory");
             return;
         }
-        parseMediaFile(fileObj);
+
+        File[] mp3Files = mp3Dir.listFiles();
+        File[] m4aFiles = m4aDir.listFiles();
+
+        assert mp3Files != null;
+        assert m4aFiles != null;
+
+        System.out.println(mp3Files.length);
+        System.out.println(m4aFiles.length);
+
+        MediaFile mediaFile = new MediaFile();
+        AbstractTag tag;
+        AttachedPicture picture;
+
+        for (File m4a : m4aFiles) {
+
+            int index      = m4a.getName().indexOf(".");
+            String m4aName = m4a.getName().substring(0, index);
+
+            for (File mp3 : mp3Files) {
+
+                index = mp3.getName().indexOf(".");
+                String mp3Name = mp3.getName().substring(0, index);
+
+                if (m4aName.equals(mp3Name)) {
+
+                    System.out.println(m4a.getName());
+                    mediaFile.scan(mp3);
+                    tag = mediaFile.getTag();
+                    if (tag == null) break;
+
+                    picture = tag.getPictureField();
+                    if (picture == null) break;
+
+                    mediaFile.scan(m4a);
+                    tag = mediaFile.getTag();
+                    tag.setPictureField(picture);
+
+                    mediaFile.setTag(tag);
+                    mediaFile.save();
+                    mediaFile.close();
+                }
+            }
+        }
     }
 }
