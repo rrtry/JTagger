@@ -8,6 +8,7 @@ import com.jtagger.ogg.vorbis.VorbisComments;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 import static com.jtagger.utils.FileContentTypeDetector.OGG_OPUS_MIME_TYPE;
 import static com.jtagger.utils.FileContentTypeDetector.OGG_VORBIS_MIME_TYPE;
@@ -48,6 +49,12 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
 
         this.pages   = parser.parsePages(file);
         this.packets = parser.parsePackets(pages);
+    }
+
+    @Override
+    public void removeTag() {
+        tag.setCommentsMap(new LinkedHashMap<>());
+        tag.assemble();
     }
 
     @Override

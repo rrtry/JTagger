@@ -216,58 +216,52 @@ public class Main {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    private static void clearAllTags(File directory) throws IOException {
 
-        File mp3Dir = new File(args[0]);
-        File m4aDir = new File(args[1]);
-
-        if (!mp3Dir.isDirectory() || !m4aDir.isDirectory()) {
+        if (!directory.isDirectory()) {
             System.err.println("Specify a directory");
             return;
         }
 
-        File[] mp3Files = mp3Dir.listFiles();
-        File[] m4aFiles = m4aDir.listFiles();
+        File[] files = directory.listFiles();
+        assert files != null;
 
-        assert mp3Files != null;
-        assert m4aFiles != null;
-
-        System.out.println(mp3Files.length);
-        System.out.println(m4aFiles.length);
-
-        MediaFile mediaFile = new MediaFile();
-        AbstractTag tag;
-        AttachedPicture picture;
-
-        for (File m4a : m4aFiles) {
-
-            int index      = m4a.getName().indexOf(".");
-            String m4aName = m4a.getName().substring(0, index);
-
-            for (File mp3 : mp3Files) {
-
-                index = mp3.getName().indexOf(".");
-                String mp3Name = mp3.getName().substring(0, index);
-
-                if (m4aName.equals(mp3Name)) {
-
-                    System.out.println(m4a.getName());
-                    mediaFile.scan(mp3);
-                    tag = mediaFile.getTag();
-                    if (tag == null) break;
-
-                    picture = tag.getPictureField();
-                    if (picture == null) break;
-
-                    mediaFile.scan(m4a);
-                    tag = mediaFile.getTag();
-                    tag.setPictureField(picture);
-
-                    mediaFile.setTag(tag);
-                    mediaFile.save();
-                    mediaFile.close();
-                }
-            }
+        MediaFile<AbstractTag, StreamInfo> mediaFile = new MediaFile<>();
+        for (File file : files) {
+            mediaFile.scan(file);
+            mediaFile.removeTag();
+            mediaFile.save();
+            mediaFile.close();
         }
+    }
+
+    private static void copyTagFrom(File directory, File targetFile) throws IOException {
+
+        if (!directory.isDirectory() || !targetFile.isFile()) {
+            System.out.println("JTagger usage: <dir> <file>");
+            return;
+        }
+
+        MediaFile<AbstractTag, StreamInfo> mediaFile;
+        AbstractTag tag;
+
+        mediaFile = new MediaFile<>();
+        mediaFile.scan(targetFile);
+        tag = mediaFile.getTag();
+
+        File[] files = directory.listFiles();
+        assert files != null;
+        assert tag   != null;
+
+        for (File file : files) {
+            mediaFile.scan(file);
+            mediaFile.setTag(tag);
+            mediaFile.save();
+            mediaFile.close();
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        parseFiles(new File(args[0]));
     }
 }

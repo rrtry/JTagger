@@ -6,6 +6,7 @@ import com.jtagger.AbstractTagEditor;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 
 import static com.jtagger.utils.FileContentTypeDetector.M4A_MIME_TYPE;
 
@@ -72,6 +73,12 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
         tempFile.close();
 
         if (!temp.delete()) System.err.println("Could not delete temp file");
+    }
+
+    @Override
+    public void removeTag() {
+        tag.removeMetadataAtoms();
+        tag.assemble();
     }
 
     @Override

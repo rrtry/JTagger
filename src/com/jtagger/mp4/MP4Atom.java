@@ -93,6 +93,9 @@ public class MP4Atom implements Component {
     }
 
     public void setChildAtoms(ArrayList<MP4Atom> childAtoms) {
+        if (childAtoms.isEmpty()) {
+            removeAllChildAtoms(); return;
+        }
         this.childAtoms = childAtoms;
     }
 
@@ -102,7 +105,7 @@ public class MP4Atom implements Component {
 
     public void removeAllChildAtoms() {
 
-        setChildAtoms(new ArrayList<>());
+        this.childAtoms = new ArrayList<>();
         data = new byte[8];
 
         System.arraycopy(IntegerUtils.fromUInt32BE(data.length), 0, data, 0, 4);
