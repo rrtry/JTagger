@@ -76,19 +76,18 @@ public class MpegFrameParser {
         return x == 0xFF && y >> 4 == 0xF;
     }
 
-    private int getSyncOffset(RandomAccessFile file) {
+    public static int getSyncOffset(RandomAccessFile file, ID3V2Tag id3V2Tag) {
         try {
 
-            if (id3V2Tag == null) {
-                return 0;
-            }
-
             int startPosition = 0;
-            TagHeader header = id3V2Tag.getTagHeader();
-            startPosition += header.getTagSize() + 10;
+            if (id3V2Tag != null) {
 
-            if (header.hasFooter()) {
-                startPosition += 10;
+                TagHeader header = id3V2Tag.getTagHeader();
+                startPosition += header.getTagSize() + 10;
+
+                if (header.hasFooter()) {
+                    startPosition += 10;
+                }
             }
 
             byte[] buffer = new byte[1024];
@@ -112,7 +111,7 @@ public class MpegFrameParser {
                 }
 
                 previousByte   = buffer[buffer.length - 1];
-                previousOffset = position;
+                previousOffset = file.getFilePointer();
 
                 for (int i = 0; i < buffer.length - 1; i++) {
                     if (isSync(buffer[i], buffer[i + 1]))
@@ -136,7 +135,7 @@ public class MpegFrameParser {
     public void parseFrame(RandomAccessFile file) {
         try {
 
-            int offset = getSyncOffset(file);
+            int offset = getSyncOffset(file, id3V2Tag);
 
             MpegFrameHeader header = parseFrameHeader(file, offset);
             byte[] frameData;
@@ -193,24 +192,63 @@ public class MpegFrameParser {
             boolean isCopyrighted = ((header[3] >> 3) & 0x1)  != 0;
             boolean isOriginal    = ((header[3] >> 2) & 0x1)  != 0;
 
-            boolean isIntensityStereo   = MODE_EXTENSION.get(modeExtension).get(0);
-            boolean isMidSideStereo     = MODE_EXTENSION.get(modeExtension).get(1);
+            boolean isIntensityStereo = false;
+            boolean isMidSideStereo   = false;
+
+            if (channelMode == CHANNEL_MODE_JOIN_STEREO) {
+
+                List<Boolean> modeExtValues = MODE_EXTENSION.get(modeExtension);
+                if (modeExtValues == null) return null;
+
+                isIntensityStereo = modeExtValues.get(0);
+                isMidSideStereo   = modeExtValues.get(1);
+            }
 
             if (version == MPEG_VERSION_1) {
 
                 if (layer == MPEG_LAYER_1) index = 0;
                 if (layer == MPEG_LAYER_2) index = 1;
                 if (layer == MPEG_LAYER_3) index = 2;
-            }
-            if (version == MPEG_VERSION_2 || version == MPEG_VERSION_2_5) {
+
+            } else if (version == MPEG_VERSION_2 || version == MPEG_VERSION_2_5) {
 
                 if (layer == MPEG_LAYER_1) index = 3;
                 if (layer == MPEG_LAYER_2 || layer == MPEG_LAYER_3) index = 4;
+
+            } else {
+                return null; // invalid version
             }
 
-            int bitrate         = BITRATE.get(bitrateIndex).get(index);
-            int sampleRate      = SAMPLE_RATE.get(sampleRateBits).get(version);
-            int samplesPerFrame = SAMPLES_PER_FRAME.get(layer).get(version);
+            List<Integer> bitrateValues         = BITRATE.get(bitrateIndex);
+            List<Integer> sampleRateValues      = SAMPLE_RATE.get(sampleRateBits);
+            List<Integer> samplesPerFrameValues = SAMPLES_PER_FRAME.get(layer);
+
+            if (bitrateValues == null) return null;
+            if (sampleRateValues == null) return null;
+            if (samplesPerFrameValues == null) return null;
+
+            int bitrate         = bitrateValues.get(index);
+            int sampleRate      = sampleRateValues.get(version);
+            int samplesPerFrame = samplesPerFrameValues.get(version);
+
+            if (bitrate == -1) {
+                return null; // bad value;
+            }
+            if (layer == MPEG_LAYER_2) {
+
+                boolean isStereo           = channelMode == CHANNEL_MODE_STEREO;
+                boolean isDualChannel      = channelMode == CHANNEL_MODE_DUAL_CHANNEL;
+                boolean isSingleChannel    = channelMode == CHANNEL_MODE_SINGLE_CHANNEL;
+                boolean illegalChannelMode = isStereo || isIntensityStereo || isDualChannel;
+
+                List<Integer> restrictedValues = List.of(32, 48, 56, 80);
+                if (restrictedValues.contains(bitrate) && illegalChannelMode) return null;
+
+                restrictedValues   = List.of(224, 256, 320, 384);
+                illegalChannelMode = isSingleChannel;
+
+                if (restrictedValues.contains(bitrate) && illegalChannelMode) return null;
+            }
 
             return new MpegFrameHeader(
                     version,

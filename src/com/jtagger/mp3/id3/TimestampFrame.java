@@ -5,6 +5,10 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoField;
 import java.time.temporal.Temporal;
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.jtagger.mp3.id3.ID3V2Tag.ID3V2_4;
 
 public class TimestampFrame extends TextFrame {
 
@@ -17,7 +21,17 @@ public class TimestampFrame extends TextFrame {
             "yyyy-MM-dd'T'HH:mm", "yyyy-MM-dd'T'HH:mm:ss"
     };
 
+    public static final Pattern[] REGEX_PATTERNS = new Pattern[VALID_PATTERNS.length];
     private Temporal temporal;
+
+    static {
+        REGEX_PATTERNS[0] = Pattern.compile("\\d\\d\\d\\d");
+        REGEX_PATTERNS[1] = Pattern.compile("\\d\\d\\d\\d-\\d\\d");
+        REGEX_PATTERNS[2] = Pattern.compile("\\d\\d\\d\\d-\\d\\d-\\d\\d");
+        REGEX_PATTERNS[3] = Pattern.compile("\\d\\d\\d\\d-\\d\\d-\\d\\dT\\d\\d");
+        REGEX_PATTERNS[4] = Pattern.compile("\\d\\d\\d\\d-\\d\\d-\\d\\dT\\d\\d:\\d\\d");
+        REGEX_PATTERNS[5] = Pattern.compile("\\d\\d\\d\\d-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d");
+    }
 
     {
         setEncoding(TextEncoding.ENCODING_LATIN_1);
@@ -45,7 +59,7 @@ public class TimestampFrame extends TextFrame {
 
     public MonthDay getMonthDay() {
 
-        int day = getField(ChronoField.DAY_OF_MONTH);
+        int day   = getField(ChronoField.DAY_OF_MONTH);
         int month = getField(ChronoField.MONTH_OF_YEAR);
 
         if (month == -1 || day == -1) {
@@ -56,7 +70,7 @@ public class TimestampFrame extends TextFrame {
 
     public LocalDate getDate() {
 
-        Year year = getYear();
+        Year year         = getYear();
         MonthDay monthDay = getMonthDay();
 
         if (year == null || monthDay == null) {
@@ -96,7 +110,30 @@ public class TimestampFrame extends TextFrame {
 
     @Override
     public void setFrameData(String text) {
-        setYear(Year.parse(text));
+
+        int index     = -1;
+        String format = "";
+
+        for (int i = 0; i < REGEX_PATTERNS.length; i++) {
+
+            Pattern pattern = REGEX_PATTERNS[i];
+            Matcher matcher = pattern.matcher(text);
+
+            if (matcher.matches()) {
+                format = VALID_PATTERNS[i];
+                index  = i;
+                break;
+            }
+        }
+
+        if (index == -1) {
+            throw new IllegalArgumentException("Invalid date string");
+        }
+
+        if (index == 0) setYear(Year.parse(text));
+        if (index == 1) setYearMonth(YearMonth.parse(text, DateTimeFormatter.ofPattern(format)));
+        if (index == 2) setDate(LocalDate.parse(text, DateTimeFormatter.ofPattern(format)));
+        if (index >= 3) setDateTime(LocalDateTime.parse(text, DateTimeFormatter.ofPattern(format)));
     }
 
     @Override
@@ -137,6 +174,13 @@ public class TimestampFrame extends TextFrame {
     public static TimestampFrame.Builder createBuilder() { return new TimestampFrame().new Builder(); }
     public static TimestampFrame.Builder newBuilder(TimestampFrame frame) { return frame.new Builder(); }
 
+    public static TimestampFrame createInstance(String identifier, String timestamp) {
+        return TimestampFrame.createBuilder()
+                .setHeader(FrameHeader.createFrameHeader(identifier, ID3V2_4))
+                .setTimestamp(timestamp)
+                .build(ID3V2_4);
+    }
+
     public class Builder {
 
         public TimestampFrame.Builder setHeader(FrameHeader frameHeader) {
@@ -166,6 +210,11 @@ public class TimestampFrame extends TextFrame {
 
         public Builder setDateTime(LocalDateTime localDateTime) {
             TimestampFrame.this.setDateTime(localDateTime);
+            return this;
+        }
+
+        public Builder setTimestamp(String timestamp) {
+            TimestampFrame.this.setFrameData(timestamp);
             return this;
         }
 

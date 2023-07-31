@@ -1,7 +1,6 @@
 package com.jtagger.utils;
 
-import com.jtagger.ogg.opus.OggOpusParser;
-import com.jtagger.ogg.vorbis.VorbisIdentificationHeader;
+import com.jtagger.mp3.MpegFrameParser;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -53,7 +52,7 @@ public class FileContentTypeDetector {
             file.read(headerMagic);
 
             if (Arrays.equals(headerMagic, OPUS_IDENTIFICATION_HEADER_MAGIC)) {
-                return FileContentTypeDetector.OGG_OPUS_MIME_TYPE;
+                file.seek(0); return FileContentTypeDetector.OGG_OPUS_MIME_TYPE;
             }
 
             file.seek(file.getFilePointer() - headerMagic.length + 1); // +1 skips header type
@@ -61,8 +60,15 @@ public class FileContentTypeDetector {
             file.read(headerMagic);
 
             if (Arrays.equals(headerMagic, VORBIS_HEADER_MAGIC)) {
-                return FileContentTypeDetector.OGG_VORBIS_MIME_TYPE;
+                file.seek(0); return FileContentTypeDetector.OGG_VORBIS_MIME_TYPE;
             }
+        }
+
+        MpegFrameParser parser = new MpegFrameParser();
+        parser.parseFrame(file);
+
+        if (parser.getMpegFrame() != null) {
+            file.seek(0); return FileContentTypeDetector.MPEG_MIME_TYPE;
         }
         return null;
     }

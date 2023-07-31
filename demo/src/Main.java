@@ -1,12 +1,25 @@
 import com.jtagger.*;
 import com.jtagger.mp3.MpegFile;
+import com.jtagger.mp3.MpegFrameHeader;
+import com.jtagger.mp3.MpegStreamInfo;
 import com.jtagger.mp3.id3.*;
+import com.jtagger.utils.IntegerUtils;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.MonthDay;
+import java.time.Year;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Random;
+
+import static java.lang.Byte.toUnsignedInt;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class Main {
@@ -146,51 +159,33 @@ public class Main {
         mediaFile.close();
     }
 
-    private static boolean parseMediaFile(File fileObj) throws IOException {
+    private static void parseMediaFile(File fileObj) throws IOException {
 
+        System.out.println(fileObj.getName());
         MediaFile mediaFile = new MediaFile<>();
         mediaFile.scan(fileObj);
 
         AbstractTag tag       = mediaFile.getTag();
         StreamInfo streamInfo = mediaFile.getStreamInfo();
-        System.out.println(fileObj.getName());
 
-        if (tag == null) {
-            return false;
-        }
+        if (tag != null) {
+            for (String field : AbstractTag.FIELDS) {
 
-        for (String field : AbstractTag.FIELDS) {
+                if (field.equals(AbstractTag.PICTURE)) continue;
+                String value = tag.getStringField(field);
 
-            if (field.equals(AbstractTag.PICTURE)) continue;
-            String value = tag.getStringField(field);
+                if (value == null) continue;
+                if (value.isEmpty()) continue;
 
-            if (value == null) continue;
-            if (value.isEmpty()) continue;
+                try {
+                    if (field.equals(AbstractTag.ID3_GENRE)) {
+                        System.out.printf("\t%s =  %s\n", field, ID3V1Tag.GENRES[Integer.parseInt(value)]);
+                    }
+                } catch (NumberFormatException ignored) {
 
-            try {
-                if (field.equals(AbstractTag.ID3_GENRE)) {
-                    System.out.printf("\t%s =  %s\n", field, ID3V1Tag.GENRES[Integer.parseInt(value)]);
                 }
-            } catch (NumberFormatException ignored) {
-
+                System.out.printf("\t%s = %s\n", field, value);
             }
-            System.out.printf("\t%s = %s\n", field, value);
-        }
-
-        AttachedPicture picture = tag.getPictureField();
-        if (picture != null) {
-
-            final String mimeType  = picture.getMimeType();
-            final String extension = "." + mimeType.substring(mimeType.indexOf("/") + 1);
-            final String path      = System.getProperty("user.home") + File.separator + "cover" + extension;
-
-            FileOutputStream out = new FileOutputStream(path);
-            out.write(picture.getPictureData());
-            out.close();
-        }
-
-        if (streamInfo == null) {
-            return false;
         }
 
         System.out.println();
@@ -202,17 +197,18 @@ public class Main {
         System.out.printf("\tChannels: %d\n", streamInfo.getChannelCount());
 
         mediaFile.close();
-        return true;
     }
 
-    private static void parseFiles(File directory) throws IOException {
+    private static void parseFiles(File directory, boolean recursive) throws IOException {
 
         File[] files = directory.listFiles();
         assert files != null;
 
         for (File file : files) {
-            if (file.isFile()) parseMediaFile(file);
-            else parseFiles(file);
+            if (file.isFile()) {
+                parseMediaFile(file);
+            }
+            else if (file.isDirectory() && recursive) parseFiles(file, true);
         }
     }
 
@@ -262,6 +258,22 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException {
-        parseFiles(new File(args[0]));
+
+        File directory = new File(args[0]);
+        File[] files   = directory.listFiles();
+
+        assert files != null;
+        for (File file : files) {
+
+            if (!file.isFile()) continue;
+            if (!file.getName().contains("mp3")) continue;
+
+            MpegFile mpegFile = new MpegFile();
+            mpegFile.scan(file);
+
+            MpegStreamInfo streamInfo = mpegFile.getStreamInfo();
+            boolean isProtected = streamInfo.getMpegHeader().isProtected();
+            if (isProtected) System.out.println(file.getName());
+        }
     }
 }

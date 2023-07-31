@@ -35,8 +35,9 @@ public class MpegStreamInfoParser implements StreamInfoParser<MpegStreamInfo> {
         XingHeaderParser xingHeaderParser = new XingHeaderParser();
 
         mpegFrameParser.parseFrame(file);
+        MpegFrame mpegFrame = mpegFrameParser.getMpegFrame();
+        if (mpegFrame == null) return null;
 
-        MpegFrame mpegFrame        = mpegFrameParser.getMpegFrame();
         MpegFrameHeader mpegHeader = mpegFrame.getMpegHeader();
         XingHeader xingHeader      = xingHeaderParser.parse(mpegFrame);
         VBRIHeader vbriHeader      = null;

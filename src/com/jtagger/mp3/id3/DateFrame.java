@@ -21,13 +21,13 @@ public class DateFrame extends TextFrame {
     @Override
     public String toString() {
         return String.format(
-                "ID: %s, DATE: %s", getIdentifier(), date
+                "ID: %s, DATE: %s", getIdentifier(), date.format(DateTimeFormatter.ofPattern(DATE_FORMAT_PATTERN))
         );
     }
 
     public void setDate(MonthDay date) {
         this.date = date;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMM");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT_PATTERN);
         super.setText(date.format(formatter));
     }
 
@@ -39,6 +39,12 @@ public class DateFrame extends TextFrame {
                 .setHeader(FrameHeader.createFrameHeader(DATE, ID3V2_3))
                 .setDate(date)
                 .build(ID3V2_3);
+    }
+
+    public static DateFrame createInstance(String dateString) {
+        return createInstance(
+                MonthDay.parse(dateString, DateTimeFormatter.ofPattern(DATE_FORMAT_PATTERN))
+        );
     }
 
     public class Builder {

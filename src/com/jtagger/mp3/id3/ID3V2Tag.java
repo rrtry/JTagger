@@ -4,21 +4,15 @@ import com.jtagger.AbstractTag;
 import com.jtagger.AttachedPicture;
 import com.jtagger.PaddingTag;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
-import static com.jtagger.mp3.id3.AbstractFrame.V2_3_FRAMES;
-import static com.jtagger.mp3.id3.AbstractFrame.V2_4_FRAMES;
+import static com.jtagger.mp3.id3.AbstractFrame.*;
 import static com.jtagger.mp3.id3.DateFrame.DATE_FORMAT_PATTERN;
 import static com.jtagger.mp3.id3.TagHeaderParser.HEADER_LENGTH;
 import static com.jtagger.mp3.id3.TextEncoding.ENCODING_LATIN_1;
@@ -148,8 +142,12 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
         return frames;
     }
 
-    public AbstractFrame getFrameAt(int index)  {
-        return frames.get(index);
+    private boolean isSupportedFrame(String id) {
+        return List.of(getVersion() == ID3V2_3 ? V2_3_FRAMES : V2_4_FRAMES).contains(id);
+    }
+
+    public boolean containsFrame(String id) {
+        return indexOf(id) == -1;
     }
 
     public TextFrame getTextFrame(String id) {
@@ -157,17 +155,8 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
     }
 
     public <T extends AbstractFrame> T getFrame(String id) {
-
-        boolean knownFrame = false;
-        if (getVersion() == ID3V2_3) knownFrame = Arrays.asList(V2_3_FRAMES).contains(id);
-        if (getVersion() == ID3V2_4) knownFrame = Arrays.asList(V2_4_FRAMES).contains(id);
-
-        if (!knownFrame) return null;
-
         for (AbstractFrame frame : frames) {
-            if (frame.getIdentifier().equals(id)) {
-                return (T) frame;
-            }
+            if (frame.getIdentifier().equals(id)) return (T) frame;
         }
         return null;
     }
@@ -175,10 +164,6 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
     private <T> AbstractFrame<T> getFrameFromFieldName(String field) {
         String frameId = getFrameIdFromFieldName(field);
         return frameId != null ? getFrame(frameId) : null;
-    }
-
-    public void addFrame(AbstractFrame frame) {
-        frames.add(frame);
     }
 
     public void setFrameAtIndex(int index, AbstractFrame frame) {
@@ -190,13 +175,11 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
     }
 
     public void setFrame(AbstractFrame frame) {
-        int index = indexOf(frame.getIdentifier());
-        if (index != -1) setFrameAtIndex(indexOf(frame.getIdentifier()), frame);
-        else addFrame(frame);
-    }
-
-    public boolean removePictures() {
-        return removeFrame(PICTURE);
+        if (isSupportedFrame(frame.getIdentifier())) {
+            int index = indexOf(frame.getIdentifier());
+            if (index != -1) setFrameAtIndex(indexOf(frame.getIdentifier()), frame);
+            else frames.add(frame);
+        }
     }
 
     public boolean removeFrame(String id) {
@@ -230,17 +213,6 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
         return index;
     }
 
-    public void setPictureFrame(AttachedPictureFrame newFrame, int index) {
-
-        newFrame = AttachedPictureFrame.newBuilder(newFrame).build(getVersion()); // assemble frame
-
-        if (index != -1 && getFrameAt(index) instanceof AttachedPictureFrame) {
-            setFrameAtIndex(index, newFrame);
-            return;
-        }
-        throw new IllegalArgumentException("Index must be non-negative and frame at the position must have id 'APIC'");
-    }
-
     private void setCommentFrame(String comment, String language) {
         setFrame(CommentFrame.createInstance(comment, language, getVersion()));
     }
@@ -255,54 +227,6 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
 
     private void setTextFrame(String id, String text, byte encoding) {
         setFrame(TextFrame.createInstance(id, text, encoding, getVersion()));
-    }
-
-    public void addPictureURL(URL url, String description, byte pictureType) {
-        final String mimeType = "-->";
-        addPicture(
-                url.toString().getBytes(StandardCharsets.ISO_8859_1),
-                description,
-                mimeType,
-                pictureType
-        );
-    }
-
-    public void addPicture(byte[] buffer, String description, String mimeType, byte pictureType) {
-        addFrame(AttachedPictureFrame.createInstance(description, mimeType, pictureType, buffer, getVersion()));
-    }
-
-    public void addPictureFromURL(URL url, String description, byte pictureType) throws IOException {
-        addPictureFrame(url, description, pictureType);
-    }
-
-    public void addPictureFromFile(File file, String description, byte pictureType) throws IOException {
-        addPictureFrame(file, description, pictureType);
-    }
-
-    private void addPictureFrame(URL url, String description, byte pictureType) throws IOException {
-        addFrame(
-                AttachedPictureFrame.newBuilder()
-                        .setHeader(FrameHeader.createFrameHeader(AbstractFrame.PICTURE, getVersion()))
-                        .setEncoding(TextEncoding.getAppropriateEncoding(getVersion()))
-                        .setPictureType(pictureType)
-                        .setDescription(description)
-                        .setPictureData(url)
-                        .build(getVersion())
-        );
-    }
-
-    private void addPictureFrame(File file, String description, byte pictureType) throws IOException {
-        String mimeType = Files.probeContentType(Paths.get(file.getAbsolutePath()));
-        addFrame(
-                AttachedPictureFrame.newBuilder()
-                        .setHeader(FrameHeader.createFrameHeader(AbstractFrame.PICTURE, getVersion()))
-                        .setEncoding(TextEncoding.getAppropriateEncoding(getVersion()))
-                        .setMimeType(mimeType)
-                        .setPictureType(pictureType)
-                        .setDescription(description)
-                        .setPictureData(file)
-                        .build(getVersion())
-        );
     }
 
     @Override
@@ -434,7 +358,7 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
     }
 
     public void setGenre(int genre) {
-        if (genre < ID3V1Tag.GENRES.length - 1) {
+        if (genre >= 0 && genre <= ID3V1Tag.UNKNOWN) {
             String genreString = ID3V1Tag.GENRES[genre];
             setTextFrame(AbstractFrame.GENRE, genreString, ENCODING_LATIN_1);
         }
@@ -456,8 +380,8 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
 
     public boolean removeYear() {
         if (getVersion() == ID3V2_3) return removeFrame(AbstractFrame.YEAR);
-        else if (getVersion() == ID3V2_4) return removeFrame(AbstractFrame.RECORDING_TIME);
-        throw new IllegalArgumentException("Invalid version number: " + getVersion());
+        if (getVersion() == ID3V2_4) return removeFrame(AbstractFrame.RECORDING_TIME);
+        return false;
     }
 
     @Override
@@ -528,46 +452,25 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
 
     private static void convertToID3V23Tag(ID3V2Tag id3V2Tag) {
 
-        final byte version = ID3V2_3;
         ArrayList<AbstractFrame> frames = id3V2Tag.getFrames();
+        TimestampFrame timestampFrame   = id3V2Tag.getFrame(AbstractFrame.RECORDING_TIME);
+        TimestampFrame releaseTimeFrame = id3V2Tag.getFrame(AbstractFrame.ORIGINAL_RELEASE_TIME);
 
-        TimestampFrame timestampFrame = id3V2Tag.getFrame(AbstractFrame.RECORDING_TIME);
-        TextFrame releaseTimeFrame = id3V2Tag.getFrame(AbstractFrame.ORIGINAL_RELEASE_TIME);
-
-        if (releaseTimeFrame != null && releaseTimeFrame.getText().length() >= 4) {
-            TextFrame releaseYear = TextFrame.createInstance(
-                    AbstractFrame.ORIGINAL_RELEASE_YEAR,
-                    releaseTimeFrame.getText().substring(0, 4),
-                    ENCODING_LATIN_1,
-                    version);
-            frames.add(releaseYear);
+        if (releaseTimeFrame != null) {
+            Year year = releaseTimeFrame.getYear();
+            if (year != null) frames.add(YearFrame.createInstance(ORIGINAL_RELEASE_YEAR, year));
         }
-
-        frames.remove(releaseTimeFrame);
-
         if (timestampFrame != null) {
 
             Year year      = timestampFrame.getYear();
             MonthDay date  = timestampFrame.getMonthDay();
             LocalTime time = timestampFrame.getTime();
 
-            TextFrame frame;
+            if (year != null) frames.add(YearFrame.createInstance(AbstractFrame.YEAR, year));
+            if (date != null) frames.add(DateFrame.createInstance(date));
+            if (time != null) frames.add(TimeFrame.createInstance(time));
 
-            if (year != null) {
-                frame = TextFrame.createInstance(
-                        AbstractFrame.YEAR, String.valueOf(year),
-                        ENCODING_LATIN_1, version
-                );
-                frames.add(frame);
-            }
-            if (date != null) {
-                frame = DateFrame.createInstance(date);
-                frames.add(frame);
-            }
-            if (time != null) {
-                frame = TimeFrame.createInstance(time);
-                frames.add(frame);
-            }
+            frames.remove(releaseTimeFrame);
             frames.remove(releaseTimeFrame);
         }
     }
@@ -580,22 +483,20 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
         StringBuilder dateString = new StringBuilder();
         StringBuilder pattern    = new StringBuilder();
 
-        TextFrame releaseYear = id3V2Tag.getFrame(AbstractFrame.ORIGINAL_RELEASE_YEAR);
-        TextFrame yearFrame   = id3V2Tag.getFrame(AbstractFrame.YEAR);
+        YearFrame releaseYear = id3V2Tag.getFrame(AbstractFrame.ORIGINAL_RELEASE_YEAR);
+        YearFrame yearFrame   = id3V2Tag.getFrame(AbstractFrame.YEAR);
         TimeFrame timeFrame   = id3V2Tag.getFrame(AbstractFrame.TIME);
-        DateFrame dateFrame   = id3V2Tag.getFrame(AbstractFrame.YEAR);
+        DateFrame dateFrame   = id3V2Tag.getFrame(AbstractFrame.DATE);
 
-        if (releaseYear != null && releaseYear.getText().length() == 4) {
+        if (releaseYear != null) {
 
             TimestampFrame releaseTime = TimestampFrame.createBuilder()
                     .setHeader(FrameHeader.createFrameHeader(AbstractFrame.ORIGINAL_RELEASE_TIME, version))
                     .setYear(Year.parse(releaseYear.getText()))
                     .build(version);
 
-            frames.set(frames.indexOf(releaseYear), releaseTime);
+            frames.add(releaseTime);
         }
-
-        frames.remove(releaseYear);
 
         boolean isYear      = false;
         boolean isDate      = false;
@@ -603,17 +504,17 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
 
         final String yearPattern = "yyyy";
 
-        if (yearFrame != null && yearFrame.getText().length() == 4) {
+        if (yearFrame != null) {
             pattern.append(yearPattern);
             dateString.append(yearFrame.getText());
             isYear = true;
         }
-        if (isYear && dateFrame != null && dateFrame.getText().length() == 4) {
+        if (isYear && dateFrame != null) {
             pattern.append("-").append(DATE_FORMAT_PATTERN);
             dateString.append("-").append(dateFrame.getText());
             isDate = true;
         }
-        if (isYear && isDate && timeFrame != null && timeFrame.getText().length() == 4) {
+        if (isYear && isDate && timeFrame != null) {
             pattern.append("-").append(TIME_FORMAT_PATTERN);
             dateString.append("-").append(timeFrame.getText());
             isDateTime = true;
@@ -622,25 +523,20 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
         frames.remove(yearFrame);
         frames.remove(dateFrame);
         frames.remove(timeFrame);
+        frames.remove(releaseYear);
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern.toString());
-
         try {
 
-            TimestampFrame.Builder recTime = TimestampFrame.createBuilder();
-            recTime = recTime.setHeader(FrameHeader.createFrameHeader(AbstractFrame.RECORDING_TIME, version));
+            TimestampFrame.Builder builder = TimestampFrame.createBuilder();
+            builder = builder.setHeader(FrameHeader.createFrameHeader(AbstractFrame.RECORDING_TIME, version));
 
-            if (isDateTime) {
-                recTime.setDateTime(LocalDateTime.parse(dateString, formatter));
-            } else if (isDate) {
-                recTime.setDate(LocalDate.parse(dateString, formatter));
-            } else if (isYear) {
-                recTime.setYear(Year.parse(dateString.toString()));
-            } else {
-                return;
-            }
+            if (isDateTime)  builder = builder.setDateTime(LocalDateTime.parse(dateString, formatter));
+            else if (isDate) builder = builder.setDate(LocalDate.parse(dateString, formatter));
+            else if (isYear) builder = builder.setYear(Year.parse(dateString.toString()));
+            else return;
 
-            TimestampFrame timestampFrame = recTime.build(version);
+            TimestampFrame timestampFrame = builder.build(version);
             frames.add(timestampFrame);
 
         } catch (DateTimeParseException e) {
@@ -713,43 +609,41 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
         }
 
         String frameId = getFrameIdFromFieldName(field);
-
         if (frameId == null) return;
-        if (field.equals(AbstractTag.PICTURE)) {
 
+        if (frameId.equals(AbstractFrame.PICTURE)) {
             AttachedPicture picture = (AttachedPicture) value;
             AttachedPictureFrame pictureFrame = AttachedPictureFrame.createInstance(
                     picture.getDescription(), picture.getMimeType(),
                     (byte) picture.getPictureType(), picture.getPictureData(),
                     getVersion()
             );
-            frames.add(pictureFrame);
-
-        } else if (TimestampFrame.isTimestampFrame(frameId)) {
-
-            Year year = Year.parse((String) value);
-            TimestampFrame timestampFrame = TimestampFrame.createBuilder()
-                    .setYear(year)
-                    .setHeader(FrameHeader.createFrameHeader(frameId, getVersion()))
-                    .build(getVersion());
-            frames.add(timestampFrame);
-
-        } else if (CommentFrame.isCommentFrame(frameId)) {
-
+            setFrame(pictureFrame);
+        }
+        else if (frameId.equals(DATE)) {
+            setFrame(DateFrame.createInstance((String) value));
+        }
+        else if (YearFrame.isYearFrame(frameId)) {
+            setFrame(YearFrame.createInstance(frameId, Year.parse((String) value)));
+        }
+        else if (TimestampFrame.isTimestampFrame(frameId)) {
+            setFrame(TimestampFrame.createInstance(frameId, (String) value));
+        }
+        else if (CommentFrame.isCommentFrame(frameId)) {
             CommentFrame commentFrame = CommentFrame.createInstance(
                     (String) value,
                     "XXX",
                     getVersion()
             );
-            frames.add(commentFrame);
-
-        } else {
+            setFrame(commentFrame);
+        }
+        else {
             TextFrame textFrame = TextFrame.createInstance(
                     frameId,
                     ((String) value),
                     TextEncoding.getAppropriateEncoding(getVersion()),
                     getVersion());
-            frames.add(textFrame);
+            setFrame(textFrame);
         }
     }
 
