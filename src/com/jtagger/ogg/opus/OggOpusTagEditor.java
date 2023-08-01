@@ -1,16 +1,17 @@
 package com.jtagger.ogg.opus;
 
+import com.jtagger.MediaFile;
 import com.jtagger.ogg.CommentHeader;
 import com.jtagger.ogg.OggPacket;
 import com.jtagger.ogg.OggTagEditor;
-import com.jtagger.utils.FileContentTypeDetector;
+
 import java.util.ArrayList;
 
 public class OggOpusTagEditor extends OggTagEditor {
 
     @Override
     protected String getFileMimeType() {
-        return FileContentTypeDetector.OGG_OPUS_MIME_TYPE;
+        return MediaFile.FileContentTypeDetector.OGG_OPUS_MIME_TYPE;
     }
 
     @Override

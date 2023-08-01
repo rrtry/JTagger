@@ -1,7 +1,7 @@
 package com.jtagger.ogg.vorbis;
 
 import com.jtagger.MediaFile;
-import static com.jtagger.utils.FileContentTypeDetector.OGG_VORBIS_MIME_TYPE;
+import static com.jtagger.MediaFile.FileContentTypeDetector.OGG_VORBIS_MIME_TYPE;
 
 public class OggVorbisFile extends MediaFile<VorbisComments, VorbisIdentificationHeader> {
 

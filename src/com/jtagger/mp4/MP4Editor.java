@@ -6,9 +6,8 @@ import com.jtagger.AbstractTagEditor;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
 
-import static com.jtagger.utils.FileContentTypeDetector.M4A_MIME_TYPE;
+import static com.jtagger.MediaFile.FileContentTypeDetector.M4A_MIME_TYPE;
 
 public class MP4Editor extends AbstractTagEditor<MP4> {
 

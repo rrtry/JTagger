@@ -4,14 +4,14 @@ import com.jtagger.MediaFile;
 import com.jtagger.mp3.id3.ID3V2Tag;
 import com.jtagger.mp3.id3.ID3V2TagEditor;
 
-import static com.jtagger.utils.FileContentTypeDetector.MPEG_MIME_TYPE;
+import static com.jtagger.MediaFile.FileContentTypeDetector.MPEG_MIME_TYPE;
 
 public class MpegFile extends MediaFile<ID3V2Tag, MpegStreamInfo> {
 
     @Override
     protected MpegStreamInfoParser getParser(String mimeType) {
         if (!mimeType.equals(MPEG_MIME_TYPE)) throw new IllegalArgumentException("Not a MP3 file");
-        return new MpegStreamInfoParser(tag);
+        return new MpegStreamInfoParser(tagEditor.getTag());
     }
 
     @Override

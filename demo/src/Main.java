@@ -188,6 +188,11 @@ public class Main {
             }
         }
 
+        if (streamInfo == null) {
+            System.err.println(fileObj.getName() + " is invalid");
+            return;
+        }
+
         System.out.println();
         int duration = streamInfo.getDuration();
 
@@ -258,22 +263,6 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException {
-
-        File directory = new File(args[0]);
-        File[] files   = directory.listFiles();
-
-        assert files != null;
-        for (File file : files) {
-
-            if (!file.isFile()) continue;
-            if (!file.getName().contains("mp3")) continue;
-
-            MpegFile mpegFile = new MpegFile();
-            mpegFile.scan(file);
-
-            MpegStreamInfo streamInfo = mpegFile.getStreamInfo();
-            boolean isProtected = streamInfo.getMpegHeader().isProtected();
-            if (isProtected) System.out.println(file.getName());
-        }
+        parseMediaFile(new File(args[0]));
     }
 }

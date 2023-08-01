@@ -20,10 +20,11 @@ public class StreamInfoBlockParser implements BlockBodyParser<StreamInfoBlock> {
 
         int minFrameSize = toUInt24BE(Arrays.copyOfRange(block, 4, 7));
         int maxFrameSize = toUInt24BE(Arrays.copyOfRange(block, 7, 10));
-        int sampleRate   = toUInt24BE(Arrays.copyOfRange(block, 10, 13)) >> 4;
+        int bits         = toUInt24BE(Arrays.copyOfRange(block, 10, 13));
+        int sampleRate   = bits >> 4;
 
-        byte channels      = (byte) (block[12] >> 5);
-        byte bitsPerSample = (byte) (block[12] >> 2);
+        byte channels      = (byte) ((bits >> 1 & 0x7) + 1); bits = toUInt32BE(Arrays.copyOfRange(block,10, 14));
+        byte bitsPerSample = (byte) (((bits >> 4) & 0x1f) + 1);
         int totalSamples   = toUInt32BE(Arrays.copyOfRange(block, 14, 18));
 
         byte[] signature = Arrays.copyOfRange(block, 18, 34);

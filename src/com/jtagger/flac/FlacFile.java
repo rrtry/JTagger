@@ -2,7 +2,7 @@ package com.jtagger.flac;
 
 import com.jtagger.MediaFile;
 
-import static com.jtagger.utils.FileContentTypeDetector.FLAC_MIME_TYPE;
+import static com.jtagger.MediaFile.FileContentTypeDetector.FLAC_MIME_TYPE;
 
 public class FlacFile extends MediaFile<FlacTag, StreamInfoBlock> {
 

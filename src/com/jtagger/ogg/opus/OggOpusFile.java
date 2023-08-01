@@ -3,7 +3,7 @@ package com.jtagger.ogg.opus;
 import com.jtagger.MediaFile;
 import com.jtagger.ogg.vorbis.VorbisComments;
 
-import static com.jtagger.utils.FileContentTypeDetector.OGG_OPUS_MIME_TYPE;
+import static com.jtagger.MediaFile.FileContentTypeDetector.OGG_OPUS_MIME_TYPE;
 
 public class OggOpusFile extends MediaFile<VorbisComments, OpusIdentificationHeader> {
 

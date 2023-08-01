@@ -2,7 +2,7 @@ package com.jtagger.flac;
 
 import com.jtagger.AbstractTagEditor;
 import com.jtagger.AbstractTag;
-import com.jtagger.utils.FileContentTypeDetector;
+import com.jtagger.MediaFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,7 +56,7 @@ public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
 
     @Override
     protected String getFileMimeType() {
-        return FileContentTypeDetector.FLAC_MIME_TYPE;
+        return MediaFile.FileContentTypeDetector.FLAC_MIME_TYPE;
     }
 
     @Override

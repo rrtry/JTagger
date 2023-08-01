@@ -1,9 +1,9 @@
 package com.jtagger.ogg.vorbis;
 
+import com.jtagger.MediaFile;
 import com.jtagger.ogg.CommentHeader;
 import com.jtagger.ogg.OggPacket;
 import com.jtagger.ogg.OggTagEditor;
-import com.jtagger.utils.FileContentTypeDetector;
 
 import java.util.ArrayList;
 
@@ -11,7 +11,7 @@ public class OggVorbisTagEditor extends OggTagEditor {
 
     @Override
     protected String getFileMimeType() {
-        return FileContentTypeDetector.OGG_VORBIS_MIME_TYPE;
+        return MediaFile.FileContentTypeDetector.OGG_VORBIS_MIME_TYPE;
     }
 
     @Override

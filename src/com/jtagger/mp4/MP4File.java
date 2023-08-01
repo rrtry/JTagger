@@ -1,7 +1,7 @@
 package com.jtagger.mp4;
 
 import com.jtagger.MediaFile;
-import static com.jtagger.utils.FileContentTypeDetector.M4A_MIME_TYPE;
+import static com.jtagger.MediaFile.FileContentTypeDetector.M4A_MIME_TYPE;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +17,6 @@ public class MP4File extends MediaFile<MP4, MP4> {
     @Override
     public void scan(File fileObj) throws IOException {
         super.scan(fileObj);
-        streamInfo = tag; // MP4 implements StreamInfo and AbstractTag
+        streamInfo = getTag(); // MP4 implements StreamInfo and AbstractTag
     }
 }

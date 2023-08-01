@@ -10,8 +10,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
-import static com.jtagger.utils.FileContentTypeDetector.OGG_OPUS_MIME_TYPE;
-import static com.jtagger.utils.FileContentTypeDetector.OGG_VORBIS_MIME_TYPE;
+import static com.jtagger.MediaFile.FileContentTypeDetector.OGG_OPUS_MIME_TYPE;
+import static com.jtagger.MediaFile.FileContentTypeDetector.OGG_VORBIS_MIME_TYPE;
 
 abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
 
