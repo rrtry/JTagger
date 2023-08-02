@@ -20,7 +20,7 @@ import static com.jtagger.ogg.opus.OggOpusParser.OPUS_IDENTIFICATION_HEADER_MAGI
 import static com.jtagger.ogg.vorbis.VorbisHeader.VORBIS_HEADER_MAGIC;
 import static com.jtagger.MediaFile.FileContentTypeDetector.*;
 
-public class MediaFile<T extends AbstractTag, I extends StreamInfo> {
+public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements AutoCloseable {
 
     protected AbstractTagEditor<T> tagEditor;
     protected StreamInfoParser<I> streamInfoParser;
@@ -91,6 +91,7 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> {
         tagEditor.commit();
     }
 
+    @Override
     public void close() throws IOException {
         if (tagEditor != null) tagEditor.release();
         tagEditor  = null;

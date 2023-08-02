@@ -263,6 +263,11 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException {
-        parseMediaFile(new File(args[0]));
+        MediaFile mediaFile = new MediaFile();
+        try (mediaFile) {
+            mediaFile.scan(new File(args[0]));
+            AbstractTag tag = mediaFile.getTag();
+            System.out.println(tag);
+        }
     }
 }
