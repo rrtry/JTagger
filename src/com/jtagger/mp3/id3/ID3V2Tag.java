@@ -218,7 +218,7 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
     }
 
     private void setRecordingYear(String id, String year) {
-        TimestampFrame timestampFrame = TimestampFrame.createBuilder()
+        TimestampFrame timestampFrame = TimestampFrame.newBuilder()
                 .setHeader(FrameHeader.createFrameHeader(id, ID3V2_4))
                 .setYear(Year.parse(year))
                 .build(ID3V2_4);
@@ -490,7 +490,7 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
 
         if (releaseYear != null) {
 
-            TimestampFrame releaseTime = TimestampFrame.createBuilder()
+            TimestampFrame releaseTime = TimestampFrame.newBuilder()
                     .setHeader(FrameHeader.createFrameHeader(AbstractFrame.ORIGINAL_RELEASE_TIME, version))
                     .setYear(Year.parse(releaseYear.getText()))
                     .build(version);
@@ -528,7 +528,7 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern.toString());
         try {
 
-            TimestampFrame.Builder builder = TimestampFrame.createBuilder();
+            TimestampFrame.Builder builder = TimestampFrame.newBuilder();
             builder = builder.setHeader(FrameHeader.createFrameHeader(AbstractFrame.RECORDING_TIME, version));
 
             if (isDateTime)  builder = builder.setDateTime(LocalDateTime.parse(dateString, formatter));

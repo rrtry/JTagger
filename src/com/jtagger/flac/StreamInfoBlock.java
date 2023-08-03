@@ -95,7 +95,7 @@ public class StreamInfoBlock extends AbstractMetadataBlock implements StreamInfo
         );
     }
 
-    public static Builder createBuilder() {
+    public static Builder newBuilder() {
         return new StreamInfoBlock().new Builder();
     }
 

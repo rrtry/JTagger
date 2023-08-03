@@ -15,7 +15,7 @@ public class DateFrame extends TextFrame {
 
     @Override
     public void setText(String text) {
-        throw new UnsupportedOperationException();
+        setDate(MonthDay.parse(text, DateTimeFormatter.ofPattern(DATE_FORMAT_PATTERN)));
     }
 
     @Override
@@ -31,11 +31,11 @@ public class DateFrame extends TextFrame {
         super.setText(date.format(formatter));
     }
 
-    public static DateFrame.Builder createBuilder() { return new DateFrame().new Builder(); }
+    public static DateFrame.Builder newBuilder() { return new DateFrame().new Builder(); }
     public static DateFrame.Builder newBuilder(DateFrame frame) { return frame.new Builder(); }
 
     public static DateFrame createInstance(MonthDay date) {
-        return DateFrame.createBuilder()
+        return DateFrame.newBuilder()
                 .setHeader(FrameHeader.createFrameHeader(DATE, ID3V2_3))
                 .setDate(date)
                 .build(ID3V2_3);
@@ -47,7 +47,7 @@ public class DateFrame extends TextFrame {
         );
     }
 
-    public class Builder {
+    public class Builder extends TextFrame.Builder {
 
         public Builder setHeader(FrameHeader frameHeader) {
             if (!frameHeader.getIdentifier().equals(DATE)) {
@@ -57,6 +57,17 @@ public class DateFrame extends TextFrame {
             }
             header = frameHeader;
             return this;
+        }
+
+        @Override
+        public Builder setText(String text) {
+            DateFrame.this.setText(text);
+            return this;
+        }
+
+        @Override
+        public Builder setEncoding(byte encoding) {
+            throw new UnsupportedOperationException();
         }
 
         public Builder setDate(MonthDay date) {

@@ -30,7 +30,7 @@ public class StreamInfoBlockParser implements BlockBodyParser<StreamInfoBlock> {
         byte[] signature = Arrays.copyOfRange(block, 18, 34);
         String md5 = toHexString(signature);
 
-        return StreamInfoBlock.createBuilder()
+        return StreamInfoBlock.newBuilder()
                 .setMinBlockSize(minBlockSize)
                 .setMaxBlockSize(maxBlockSize)
                 .setMinFrameSize(minFrameSize)

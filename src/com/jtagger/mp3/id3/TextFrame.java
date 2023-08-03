@@ -36,7 +36,7 @@ public class TextFrame extends AbstractFrame<String> {
 
     @Override
     public void setFrameData(String text) {
-        this.text = text;
+        setText(text);
     }
 
     public String getText() {

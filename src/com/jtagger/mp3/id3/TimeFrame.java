@@ -15,7 +15,7 @@ public class TimeFrame extends TextFrame {
 
     @Override
     public void setText(String text) {
-        throw new UnsupportedOperationException();
+        setTime(LocalTime.parse(text, DateTimeFormatter.ofPattern(TIME_FORMAT_PATTERN)));
     }
 
     @Override
@@ -31,17 +31,17 @@ public class TimeFrame extends TextFrame {
         super.setText(time.format(formatter));
     }
 
-    public static TimeFrame.Builder createBuilder() { return new TimeFrame().new Builder(); }
+    public static TimeFrame.Builder newBuilder() { return new TimeFrame().new Builder(); }
     public static TimeFrame.Builder newBuilder(TimeFrame frame) { return frame.new Builder(); }
 
     public static TimeFrame createInstance(LocalTime localTime) {
-        return TimeFrame.createBuilder()
+        return TimeFrame.newBuilder()
                 .setHeader(FrameHeader.createFrameHeader(TIME, ID3V2_3))
                 .setTime(localTime)
                 .build(ID3V2_3);
     }
 
-    public class Builder {
+    public class Builder extends TextFrame.Builder {
 
         public Builder setHeader(FrameHeader frameHeader) {
             if (!frameHeader.getIdentifier().equals(TIME)) {
@@ -51,6 +51,17 @@ public class TimeFrame extends TextFrame {
             }
             header = frameHeader;
             return this;
+        }
+
+        @Override
+        public Builder setText(String text) {
+            TimeFrame.this.setText(text);
+            return this;
+        }
+
+        @Override
+        public Builder setEncoding(byte encoding) {
+            throw new UnsupportedOperationException();
         }
 
         public Builder setTime(LocalTime localTime) {

@@ -20,7 +20,7 @@ public class YearFrame extends TextFrame {
 
     @Override
     public void setText(String text) {
-        throw new UnsupportedOperationException();
+        setYear(Year.parse(text));
     }
 
     @Override
@@ -36,17 +36,17 @@ public class YearFrame extends TextFrame {
         super.setText(year.format(formatter));
     }
 
-    public static YearFrame.Builder createBuilder() { return new YearFrame().new Builder(); }
+    public static YearFrame.Builder newBuilder() { return new YearFrame().new Builder(); }
     public static YearFrame.Builder newBuilder(YearFrame frame) { return frame.new Builder(); }
 
     public static YearFrame createInstance(String frameId, Year year) {
-        return YearFrame.createBuilder()
+        return YearFrame.newBuilder()
                 .setHeader(FrameHeader.createFrameHeader(frameId, ID3V2_3))
                 .setYear(year)
                 .build(ID3V2_3);
     }
 
-    public class Builder {
+    public class Builder extends TextFrame.Builder {
 
         public YearFrame.Builder setHeader(FrameHeader frameHeader) {
             if (!isYearFrame(frameHeader.getIdentifier())) {
@@ -56,6 +56,17 @@ public class YearFrame extends TextFrame {
             }
             header = frameHeader;
             return this;
+        }
+
+        @Override
+        public Builder setText(String text) {
+            YearFrame.this.setText(text);
+            return this;
+        }
+
+        @Override
+        public Builder setEncoding(byte encoding) {
+            throw new UnsupportedOperationException();
         }
 
         public YearFrame.Builder setYear(Year year) {

@@ -2,6 +2,7 @@ package com.jtagger.mp3.id3;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.Temporal;
 import java.util.Arrays;
@@ -47,6 +48,10 @@ public class TimestampFrame extends TextFrame {
         } catch (DateTimeException e) {
             return -1;
         }
+    }
+
+    public Temporal getTemporal() {
+        return temporal;
     }
 
     public Year getYear() {
@@ -110,6 +115,11 @@ public class TimestampFrame extends TextFrame {
 
     @Override
     public void setFrameData(String text) {
+        setText(text);
+    }
+
+    @Override
+    public void setText(String text) {
 
         int index     = -1;
         String format = "";
@@ -127,18 +137,13 @@ public class TimestampFrame extends TextFrame {
         }
 
         if (index == -1) {
-            throw new IllegalArgumentException("Invalid date string");
+            throw new IllegalArgumentException("Invalid timestamp string: " + text);
         }
 
         if (index == 0) setYear(Year.parse(text));
         if (index == 1) setYearMonth(YearMonth.parse(text, DateTimeFormatter.ofPattern(format)));
         if (index == 2) setDate(LocalDate.parse(text, DateTimeFormatter.ofPattern(format)));
         if (index >= 3) setDateTime(LocalDateTime.parse(text, DateTimeFormatter.ofPattern(format)));
-    }
-
-    @Override
-    public void setText(String text) {
-        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -171,17 +176,17 @@ public class TimestampFrame extends TextFrame {
         super.setText(formatter.format(localDateTime));
     }
 
-    public static TimestampFrame.Builder createBuilder() { return new TimestampFrame().new Builder(); }
+    public static TimestampFrame.Builder newBuilder() { return new TimestampFrame().new Builder(); }
     public static TimestampFrame.Builder newBuilder(TimestampFrame frame) { return frame.new Builder(); }
 
     public static TimestampFrame createInstance(String identifier, String timestamp) {
-        return TimestampFrame.createBuilder()
+        return TimestampFrame.newBuilder()
                 .setHeader(FrameHeader.createFrameHeader(identifier, ID3V2_4))
                 .setTimestamp(timestamp)
                 .build(ID3V2_4);
     }
 
-    public class Builder {
+    public class Builder extends TextFrame.Builder {
 
         public TimestampFrame.Builder setHeader(FrameHeader frameHeader) {
             if (!Arrays.asList(VALID_IDENTIFIERS).contains(frameHeader.getIdentifier())) {
@@ -191,6 +196,17 @@ public class TimestampFrame extends TextFrame {
             }
             header = frameHeader;
             return this;
+        }
+
+        @Override
+        public Builder setText(String text) {
+            TimestampFrame.this.setText(text);
+            return this;
+        }
+
+        @Override
+        public Builder setEncoding(byte encoding) {
+            throw new UnsupportedOperationException();
         }
 
         public Builder setYearMonth(YearMonth date) {

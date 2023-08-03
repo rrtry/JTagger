@@ -37,7 +37,7 @@ public class TimestampFrameParser implements FrameBodyParser<TimestampFrame> {
             }
         }
 
-        TimestampFrame.Builder builder = TimestampFrame.createBuilder().setHeader(frameHeader);
+        TimestampFrame.Builder builder = TimestampFrame.newBuilder().setHeader(frameHeader);
         if (index == -1) return null;
 
         if (index == 0) builder = builder.setYear(Year.parse(recordingTime));

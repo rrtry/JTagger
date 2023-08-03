@@ -9,10 +9,7 @@ import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.MonthDay;
-import java.time.Year;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -263,11 +260,6 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException {
-        MediaFile mediaFile = new MediaFile();
-        try (mediaFile) {
-            mediaFile.scan(new File(args[0]));
-            AbstractTag tag = mediaFile.getTag();
-            System.out.println(tag);
-        }
+        parseFiles(new File(args[0]), true);
     }
 }
