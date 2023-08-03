@@ -69,34 +69,35 @@ public class TextFrame extends AbstractFrame<String> {
                 .build(version);
     }
 
-    public class Builder {
+    @SuppressWarnings("unchecked")
+    public class Builder <T extends Builder<T, I>, I extends TextFrame> {
 
-        public Builder setHeader(FrameHeader frameHeader) {
+        public T setHeader(FrameHeader frameHeader) {
             if (frameHeader.getIdentifier().charAt(0) != 'T') {
                 throw new IllegalArgumentException("Invalid frame identifier: " + frameHeader.getIdentifier());
             }
             header = frameHeader;
-            return this;
+            return (T) this;
         }
 
-        public Builder setEncoding(byte encoding) {
+        public T setEncoding(byte encoding) {
             TextFrame.this.setEncoding(encoding);
-            return this;
+            return (T) this;
         }
 
-        public Builder setText(String text) {
+        public T setText(String text) {
             TextFrame.this.setText(text);
-            return this;
+            return (T) this;
         }
 
-        public TextFrame build(byte[] frameData) {
+        public I build(byte[] frameData) {
             TextFrame.this.frameBytes = frameData;
-            return TextFrame.this;
+            return (I) TextFrame.this;
         }
 
-        public TextFrame build(byte version) {
+        public I build(byte version) {
             assemble(version);
-            return TextFrame.this;
+            return (I) TextFrame.this;
         }
     }
 }

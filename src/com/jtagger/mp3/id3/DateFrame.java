@@ -21,8 +21,12 @@ public class DateFrame extends TextFrame {
     @Override
     public String toString() {
         return String.format(
-                "ID: %s, DATE: %s", getIdentifier(), date.format(DateTimeFormatter.ofPattern(DATE_FORMAT_PATTERN))
+                "ID: %s, DATE: %s", getIdentifier(), date.toString()
         );
+    }
+
+    public MonthDay getDate() {
+        return date;
     }
 
     public void setDate(MonthDay date) {
@@ -47,7 +51,7 @@ public class DateFrame extends TextFrame {
         );
     }
 
-    public class Builder extends TextFrame.Builder {
+    public class Builder extends TextFrame.Builder<Builder, DateFrame> {
 
         public Builder setHeader(FrameHeader frameHeader) {
             if (!frameHeader.getIdentifier().equals(DATE)) {
@@ -56,12 +60,6 @@ public class DateFrame extends TextFrame {
                 );
             }
             header = frameHeader;
-            return this;
-        }
-
-        @Override
-        public Builder setText(String text) {
-            DateFrame.this.setText(text);
             return this;
         }
 

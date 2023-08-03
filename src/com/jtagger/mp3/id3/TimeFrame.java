@@ -41,7 +41,7 @@ public class TimeFrame extends TextFrame {
                 .build(ID3V2_3);
     }
 
-    public class Builder extends TextFrame.Builder {
+    public class Builder extends TextFrame.Builder<Builder, TimeFrame> {
 
         public Builder setHeader(FrameHeader frameHeader) {
             if (!frameHeader.getIdentifier().equals(TIME)) {
@@ -50,12 +50,6 @@ public class TimeFrame extends TextFrame {
                 );
             }
             header = frameHeader;
-            return this;
-        }
-
-        @Override
-        public Builder setText(String text) {
-            TimeFrame.this.setText(text);
             return this;
         }
 

@@ -186,7 +186,7 @@ public class TimestampFrame extends TextFrame {
                 .build(ID3V2_4);
     }
 
-    public class Builder extends TextFrame.Builder {
+    public class Builder extends TextFrame.Builder<Builder, TimestampFrame> {
 
         public TimestampFrame.Builder setHeader(FrameHeader frameHeader) {
             if (!Arrays.asList(VALID_IDENTIFIERS).contains(frameHeader.getIdentifier())) {
@@ -195,12 +195,6 @@ public class TimestampFrame extends TextFrame {
                 );
             }
             header = frameHeader;
-            return this;
-        }
-
-        @Override
-        public Builder setText(String text) {
-            TimestampFrame.this.setText(text);
             return this;
         }
 
@@ -232,16 +226,6 @@ public class TimestampFrame extends TextFrame {
         public Builder setTimestamp(String timestamp) {
             TimestampFrame.this.setFrameData(timestamp);
             return this;
-        }
-
-        public TimestampFrame build(byte[] frameData) {
-            TimestampFrame.this.frameBytes = frameData;
-            return TimestampFrame.this;
-        }
-
-        public TimestampFrame build(byte version) {
-            assemble(version);
-            return TimestampFrame.this;
         }
     }
 }

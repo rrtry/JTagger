@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.regex.Pattern;
 
 import static java.lang.Byte.toUnsignedInt;
 
@@ -260,6 +261,6 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException {
-        parseFiles(new File(args[0]), true);
+        parseMediaFile(new File(args[0]));
     }
 }

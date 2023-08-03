@@ -30,6 +30,10 @@ public class YearFrame extends TextFrame {
         );
     }
 
+    public Year getYear() {
+        return year;
+    }
+
     public void setYear(Year year) {
         this.year = year;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(YEAR_FORMAT_PATTERN);
@@ -46,8 +50,9 @@ public class YearFrame extends TextFrame {
                 .build(ID3V2_3);
     }
 
-    public class Builder extends TextFrame.Builder {
+    public class Builder extends TextFrame.Builder<Builder, YearFrame> {
 
+        @Override
         public YearFrame.Builder setHeader(FrameHeader frameHeader) {
             if (!isYearFrame(frameHeader.getIdentifier())) {
                 throw new IllegalArgumentException(
@@ -55,12 +60,6 @@ public class YearFrame extends TextFrame {
                 );
             }
             header = frameHeader;
-            return this;
-        }
-
-        @Override
-        public Builder setText(String text) {
-            YearFrame.this.setText(text);
             return this;
         }
 
@@ -74,6 +73,7 @@ public class YearFrame extends TextFrame {
             return this;
         }
 
+        @Override
         public YearFrame build(byte version) {
             if (version != ID3V2_3) {
                 throw new IllegalArgumentException(
