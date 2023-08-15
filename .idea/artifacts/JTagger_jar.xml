@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="JTagger:jar">
-    <output-path>$PROJECT_DIR$/out/artifacts/JTagger_jar</output-path>
-    <root id="archive" name="JTagger.jar">
-      <element id="module-output" name="JTagger" />
-    </root>
-  </artifact>
-</component>
