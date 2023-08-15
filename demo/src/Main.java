@@ -166,6 +166,9 @@ public class Main {
         AbstractTag tag       = mediaFile.getTag();
         StreamInfo streamInfo = mediaFile.getStreamInfo();
 
+        System.out.println(tag);
+        System.out.println(streamInfo);
+
         if (tag != null) {
             for (String field : AbstractTag.FIELDS) {
 
@@ -261,6 +264,36 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException {
-        parseMediaFile(new File(args[0]));
+        MediaFile<AbstractTag, StreamInfo> mediaFile = new MediaFile<>();
+        mediaFile.scan(new File(mediaPath));
+        AbstractTag tag = mediaFile.getTag();
+        StreamInfo info = mediaFile.getStreamInfo();
+
+// print tag information
+        System.out.printf("%s=%s\n", AbstractTag.TITLE, tag.getStringField(AbstractTag.TITLE));
+        System.out.printf("%s=%s\n", AbstractTag.ARTIST, tag.getStringField(AbstractTag.ARTIST));
+        System.out.printf("%s=%s\n", AbstractTag.ALBUM, tag.getStringField(AbstractTag.ALBUM));
+
+// print stream information
+        int duration = info.getDuration();
+        System.out.printf("Duration: %02d:%02d\n", duration / 60, duration % 60);
+        System.out.printf("Sampling rate: %d HZ\n", info.getSampleRate());
+        System.out.printf("Bitrate: %d kbps\n", info.getBitrate());
+        System.out.printf("Channels: %d\n", info.getChannelCount());
+
+// set fields
+        tag.setStringField(AbstractTag.ARTIST, "Roxette");
+        tag.setStringField(AbstractTag.TITLE, "Neverending Love");
+        tag.setStringField(AbstractTag.ALBUM, "Pearls of Passion");
+
+// set album cover
+        AttachedPicture picture = new AttachedPicture();
+        picture.setPictureData(new File(picturePath)); // accepts URL as well
+        tag.setPictureField(picture);
+
+// save and close
+        mediaFile.setTag(tag);
+        mediaFile.save();
+        mediaFile.close();
     }
 }
