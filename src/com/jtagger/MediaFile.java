@@ -28,12 +28,12 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements A
 
     private final FileContentTypeDetector contentTypeDetector = new FileContentTypeDetector();
 
-    public void scan(File fileObj) throws IOException {
+    public void scan(File fileObj, String accessMode) throws IOException {
 
         if (tagEditor != null) close();
         if (!fileObj.isFile()) return;
 
-        RandomAccessFile file = new RandomAccessFile(fileObj.getAbsolutePath(), "rw");
+        RandomAccessFile file = new RandomAccessFile(fileObj.getAbsolutePath(), accessMode);
         String mimeType       = contentTypeDetector.getFileContentType(file);
 
         if (mimeType == null) {

@@ -15,8 +15,8 @@ public class MP4File extends MediaFile<MP4, MP4> {
     }
 
     @Override
-    public void scan(File fileObj) throws IOException {
-        super.scan(fileObj);
+    public void scan(File fileObj, String accessMode) throws IOException {
+        super.scan(fileObj, accessMode);
         streamInfo = getTag(); // MP4 implements StreamInfo and AbstractTag
     }
 }
