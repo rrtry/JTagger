@@ -7,8 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import static com.jtagger.MediaFile.FileContentTypeDetector.M4A_MIME_TYPE;
-
 public class MP4Editor extends AbstractTagEditor<MP4> {
 
     private MP4Parser parser;
@@ -21,11 +19,6 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
     protected void parseTag() {
         parser = new MP4Parser();
         this.tag = parser.parseTag(file);
-    }
-
-    @Override
-    protected String getFileMimeType() {
-        return M4A_MIME_TYPE;
     }
 
     // TODO: make use of padding ('free' atom)

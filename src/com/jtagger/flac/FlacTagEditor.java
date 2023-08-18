@@ -2,7 +2,6 @@ package com.jtagger.flac;
 
 import com.jtagger.AbstractTagEditor;
 import com.jtagger.AbstractTag;
-import com.jtagger.MediaFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,11 +51,6 @@ public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
     @Override
     public void removeTag() {
         setEmptyTag();
-    }
-
-    @Override
-    protected String getFileMimeType() {
-        return MediaFile.FileContentTypeDetector.FLAC_MIME_TYPE;
     }
 
     @Override

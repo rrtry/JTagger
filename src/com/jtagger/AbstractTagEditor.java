@@ -12,8 +12,6 @@ public abstract class AbstractTagEditor<T extends AbstractTag> {
     protected String mimeType;
 
     abstract protected void parseTag() throws IOException;
-    abstract protected String getFileMimeType();
-
     abstract public void commit() throws IOException;
     abstract public void setTag(AbstractTag tag);
 
@@ -48,12 +46,17 @@ public abstract class AbstractTagEditor<T extends AbstractTag> {
         return tag;
     }
 
+    public String getMimeType() {
+        return mimeType;
+    }
+
     public void removeTag() {
         this.tag = null;
     }
 
     public void release() throws IOException {
         file.close();
-        tag = null;
+        tag      = null;
+        mimeType = null;
     }
 }

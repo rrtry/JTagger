@@ -2,7 +2,6 @@ package com.jtagger.mp3.id3;
 
 import com.jtagger.AbstractTagEditor;
 import com.jtagger.AbstractTag;
-import com.jtagger.MediaFile;
 
 import java.io.*;
 
@@ -46,11 +45,6 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
             isID3V1Present = true;
             this.tag = ID3V2Tag.fromID3V1Tag(id3V1Tag, ID3V2Tag.ID3V2_3);
         }
-    }
-
-    @Override
-    protected String getFileMimeType() {
-        return MediaFile.FileContentTypeDetector.MPEG_MIME_TYPE;
     }
 
     @Override

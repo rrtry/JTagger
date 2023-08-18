@@ -1,6 +1,5 @@
 package com.jtagger.ogg.opus;
 
-import com.jtagger.MediaFile;
 import com.jtagger.ogg.CommentHeader;
 import com.jtagger.ogg.OggPacket;
 import com.jtagger.ogg.OggTagEditor;
@@ -8,11 +7,6 @@ import com.jtagger.ogg.OggTagEditor;
 import java.util.ArrayList;
 
 public class OggOpusTagEditor extends OggTagEditor {
-
-    @Override
-    protected String getFileMimeType() {
-        return MediaFile.FileContentTypeDetector.OGG_OPUS_MIME_TYPE;
-    }
 
     @Override
     protected CommentHeader getCommentHeader() {

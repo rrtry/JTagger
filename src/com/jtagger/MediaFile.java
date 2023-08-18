@@ -34,7 +34,7 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements A
         if (!fileObj.isFile()) return;
 
         RandomAccessFile file = new RandomAccessFile(fileObj.getAbsolutePath(), accessMode);
-        String mimeType       = contentTypeDetector.getFileContentType(file);
+        String mimeType = contentTypeDetector.getFileContentType(file);
 
         if (mimeType == null) {
             file.close();
@@ -77,6 +77,10 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements A
 
     public void removeTag() {
         tagEditor.removeTag();
+    }
+
+    public String getMimeType() {
+        return tagEditor != null ? tagEditor.getMimeType() : null;
     }
 
     public T getTag() {
