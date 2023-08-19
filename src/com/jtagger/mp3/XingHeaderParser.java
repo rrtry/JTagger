@@ -53,7 +53,7 @@ public class XingHeaderParser {
             builder     = builder.setTotalBytes(totalBytes);
         }
         if ((flags & FLAG_TOC) != 0x0) {
-            entries = toUInt32BE(Arrays.copyOfRange(frameBody, offset, offset + 4)); offset += 4;
+            entries = toUInt32BE(Arrays.copyOfRange(frameBody, offset, offset + 4)); offset += 100;
             builder = builder.setTableOfContents(tableOfContents);
         }
         if ((flags & FLAG_QUALITY) != 0x0) {
