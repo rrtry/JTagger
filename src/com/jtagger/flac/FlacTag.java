@@ -17,11 +17,14 @@ public class FlacTag extends AbstractTag implements PaddingTag {
 
     private byte[] tag;
     private final ArrayList<AbstractMetadataBlock> metadataBlocks = new ArrayList<>();
-
     private int padding = MIN_PADDING;
 
+    public ArrayList<AbstractMetadataBlock> getBlocks() {
+        return metadataBlocks;
+    }
+
     @SuppressWarnings("unchecked")
-    <T extends AbstractMetadataBlock> T getBlock(int type) {
+    public <T extends AbstractMetadataBlock> T getBlock(int type) {
         for (AbstractMetadataBlock block : metadataBlocks) {
             if (block.getBlockType() == type) {
                 return (T) block;
@@ -30,7 +33,7 @@ public class FlacTag extends AbstractTag implements PaddingTag {
         return null;
     }
 
-    void addBlock(AbstractMetadataBlock block) {
+    public void addBlock(AbstractMetadataBlock block) {
 
         if (block.getBlockType() == BLOCK_TYPE_PADDING) {
             setPaddingAmount(block.blockBody.length);
@@ -44,7 +47,7 @@ public class FlacTag extends AbstractTag implements PaddingTag {
         }
     }
 
-    void removeBlock(byte type) {
+    public void removeBlock(byte type) {
         if (type == BLOCK_TYPE_STREAMINFO) throw new IllegalArgumentException("STREAMINFO block cannot be removed");
         if (type == BLOCK_TYPE_PADDING) this.padding = 0;
         metadataBlocks.removeIf((b) -> b.getBlockType() == type);
@@ -69,15 +72,6 @@ public class FlacTag extends AbstractTag implements PaddingTag {
     private String getComment(String field) {
         VorbisCommentBlock vorbisComment = getBlock(BLOCK_TYPE_VORBIS_COMMENT);
         return vorbisComment == null ? "" : vorbisComment.getComment(field);
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for (AbstractMetadataBlock block : metadataBlocks) {
-            sb.append(block).append("\n");
-        }
-        return sb.toString();
     }
 
     @Override
@@ -177,6 +171,10 @@ public class FlacTag extends AbstractTag implements PaddingTag {
 
     @Override
     public void removeField(String fieldId) {
+        if (fieldId.equals(PICTURE)) {
+            removeBlock(BLOCK_TYPE_PICTURE);
+            return;
+        }
         removeComment(fieldId);
     }
 }

@@ -1,5 +1,6 @@
 package com.jtagger.flac;
 
+import com.jtagger.StreamInfo;
 import com.jtagger.StreamInfoParser;
 import com.jtagger.TagParser;
 import com.jtagger.utils.IntegerUtils;
@@ -13,6 +14,22 @@ public class FlacParser implements TagParser<FlacTag>, StreamInfoParser<StreamIn
 
     private FlacTag tag;
 
+    public static boolean isValidBlockType(int blockType) {
+        return blockType >= 0x00 && blockType <= 0x7E;
+    }
+
+    @SuppressWarnings("rawtypes")
+    public static BlockBodyParser getBlockParser(int blockType) {
+        if (blockType == BLOCK_TYPE_VORBIS_COMMENT) return new VorbisCommentBlockParser();
+        if (blockType == BLOCK_TYPE_PICTURE)        return new PictureBlockParser();
+        if (blockType == BLOCK_TYPE_STREAMINFO)     return new StreamInfoBlockParser();
+        return null;
+    }
+
+    public static int getBitrate(StreamInfo streamInfo, int streamLength) {
+        return (int) ((streamLength * 8f) / (streamInfo.getDuration() * 1000f));
+    }
+
     @Override
     public StreamInfoBlock parseStreamInfo(RandomAccessFile file) throws IOException {
 
@@ -20,71 +37,68 @@ public class FlacParser implements TagParser<FlacTag>, StreamInfoParser<StreamIn
             parseTag(file);
         }
 
+        StreamInfoBlock streamInfo;
         int streamLength;
         int bitRate;
 
-        StreamInfoBlock streamInfo = tag.getBlock(BLOCK_TYPE_STREAMINFO);
-
+        streamInfo   = tag.getBlock(BLOCK_TYPE_STREAMINFO);
         streamLength = (int) (file.length() - tag.getBytes().length);
-        bitRate      = (int) ((streamLength * 8f) / (streamInfo.getDuration() * 1000f));
-        streamInfo.setBitrate(bitRate);
+        bitRate      = getBitrate(streamInfo, streamLength);
 
+        streamInfo.setBitrate(bitRate);
         return streamInfo;
     }
 
     @Override
-    public FlacTag parseTag(RandomAccessFile file) {
-        try {
+    @SuppressWarnings("rawtypes")
+    public FlacTag parseTag(RandomAccessFile file) throws IOException {
 
-            if (this.tag != null) return tag;
-            FlacTag tag = new FlacTag();
+        if (this.tag != null) return tag;
+        FlacTag tag = new FlacTag();
 
-            byte[] magicBytes = new byte[MAGIC.length()];
-            file.read(magicBytes, 0, magicBytes.length);
+        byte[] magicBytes = new byte[MAGIC.length()];
+        file.read(magicBytes, 0, magicBytes.length);
 
-            String magic = new String(magicBytes);
-            if (!magic.equals(MAGIC)) return null;
+        String magic = new String(magicBytes);
+        if (!magic.equals(MAGIC)) throw new IllegalStateException("Invalid file signature");
 
-            file.seek(magicBytes.length);
-            while (file.getFilePointer() < file.length()) {
+        file.seek(magicBytes.length);
+        while (file.getFilePointer() < file.length()) {
 
-                boolean isLastBlock;
+            boolean isLastBlock;
+            int blockType;
+            int blockLength;
 
-                int blockType;
-                int blockLength;
+            byte blockHeader;
+            byte[] lengthBytes;
+            byte[] blockData;
 
-                byte headerByte;
-                byte[] lengthBytes = new byte[3];
+            lengthBytes = new byte[3];
+            blockHeader = file.readByte();
+            isLastBlock = (blockHeader & 0x80) != 0;
+            blockType   = blockHeader & 0x7f;
 
-                headerByte  = file.readByte();
-                isLastBlock = (headerByte & 0x80) != 0;
-                blockType   = (headerByte & 0x7f);
-
-                file.read(lengthBytes, 0, lengthBytes.length);
-                blockLength = IntegerUtils.toUInt24BE(lengthBytes);
-
-                byte[] blockData = new byte[blockLength];
-                file.read(blockData, 0, blockData.length);
-
-                BlockBodyParser parser = null;
-
-                if (blockType == BLOCK_TYPE_VORBIS_COMMENT) parser = new VorbisCommentBlockParser();
-                if (blockType == BLOCK_TYPE_PICTURE)        parser = new PictureBlockParser();
-                if (blockType == BLOCK_TYPE_STREAMINFO)     parser = new StreamInfoBlockParser();
-
-                if (parser != null) tag.addBlock(parser.parse(blockData));
-                else tag.addBlock(new UnknownMetadataBlock(blockData, headerByte));
-
-                if (isLastBlock) break;
+            if (!isValidBlockType(blockType)) {
+                throw new IllegalStateException("Invalid block type " + blockType);
             }
 
-            tag.assemble();
-            this.tag = tag;
-            return tag;
+            file.read(lengthBytes, 0, lengthBytes.length);
+            blockLength = IntegerUtils.toUInt24BE(lengthBytes);
+            blockData   = new byte[blockLength];
 
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
+            file.read(blockData, 0, blockData.length);
+            BlockBodyParser parser = getBlockParser(blockType);
+
+            if (parser != null) {
+                tag.addBlock(parser.parse(blockData));
+            } else {
+                tag.addBlock(new UnknownMetadataBlock(blockData, blockHeader));
+            }
+            if (isLastBlock) break;
         }
+
+        tag.assemble();
+        this.tag = tag;
+        return tag;
     }
 }

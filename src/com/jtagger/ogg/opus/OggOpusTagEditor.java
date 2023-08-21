@@ -3,7 +3,6 @@ package com.jtagger.ogg.opus;
 import com.jtagger.ogg.CommentHeader;
 import com.jtagger.ogg.OggPacket;
 import com.jtagger.ogg.OggTagEditor;
-
 import java.util.ArrayList;
 
 public class OggOpusTagEditor extends OggTagEditor {

@@ -42,7 +42,11 @@ public class StreamInfoBlock extends AbstractMetadataBlock implements StreamInfo
         return bitsPerSample;
     }
 
-    private int getTotalSamples() {
+    public void setTotalSamples(int totalSamples) {
+        this.totalSamples = totalSamples;
+    }
+
+    public int getTotalSamples() {
         return totalSamples;
     }
 
@@ -68,7 +72,7 @@ public class StreamInfoBlock extends AbstractMetadataBlock implements StreamInfo
 
     @Override
     public void setDuration(int duration) {
-        return;
+
     }
 
     @Override

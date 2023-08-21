@@ -21,36 +21,25 @@ public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
     @Override
     protected void parseTag() throws IOException {
 
-        FlacParser parser = new FlacParser();
+        parser       = new FlacParser();
+        tag          = parser.parseTag(file);
+        isTagPresent = tag != null;
 
-        this.parser = parser;
-        this.tag    = parser.parseTag(file);
+        if (!isTagPresent) return;
+        streamInfo = tag.getBlock(BLOCK_TYPE_STREAMINFO);
 
-        if (tag != null) {
-            this.streamInfo      = tag.getBlock(BLOCK_TYPE_STREAMINFO);
-            this.isTagPresent    = true;
-            this.originalTagSize = tag.getBlockDataSize();
-        }
+        if (streamInfo == null) throw new IllegalStateException("Missing STREAMINFO block");
+        originalTagSize = tag.getBlockDataSize();
     }
 
     public FlacParser getParser() {
         return parser;
     }
 
-    private void setEmptyTag() {
-
-        if (streamInfo == null) return;
-
-        FlacTag tag = new FlacTag();
-        tag.addBlock(streamInfo); // remove all blocks except STREAMINFO
-        tag.assemble();
-
-        this.tag = tag;
-    }
-
     @Override
     public void removeTag() {
-        setEmptyTag();
+        tag.removeBlock(BLOCK_TYPE_VORBIS_COMMENT);
+        tag.removeBlock(BLOCK_TYPE_PICTURE);
     }
 
     @Override
@@ -79,7 +68,7 @@ public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
 
         final long initialLength = file.length();
         final int bufferSize     = 4096;
-        final String suffix = ".tmp";
+        final String suffix      = ".tmp";
 
         File temp = File.createTempFile(MAGIC, suffix);
         byte[] tempBuffer = new byte[bufferSize];
@@ -120,11 +109,10 @@ public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
             this.tag = (FlacTag) tag;
             return;
         }
-        if (streamInfo == null) {
-            throw new IllegalStateException("STREAMINFO block should be present");
-        }
 
-        setEmptyTag();
+        FlacTag flacTag = new FlacTag();
+        flacTag.addBlock(streamInfo);
+
         convertTag(tag, this.tag);
         this.tag.assemble();
     }

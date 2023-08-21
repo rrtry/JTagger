@@ -7,6 +7,7 @@ import com.jtagger.mp3.id3.ID3V2Tag;
 import com.jtagger.mp3.id3.ID3V2TagEditor;
 import com.jtagger.mp4.MP4Editor;
 import com.jtagger.ogg.OggTagEditor;
+import com.jtagger.ogg.flac.OggFlacTagEditor;
 import com.jtagger.ogg.opus.OggOpusTagEditor;
 import com.jtagger.ogg.vorbis.OggVorbisTagEditor;
 
@@ -28,6 +29,7 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements A
 
     private final FileContentTypeDetector contentTypeDetector = new FileContentTypeDetector();
 
+    @SuppressWarnings("unchecked")
     public void scan(File fileObj, String accessMode) throws IOException {
 
         if (tagEditor != null) close();
@@ -57,6 +59,7 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements A
         if (mimeType.equals(FLAC_MIME_TYPE))       return new FlacTagEditor();
         if (mimeType.equals(OGG_VORBIS_MIME_TYPE)) return new OggVorbisTagEditor();
         if (mimeType.equals(OGG_OPUS_MIME_TYPE))   return new OggOpusTagEditor();
+        if (mimeType.equals(OGG_FLAC_MIME_TYPE))   return new OggFlacTagEditor();
         if (mimeType.equals(M4A_MIME_TYPE))        return new MP4Editor();
         return null;
     }
@@ -68,6 +71,7 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements A
         if (mimeType.equals(M4A_MIME_TYPE))        return ((MP4Editor) tagEditor).getParser();
         if (mimeType.equals(OGG_VORBIS_MIME_TYPE)) return (StreamInfoParser) ((OggTagEditor) tagEditor).getParser();
         if (mimeType.equals(OGG_OPUS_MIME_TYPE))   return (StreamInfoParser) ((OggTagEditor) tagEditor).getParser();
+        if (mimeType.equals(OGG_FLAC_MIME_TYPE))   return (StreamInfoParser) ((OggTagEditor) tagEditor).getParser();
         return null;
     }
 
@@ -108,6 +112,7 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements A
         public static final String FLAC_MIME_TYPE       = "audio/flac";
         public static final String OGG_VORBIS_MIME_TYPE = "audio/x-vorbis+ogg";
         public static final String OGG_OPUS_MIME_TYPE   = "audio/x-opus+ogg";
+        public static final String OGG_FLAC_MIME_TYPE   = "audio/x-flac+ogg";
         public static final String M4A_MIME_TYPE        = "audio/m4a";
 
         private FileContentTypeDetector() {
@@ -155,6 +160,14 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements A
 
                 if (Arrays.equals(headerMagic, VORBIS_HEADER_MAGIC)) {
                     file.seek(0); return FileContentTypeDetector.OGG_VORBIS_MIME_TYPE;
+                }
+
+                file.seek(file.getFilePointer() - headerMagic.length);
+                headerMagic = new byte[4];
+                file.read(headerMagic);
+
+                if (Arrays.equals(headerMagic, new byte[] { 0x46, 0x4C, 0x41, 0x43 })) {
+                    file.seek(0); return FileContentTypeDetector.OGG_FLAC_MIME_TYPE;
                 }
             }
 

@@ -30,19 +30,19 @@ public class OggPacket {
     }
 
     public void setPacketData(byte[] packetData) {
-        this.index = packetData.length;
+        this.index      = packetData.length;
         this.packetData = packetData;
     }
 
     public byte[] getPacketData() {
+        return packetData;
+    }
+
+    public byte[] getPacketDataTruncated() {
         return Arrays.copyOf(packetData, index);
     }
 
     public int getSize() {
-        return getPacketData().length;
-    }
-
-    public boolean isEmpty() {
-        return getPacketData().length == 0;
+        return getPacketDataTruncated().length;
     }
 }

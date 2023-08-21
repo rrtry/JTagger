@@ -27,7 +27,11 @@ public abstract class AbstractMetadataBlock implements Component {
     protected byte[] blockBody;
     protected boolean isLastBlock;
 
-    abstract int getBlockType();
+    abstract public int getBlockType();
+
+    public void setBlockLast(boolean isLast) {
+        this.isLastBlock = isLast;
+    }
 
     @Override
     public byte[] getBytes() {

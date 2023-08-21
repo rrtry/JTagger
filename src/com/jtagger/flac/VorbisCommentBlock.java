@@ -6,6 +6,10 @@ public class VorbisCommentBlock extends AbstractMetadataBlock {
 
     private VorbisComments vorbisComments = new VorbisComments(false);
 
+    public VorbisComments getVorbisComments() {
+        return vorbisComments;
+    }
+
     public String getComment(String field) {
         return vorbisComments.getComment(field);
     }

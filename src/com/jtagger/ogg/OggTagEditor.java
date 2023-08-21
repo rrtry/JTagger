@@ -2,6 +2,7 @@ package com.jtagger.ogg;
 
 import com.jtagger.AbstractTagEditor;
 import com.jtagger.AbstractTag;
+import com.jtagger.ogg.flac.OggFlacParser;
 import com.jtagger.ogg.opus.OggOpusParser;
 import com.jtagger.ogg.vorbis.OggVorbisParser;
 import com.jtagger.ogg.vorbis.VorbisComments;
@@ -10,8 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
-import static com.jtagger.MediaFile.FileContentTypeDetector.OGG_OPUS_MIME_TYPE;
-import static com.jtagger.MediaFile.FileContentTypeDetector.OGG_VORBIS_MIME_TYPE;
+import static com.jtagger.MediaFile.FileContentTypeDetector.*;
 
 abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
 
@@ -26,6 +26,7 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
     private static OggParser getOggParser(String mimeType) {
         if (mimeType.equals(OGG_OPUS_MIME_TYPE))   return new OggOpusParser();
         if (mimeType.equals(OGG_VORBIS_MIME_TYPE)) return new OggVorbisParser();
+        if (mimeType.equals(OGG_FLAC_MIME_TYPE))   return new OggFlacParser();
         throw new IllegalStateException();
     }
 
@@ -49,12 +50,6 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
 
         this.pages   = parser.parsePages(file);
         this.packets = parser.parsePackets(pages);
-    }
-
-    @Override
-    public void removeTag() {
-        tag.setCommentsMap(new LinkedHashMap<>());
-        tag.assemble();
     }
 
     @Override
@@ -90,11 +85,18 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
     }
 
     @Override
+    public void removeTag() {
+        tag.setCommentsMap(new LinkedHashMap<>());
+        tag.assemble();
+    }
+
+    @Override
     public void setTag(AbstractTag tag) {
 
         if (tag instanceof VorbisComments) {
-            tag.assemble();
             this.tag = (VorbisComments) tag;
+            this.tag.setFramingBit(mimeType.equals(OGG_VORBIS_MIME_TYPE));
+            this.tag.assemble();
             return;
         }
 

@@ -32,14 +32,13 @@ public class AttachedPicture {
     public static final byte PICTURE_TYPE_BAND_LOGO            = 0x13;
     public static final byte PICTURE_TYPE_STUDIO_LOGO          = 0x14;
 
-    private int pictureType = PICTURE_TYPE_OTHER;
-
     private String mimeType    = "image/png";
-    private String description = "";
+    private String description = "Front cover";
 
-    private int width  = 0;
-    private int height = 0;
-    private int colorDepth = 24;
+    private int pictureType = PICTURE_TYPE_FRONT_COVER;
+    private int width       = 0;
+    private int height      = 0;
+    private int colorDepth  = 24;
 
     private byte[] pictureData;
 
@@ -139,8 +138,12 @@ public class AttachedPicture {
     }
 
     public void setPictureData(File file) {
-        setMimeType(ImageReader.getMimeType(file));
-        setPictureData(ImageReader.readFromFile(file));
+        if (file.isFile()) {
+            setMimeType(ImageReader.getMimeType(file));
+            setPictureData(ImageReader.readFromFile(file));
+            return;
+        }
+        throw new IllegalArgumentException("Specify regular file");
     }
 
     public void setPictureData(URL url) {

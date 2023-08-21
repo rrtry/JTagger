@@ -2,7 +2,6 @@ package com.jtagger.ogg.vorbis;
 
 import com.jtagger.StreamInfoParser;
 import com.jtagger.ogg.OggPacket;
-import com.jtagger.ogg.OggPage;
 import com.jtagger.ogg.OggParser;
 import com.jtagger.utils.IntegerUtils;
 
@@ -45,7 +44,7 @@ public class OggVorbisParser extends OggParser implements StreamInfoParser<Vorbi
         if (packets.size() < 2) return null;
         OggPacket oggPacket = packets.get(1);
 
-        byte[] packet = oggPacket.getPacketData();
+        byte[] packet = oggPacket.getPacketDataTruncated();
         byte headerValid = verifyHeader(packet, VorbisHeader.HEADER_TYPE_COMMENT);
 
         if (headerValid != 0x0) {
@@ -68,7 +67,7 @@ public class OggVorbisParser extends OggParser implements StreamInfoParser<Vorbi
 
         byte offset = 0;
 
-        byte[] packet    = oggPacket.getPacketData();
+        byte[] packet    = oggPacket.getPacketDataTruncated();
         byte headerValid = verifyHeader(packet, VorbisHeader.HEADER_TYPE_IDENTIFICATION);
 
         if (headerValid != 0x0) {

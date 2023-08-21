@@ -45,7 +45,7 @@ public class OggOpusParser extends OggParser implements StreamInfoParser<OpusIde
         parsePackets(parsePages(file));
 
         OggPacket packet = packets.get(0);
-        byte[] header    = packet.getPacketData();
+        byte[] header    = packet.getPacketDataTruncated();
 
         if (isHeaderSignatureInvalid(header, OPUS_IDENTIFICATION_HEADER_MAGIC)) {
             throw new IllegalStateException("Header signature mismatch");
@@ -101,7 +101,7 @@ public class OggOpusParser extends OggParser implements StreamInfoParser<OpusIde
         parsePackets(parsePages(file));
 
         OggPacket packet = packets.get(1);
-        byte[] header    = packet.getPacketData();
+        byte[] header    = packet.getPacketDataTruncated();
 
         if (isHeaderSignatureInvalid(header, OPUS_COMMENT_HEADER_MAGIC)) {
             throw new IllegalArgumentException("Header signature mismatch");

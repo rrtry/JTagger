@@ -30,6 +30,10 @@ public class VorbisComments extends AbstractTag {
         this.framingBit = framingBit;
     }
 
+    public void setFramingBit(boolean framingBit) {
+        this.framingBit = framingBit;
+    }
+
     private int getSize() {
         int size = framingBit ? 1 : 0;
         for (Map.Entry<String, String> entry : commentsMap.entrySet()) {

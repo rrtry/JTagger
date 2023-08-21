@@ -149,9 +149,9 @@ public class OggPage implements Component {
 
         for (OggPacket packet : packets) {
 
-            byte[] packetData   = packet.getPacketData();
+            byte[] packetData   = packet.getPacketDataTruncated();
             int packetBytesRead = 0;
-            int packetSize      = packet.getPacketData().length;
+            int packetSize      = packet.getPacketDataTruncated().length;
 
             if (!page.getHeader().hasAvailableSegments()) {
 
@@ -171,7 +171,7 @@ public class OggPage implements Component {
 
                 if (!isChunkFullyRead) {
 
-                    packetData = Arrays.copyOfRange(packet.getPacketData(), packetBytesRead, packetSize);
+                    packetData = Arrays.copyOfRange(packet.getPacketDataTruncated(), packetBytesRead, packetSize);
                     if (!pages.contains(page)) pages.add(page);
 
                     page = new OggPage();
@@ -236,6 +236,10 @@ public class OggPage implements Component {
     }
 
     public byte[] getPageData() {
+        return pageData;
+    }
+
+    public byte[] getPageDataTruncated() {
         return Arrays.copyOf(pageData, index);
     }
 
@@ -246,9 +250,9 @@ public class OggPage implements Component {
         header.assemble();
 
         byte[] headerBytes = header.getBytes();
-        byte[] pageData    = getPageData();
+        byte[] pageData    = getPageDataTruncated();
 
-        bytes = new byte[headerBytes.length + getPageData().length];
+        bytes = new byte[headerBytes.length + getPageDataTruncated().length];
 
         System.arraycopy(headerBytes, 0, bytes, 0, headerBytes.length);
         System.arraycopy(pageData, 0, bytes, headerBytes.length, pageData.length);

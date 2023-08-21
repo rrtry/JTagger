@@ -1,5 +1,6 @@
 package com.jtagger.ogg;
 
+import com.jtagger.AbstractTag;
 import com.jtagger.StreamInfo;
 import com.jtagger.TagParser;
 import com.jtagger.ogg.vorbis.VorbisComments;
@@ -26,8 +27,7 @@ abstract public class OggParser implements TagParser<VorbisComments> {
 
     protected int getDuration(StreamInfo streamInfo) {
 
-        OggPage lastPage  = pages.get(pages.size() - 1);
-
+        OggPage lastPage = pages.get(pages.size() - 1);
         final long totalSamples = lastPage.getHeader().getGranulePosition();
         final int sampleRate    = streamInfo.getSampleRate();
 
@@ -122,7 +122,7 @@ abstract public class OggParser implements TagParser<VorbisComments> {
 
             boolean isFreshPage = header.isFreshPage();
             byte[] segmentTable = header.getSegmentTable();
-            byte[] pageData     = page.getPageData();
+            byte[] pageData     = page.getPageDataTruncated();
 
             OggPacket packet = !isFreshPage && !packets.isEmpty() ? packets.get(packets.size() - 1) : new OggPacket();
             int offset = 0;
