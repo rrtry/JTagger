@@ -1,23 +1,23 @@
 package com.jtagger.mp4;
 
 import com.jtagger.utils.IntegerUtils;
-
 import java.util.Arrays;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
-public class TrackNumberAtom extends MP4Atom implements ItunesAtom<TrackNumber> {
+public class TrackNumberAtom extends ItunesAtom<TrackNumber> {
 
     private TrackNumber trackNumber;
-    private int atomType;
+    private final int atomType;
 
-    public TrackNumberAtom(String type, byte[] atomBytes, int atomType) {
+    TrackNumberAtom(String type, byte[] atomBytes, int atomType) {
         super(type, atomBytes);
         this.atomType = atomType;
     }
 
     public TrackNumberAtom(String type) {
         super(type);
+        this.atomType = TYPE_IMPLICIT;
     }
 
     @Override

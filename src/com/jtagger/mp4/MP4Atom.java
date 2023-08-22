@@ -84,19 +84,19 @@ public class MP4Atom implements Component {
         return childAtoms.size() > 0;
     }
 
-    public ArrayList<MP4Atom> getChildAtoms() {
-        return childAtoms;
+    public <T extends MP4Atom> ArrayList<T> getChildAtoms() {
+        return (ArrayList<T>) childAtoms;
+    }
+
+    public <T extends MP4Atom> void setChildAtoms(ArrayList<T> childAtoms) {
+        if (childAtoms.isEmpty()) {
+            removeAllChildAtoms(); return;
+        }
+        this.childAtoms = (ArrayList<MP4Atom>) childAtoms;
     }
 
     public void appendChildAtom(MP4Atom atom) {
         if (!childAtoms.contains(atom)) childAtoms.add(atom);
-    }
-
-    public void setChildAtoms(ArrayList<MP4Atom> childAtoms) {
-        if (childAtoms.isEmpty()) {
-            removeAllChildAtoms(); return;
-        }
-        this.childAtoms = childAtoms;
     }
 
     public void setTopLevelAtom(boolean isTopLevelAtom) {

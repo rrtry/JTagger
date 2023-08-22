@@ -2,23 +2,21 @@ package com.jtagger.mp4;
 
 import com.jtagger.AttachedPicture;
 import com.jtagger.utils.IntegerUtils;
-
-import java.util.HashMap;
-
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
-public class PictureAtom extends MP4Atom implements ItunesAtom<AttachedPicture> {
+public class PictureAtom extends ItunesAtom<AttachedPicture> {
 
     private AttachedPicture picture;
-    private int atomType = ItunesAtom.TYPE_PNG;
+    private int atomType;
 
-    public PictureAtom(String type, byte[] data, int atomType) {
+    PictureAtom(String type, byte[] data, int atomType) {
         super(type, data);
         this.atomType = atomType;
     }
 
     public PictureAtom(String type) {
         super(type);
+        this.atomType = TYPE_JPEG;
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.jtagger.mp4;
 
-public class UnknownAtom extends MP4Atom implements ItunesAtom<byte[]> {
+public class UnknownAtom extends ItunesAtom<byte[]> {
 
     private int atomType;
 

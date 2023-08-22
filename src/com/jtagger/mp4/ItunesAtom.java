@@ -1,17 +1,25 @@
 package com.jtagger.mp4;
 
-public interface ItunesAtom <T> {
+abstract public class ItunesAtom <T> extends MP4Atom {
 
-    int TYPE_UTF8     = 0x000001;
-    int TYPE_UTF16    = 0x000002;
-    int TYPE_INTEGER  = 0x000015;
-    int TYPE_JPEG     = 0x00000D;
-    int TYPE_PNG      = 0x00000E;
-    int TYPE_BMP      = 0x00001B;
-    int TYPE_IMPLICIT = 0x000000;
+    public static final int TYPE_UTF8     = 0x000001;
+    public static final int TYPE_UTF16    = 0x000002;
+    public static final int TYPE_INTEGER  = 0x000015;
+    public static final int TYPE_JPEG     = 0x00000D;
+    public static final int TYPE_PNG      = 0x00000E;
+    public static final int TYPE_BMP      = 0x00001B;
+    public static final int TYPE_IMPLICIT = 0x000000;
 
-    T getAtomData();
-    int getAtomType();
-    void setAtomData(byte[] data);
-    void setAtomData(T data);
+    public ItunesAtom(String type, byte[] data) {
+        super(type, data);
+    }
+
+    public ItunesAtom(String type) {
+        super(type);
+    }
+
+    abstract void setAtomData(byte[] data);
+    abstract public T getAtomData();
+    abstract public int getAtomType();
+    abstract public void setAtomData(T data);
 }

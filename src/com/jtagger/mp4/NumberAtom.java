@@ -4,12 +4,12 @@ import com.jtagger.utils.IntegerUtils;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
-public class NumberAtom extends MP4Atom implements ItunesAtom<Number> {
+public class NumberAtom extends ItunesAtom<Number> {
 
     private Number number;
     private byte length;
 
-    public NumberAtom(String type, byte[] atomData) {
+    NumberAtom(String type, byte[] atomData) {
         super(type, atomData);
     }
 

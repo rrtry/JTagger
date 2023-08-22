@@ -6,6 +6,7 @@ import com.jtagger.StreamInfo;
 
 import java.util.*;
 
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class MP4 extends AbstractTag implements StreamInfo {
 
     private final ArrayList<MP4Atom> atoms;
@@ -16,6 +17,8 @@ public class MP4 extends AbstractTag implements StreamInfo {
 
     private StsdAtom stsdAtom;
     private MdhdAtom mdhdAtom;
+    private MP4Atom ilstAtom;
+    private MP4Atom moovAtom;
 
     public static String[] ATOMS = new String[] {
             "moov", "udta", "meta", "ilst", "trak", "mdia",
@@ -114,16 +117,41 @@ public class MP4 extends AbstractTag implements StreamInfo {
         this.mdatEnd     = mdatEnd;
     }
 
-    public MP4Atom findTopLevelAtom(String type) {
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
         for (MP4Atom atom : atoms) {
-            if (atom.getType().equals(type)) {
+            sb.append(atom.toString()).append("\n");
+            if (atom.hasChildAtoms()) {
+                iterateOverAtomTree(sb, atom, 1);
+            }
+        }
+        return sb.toString();
+    }
+
+    private static void iterateOverAtomTree(StringBuilder sb, MP4Atom parent, int depth) {
+        for (MP4Atom atom : parent.getChildAtoms()) {
+            sb.append("---".repeat(depth)).append(atom.toString()).append("\n");
+            if (atom.hasChildAtoms()) {
+                iterateOverAtomTree(sb, atom, depth + 1);
+            }
+        }
+    }
+
+    private MP4Atom getMoovAtom() {
+        if (moovAtom != null) {
+            return moovAtom;
+        }
+        for (MP4Atom atom : atoms) {
+            if (atom.getType().equals("moov")) {
+                moovAtom = atom;
                 return atom;
             }
         }
-        return null;
+        throw new IllegalStateException("MP4: moov atom is missing");
     }
 
-    public MP4Atom findMetadataAtom(String type, MP4Atom currentAtom) {
+    private MP4Atom findMetadataAtom(String type, MP4Atom currentAtom) {
         for (MP4Atom atom : currentAtom.getChildAtoms()) {
             if (atom.getType().equals(type)) {
                 return atom;
@@ -135,18 +163,49 @@ public class MP4 extends AbstractTag implements StreamInfo {
         return null;
     }
 
-    public ArrayList<MP4Atom> getMetadataAtoms() {
-        return findMetadataAtom("ilst", findTopLevelAtom("moov")).getChildAtoms();
+    private MP4Atom getIlstAtom() {
+        if (ilstAtom != null) {
+            return ilstAtom;
+        }
+        ilstAtom = findMetadataAtom("ilst", getMoovAtom());
+        if (ilstAtom == null) throw new IllegalStateException("MP4: ilst atom is missing");
+        return ilstAtom;
     }
 
-    public void setMetadataAtoms(ArrayList<MP4Atom> metadataAtoms) {
-        MP4Atom ilstAtom = findMetadataAtom("ilst", findTopLevelAtom("moov"));
-        ilstAtom.setChildAtoms(metadataAtoms);
+    public ArrayList<ItunesAtom> getMetadataAtoms() {
+        return getIlstAtom().getChildAtoms();
+    }
+
+    public <T extends ItunesAtom> T getMetadataAtom(String type) {
+        return (T) findMetadataAtom(type, getIlstAtom());
+    }
+
+    public void addMetadataAtom(ItunesAtom atom) {
+        getIlstAtom().appendChildAtom(atom);
+    }
+
+    public void setMetadataAtoms(ArrayList<ItunesAtom> metadataAtoms) {
+        getIlstAtom().setChildAtoms(metadataAtoms);
+    }
+
+    public void removeMetadataAtom(String type) {
+
+        ArrayList<ItunesAtom> atoms = getMetadataAtoms();
+        ItunesAtom atom = null;
+
+        for (ItunesAtom childAtom : atoms) {
+            if (childAtom.getType().equals(type)) {
+                atom = childAtom;
+                break;
+            }
+        }
+        if (atom != null) {
+            atoms.remove(atom);
+        }
     }
 
     public void removeMetadataAtoms() {
-        MP4Atom ilstAtom = findMetadataAtom("ilst", findTopLevelAtom("moov"));
-        ilstAtom.removeAllChildAtoms();
+        getIlstAtom().removeAllChildAtoms();
     }
 
     @Override
@@ -156,16 +215,14 @@ public class MP4 extends AbstractTag implements StreamInfo {
         String atomType = FIELD_MAP.get(fieldId);
         if (atomType == null) return;
 
-        MP4Atom ilstAtom = findMetadataAtom("ilst", findTopLevelAtom("moov"));
-        ArrayList<MP4Atom> itunesAtoms = ilstAtom.getChildAtoms();
-
         boolean addAtom       = true;
         ItunesAtom itunesAtom = null;
 
-        for (MP4Atom atom : itunesAtoms) {
+        ArrayList<ItunesAtom> itunesAtoms = getIlstAtom().getChildAtoms();
+        for (ItunesAtom atom : itunesAtoms) {
             if (atom.getType().equals(atomType)) {
                 addAtom    = false;
-                itunesAtom = (ItunesAtom) atom;
+                itunesAtom = atom;
                 break;
             }
         }
@@ -211,9 +268,9 @@ public class MP4 extends AbstractTag implements StreamInfo {
             itunesAtom = textAtom;
         }
 
-        ((MP4Atom) itunesAtom).assemble();
+        itunesAtom.assemble();
         if (addAtom) {
-            ilstAtom.appendChildAtom((MP4Atom) itunesAtom);
+            ilstAtom.appendChildAtom(itunesAtom);
         }
     }
 
@@ -224,14 +281,13 @@ public class MP4 extends AbstractTag implements StreamInfo {
         String atomType = FIELD_MAP.get(fieldId);
         if (atomType == null) return null;
 
-        MP4Atom ilstAtom = findMetadataAtom("ilst", findTopLevelAtom("moov"));
-        ArrayList<MP4Atom> itunesAtoms = ilstAtom.getChildAtoms();
-
+        ArrayList<ItunesAtom> itunesAtoms = getIlstAtom().getChildAtoms();
         boolean isCover = fieldId.equals(AbstractTag.PICTURE);
-        for (MP4Atom atom : itunesAtoms) {
+
+        for (ItunesAtom atom : itunesAtoms) {
             if (atom.getType().equals(atomType)) {
-                return isCover ? (T) ((ItunesAtom) atom).getAtomData() :
-                        (T) ((ItunesAtom) atom).getAtomData().toString();
+                return isCover ? (T) atom.getAtomData() :
+                        (T) atom.getAtomData().toString();
             }
         }
         return null;
@@ -239,22 +295,9 @@ public class MP4 extends AbstractTag implements StreamInfo {
 
     @Override
     public void removeField(String fieldId) {
-
         String atomType = FIELD_MAP.get(fieldId);
         if (atomType == null) return;
-
-        MP4Atom ilstAtom = findMetadataAtom("ilst", findTopLevelAtom("moov"));
-        ArrayList<MP4Atom> itunesAtoms = ilstAtom.getChildAtoms();
-        Iterator<MP4Atom> iterator     = itunesAtoms.iterator();
-
-        MP4Atom atom;
-        while (iterator.hasNext()) {
-            atom = iterator.next();
-            if (atom.getType().equals(atomType)) {
-                itunesAtoms.remove(atom);
-                break;
-            }
-        }
+        removeMetadataAtom(atomType);
     }
 
     private int assembleAtoms() {
@@ -274,7 +317,7 @@ public class MP4 extends AbstractTag implements StreamInfo {
         int size  = assembleAtoms();
         int delta = size - mdatStart;
 
-        MP4Atom moovAtom  = findTopLevelAtom("moov");
+        MP4Atom moovAtom  = getMoovAtom();
         StcoAtom stcoAtom = (StcoAtom) findMetadataAtom("stco", moovAtom);
         stcoAtom.updateOffsets(delta);
 
@@ -294,14 +337,6 @@ public class MP4 extends AbstractTag implements StreamInfo {
         return bytes;
     }
 
-    public void addAtom(MP4Atom atom) {
-        if (!atoms.contains(atom)) atoms.add(atom);
-    }
-
-    public ArrayList<MP4Atom> getAtoms() {
-        return atoms;
-    }
-
     int getMdatStart() {
         return mdatStart;
     }
@@ -312,35 +347,35 @@ public class MP4 extends AbstractTag implements StreamInfo {
 
     @Override
     public byte getChannelCount() {
-        if (stsdAtom == null) stsdAtom = (StsdAtom) findMetadataAtom("stsd", findTopLevelAtom("moov"));
+        if (stsdAtom == null) stsdAtom = (StsdAtom) findMetadataAtom("stsd", getMoovAtom());
         return (byte) stsdAtom.getChannels();
     }
 
     @Override
     public int getDuration() {
-        if (mdhdAtom == null) mdhdAtom = (MdhdAtom) findMetadataAtom("mdhd", findTopLevelAtom("moov"));
+        if (mdhdAtom == null) mdhdAtom = (MdhdAtom) findMetadataAtom("mdhd", getMoovAtom());
         return (int) (mdhdAtom.getDuration() / mdhdAtom.getTimescale());
     }
 
     @Override
     public int getBitrate() {
-        if (stsdAtom == null) stsdAtom = (StsdAtom) findMetadataAtom("stsd", findTopLevelAtom("moov"));
+        if (stsdAtom == null) stsdAtom = (StsdAtom) findMetadataAtom("stsd", getMoovAtom());
         return stsdAtom.getAvgBitrate() / 1000;
     }
 
     @Override
     public int getSampleRate() {
-        if (stsdAtom == null) stsdAtom = (StsdAtom) findMetadataAtom("stsd", findTopLevelAtom("moov"));
+        if (stsdAtom == null) stsdAtom = (StsdAtom) findMetadataAtom("stsd", getMoovAtom());
         return stsdAtom.getSampleRate();
     }
 
     @Override
     public void setDuration(int duration) {
-
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public void setBitrate(int bitrate) {
-
+        throw new UnsupportedOperationException("Not implemented");
     }
 }

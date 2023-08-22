@@ -2,27 +2,30 @@ package com.jtagger.mp4;
 
 import com.jtagger.utils.IntegerUtils;
 
+import java.nio.charset.Charset;
+
 import static java.nio.charset.StandardCharsets.*;
 
-public class TextAtom extends MP4Atom implements ItunesAtom<String> {
+public class TextAtom extends ItunesAtom<String> {
 
     private String text;
-    private int atomType = ItunesAtom.TYPE_UTF8;
+    private final int atomType;
 
-    public TextAtom(String type, byte[] data, int atomType) {
+    TextAtom(String type, byte[] data, int atomType) {
         super(type, data);
         this.atomType = atomType;
     }
 
     public TextAtom(String type) {
         super(type);
+        this.atomType = TYPE_UTF8;
     }
 
     @Override
     public byte[] assemble(byte version) {
 
         int index        = 0;
-        byte[] textBytes = text.getBytes(atomType == TYPE_UTF8 ? UTF_8 : UTF_16BE);
+        byte[] textBytes = text.getBytes(getCharset(getType(), atomType));
 
         byte[] dataAtom   = new byte[8 + 8 + textBytes.length];
         byte[] itunesAtom = new byte[dataAtom.length + 8];
@@ -40,6 +43,12 @@ public class TextAtom extends MP4Atom implements ItunesAtom<String> {
 
         this.data = itunesAtom;
         return itunesAtom;
+    }
+
+    public static Charset getCharset(String type, int atomType) {
+        if (atomType == TYPE_UTF8)  return UTF_8;
+        if (atomType == TYPE_UTF16) return UTF_16BE;
+        throw new IllegalStateException("Invalid data type for atom " + type);
     }
 
     @Override

@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.jtagger.mp4.ItunesAtom.TYPE_UTF16;
+import static com.jtagger.mp4.ItunesAtom.TYPE_UTF8;
+import static com.jtagger.utils.IntegerUtils.toUInt32BE;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
@@ -29,13 +32,13 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
         if (version == 1) {
             dateCreated  = IntegerUtils.toUInt64BE(Arrays.copyOfRange(atom, i, i + 8)); i += 8;
             dateModified = IntegerUtils.toUInt64BE(Arrays.copyOfRange(atom, i, i + 8)); i += 8;
-            timescale    = Integer.toUnsignedLong(IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, i, i + 4))); i += 4;
+            timescale    = Integer.toUnsignedLong(toUInt32BE(Arrays.copyOfRange(atom, i, i + 4))); i += 4;
             duration     = IntegerUtils.toUInt64BE(Arrays.copyOfRange(atom, i, i + 8)); i += 8;
         } else {
-            dateCreated  = Integer.toUnsignedLong(IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, i, i + 4))); i += 4;
-            dateModified = Integer.toUnsignedLong(IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, i, i + 4))); i += 4;
-            timescale    = Integer.toUnsignedLong(IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, i, i + 4))); i += 4;
-            duration     = Integer.toUnsignedLong(IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, i, i + 4))); i += 4;
+            dateCreated  = Integer.toUnsignedLong(toUInt32BE(Arrays.copyOfRange(atom, i, i + 4))); i += 4;
+            dateModified = Integer.toUnsignedLong(toUInt32BE(Arrays.copyOfRange(atom, i, i + 4))); i += 4;
+            timescale    = Integer.toUnsignedLong(toUInt32BE(Arrays.copyOfRange(atom, i, i + 4))); i += 4;
+            duration     = Integer.toUnsignedLong(toUInt32BE(Arrays.copyOfRange(atom, i, i + 4))); i += 4;
         }
 
         return new MdhdAtom("mdhd", atom, dateCreated, dateModified, duration, timescale, version);
@@ -57,7 +60,7 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
         byte[] endTag   = new byte[] {(byte) 0xFE, (byte) 0xFE, (byte) 0xFE};
 
         int i = 12;
-        int descCount = IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, i, i + 4)); i += 8;
+        int descCount = toUInt32BE(Arrays.copyOfRange(atom, i, i + 4)); i += 8;
 
         if (descCount < 1) {
             throw new InvalidAtomException("Invalid number of descriptions");
@@ -91,8 +94,8 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
         int flags      = Byte.toUnsignedInt(atom[i++]);
         int streamType = flags >> 2;
         int bufSize    = IntegerUtils.toUInt24BE(Arrays.copyOfRange(atom, i, i + 3)); i += 3;
-        int maxBitrate = IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, i, i + 4)); i += 4;
-        int avgBitrate = IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, i, i + 4)); i += 4;
+        int maxBitrate = toUInt32BE(Arrays.copyOfRange(atom, i, i + 4)); i += 4;
+        int avgBitrate = toUInt32BE(Arrays.copyOfRange(atom, i, i + 4)); i += 4;
 
         return new StsdAtom(
                 "stsd", atom, channels, sampleSize, sampleRate,
@@ -102,27 +105,57 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
 
     private FreeFormAtom parseFreeFormAtom(byte[] atom) throws InvalidAtomException {
 
-        int i = 9;
-        while (atom[i] != ':') i++;
+        int length;
+        int index;
+        final int dataOffset;
 
-        String mean = new String(Arrays.copyOfRange(atom, 9, i), ISO_8859_1);
-        String name = new String(Arrays.copyOfRange(atom, ++i, i + 4)); i += 4;
+        String atomType;
+        String mean;
+        String name;
 
-        int size    = IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, i, i + 4)); i += 4;
-        String type = new String(Arrays.copyOfRange(atom, i, i + 4)); i += 4;
+        index    = 8;
+        length   = toUInt32BE(Arrays.copyOfRange(atom, index, index + 4)); index += 4;
+        atomType = new String(Arrays.copyOfRange(atom, index, index + 4)); index += 4;
 
-        if (size < 8) {
-            throw new InvalidAtomException("Invalid atom size");
+        if (length < 8) {
+            throw new InvalidAtomException("Invalid length for 'mean' atom");
         }
-        if (!type.equals("data")) {
-            throw new InvalidAtomException("Unexpected atom: " + type);
+        if (!atomType.equals("mean")) {
+            throw new InvalidAtomException("Expected atom type: 'mean'");
         }
 
-        int flags   = IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, i, i + 4)); i += 4;
-        String text = new String(Arrays.copyOfRange(atom, i, i + size - 8 - 4));
+        mean     = new String(Arrays.copyOfRange(atom, index + 4, index + length - 8)); index += length - 8;
+        length   = toUInt32BE(Arrays.copyOfRange(atom, index, index + 4)); index += 4;
+        atomType = new String(Arrays.copyOfRange(atom, index, index + 4)); index += 4;
 
-        FreeFormAtom freeFormAtom = new FreeFormAtom(mean, name, atom);
-        freeFormAtom.setAtomData(text);
+        if (length < 8) {
+            throw new InvalidAtomException("Invalid length for 'name' atom");
+        }
+        if (!atomType.equals("name")) {
+            throw new InvalidAtomException("Expected atom type: 'name'");
+        }
+
+        name       = new String(Arrays.copyOfRange(atom, index + 4, index + length - 8)); index += length - 8;
+        dataOffset = index;
+        length     = toUInt32BE(Arrays.copyOfRange(atom, index, index + 4)); index += 4;
+        atomType   = new String(Arrays.copyOfRange(atom, index, index + 4)); index += 4;
+
+        if (length < 8) {
+            throw new InvalidAtomException("Invalid length for 'data' atom");
+        }
+        if (!atomType.equals("data")) {
+            throw new InvalidAtomException("Expected type 'data', got " + atomType);
+        }
+
+        byte[] atomData = Arrays.copyOfRange(atom, index + 8, index + length - 8);
+        int dataType    = toUInt32BE(Arrays.copyOfRange(atom, index, index + 4));
+
+        if (dataType != TYPE_UTF8 && dataType != TYPE_UTF16) {
+            throw new InvalidAtomException("Unsupported freeform data type: " + dataType);
+        }
+
+        FreeFormAtom freeFormAtom = new FreeFormAtom(mean, name, atom, dataType, dataOffset);
+        freeFormAtom.setAtomData(atomData);
         return freeFormAtom;
     }
 
@@ -130,12 +163,12 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
 
         StcoAtom stco = new StcoAtom("stco", atom);
 
-        int entryCount = IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, 12, 16));
+        int entryCount = toUInt32BE(Arrays.copyOfRange(atom, 12, 16));
         int[] offsets  = new int[entryCount];
         byte[] entries = Arrays.copyOfRange(atom, 16, atom.length);
 
         for (int i = 0; i < entries.length; i += 4) {
-            offsets[i / 4] = IntegerUtils.toUInt32BE(Arrays.copyOfRange(entries, i, i + 4));
+            offsets[i / 4] = toUInt32BE(Arrays.copyOfRange(entries, i, i + 4));
         }
 
         stco.setOffsets(offsets);
@@ -156,11 +189,11 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
 
         dataAtomType = new String(dataAtomTypeBytes, ISO_8859_1);
         type         = new String(typeBytes, ISO_8859_1);
-        size         = IntegerUtils.toUInt32BE(sizeBytes);
-        dataType     = IntegerUtils.toUInt32BE(Arrays.copyOfRange(atom, 16, 20));
+        size         = toUInt32BE(sizeBytes);
+        dataType     = toUInt32BE(Arrays.copyOfRange(atom, 16, 20));
 
         if (size < 8) {
-            throw new InvalidAtomException("Invalid atom size: " + size);
+            throw new InvalidAtomException(String.format("Atom %s: invalid size: %d", type, size));
         }
         if (!dataAtomType.equals("data")) {
             throw new InvalidAtomException("Unexpected atom: " + dataAtomType);
@@ -205,7 +238,7 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
             byte[] sizeBytes = Arrays.copyOfRange(childAtom, index, index + 4); index += 4;
             byte[] typeBytes = Arrays.copyOfRange(childAtom, index, index + 4); index += 4;
 
-            atomSize  = IntegerUtils.toUInt32BE(sizeBytes);
+            atomSize  = toUInt32BE(sizeBytes);
             endOffset = startOffset + atomSize;
             atomType  = new String(typeBytes, ISO_8859_1);
 
@@ -217,12 +250,12 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
             MP4Atom atom    = new MP4Atom(atomType, atomData);
 
             if (atomType.equals("----")) {
-                MP4Atom freeFormAtom = parseFreeFormAtom(atomData);
+                FreeFormAtom freeFormAtom = parseFreeFormAtom(atomData);
                 parentAtom.appendChildAtom(freeFormAtom);
                 atoms.add(freeFormAtom);
             }
             else if (parentAtom.getType().equals("ilst")) {
-                MP4Atom itunesAtom = (MP4Atom) parseItunesAtom(atomData);
+                ItunesAtom itunesAtom = parseItunesAtom(atomData);
                 parentAtom.appendChildAtom(itunesAtom);
                 atoms.add(itunesAtom);
             }
@@ -276,7 +309,7 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
                 if (file.read(sizeBytes, 0, 4) == -1) break;
                 if (file.read(typeBytes, 0, 4) == -1) break;
 
-                int atomSize    = IntegerUtils.toUInt32BE(sizeBytes);
+                int atomSize    = toUInt32BE(sizeBytes);
                 String atomType = new String(typeBytes, ISO_8859_1);
 
                 if (atomType.equals("mdat")) {
