@@ -14,15 +14,13 @@ public class AttachedPictureFrameParser implements FrameBodyParser<AttachedPictu
 
         position = 0;
 
-        byte encoding = frameData[ENCODING_OFFSET];
-        Charset charset = TextEncoding.getCharset(encoding);
+        byte encoding   = frameData[ENCODING_OFFSET];
         String mimeType = parseMimeType(frameData);
 
         byte pictureType = frameData[position];
-        String pictureDescription = parsePictureDescription(frameData, charset);
+        String pictureDescription = parsePictureDescription(frameData, TextEncoding.getCharset(encoding));
 
         byte[] pictureData = parsePictureData(frameData);
-
         return AttachedPictureFrame.newBuilder()
                 .setHeader(frameHeader)
                 .setMimeType(mimeType)

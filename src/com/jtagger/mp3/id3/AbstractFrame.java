@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterOutputStream;
 
+import static com.jtagger.mp3.id3.UnsynchronisationUtils.toUnsynch;
+
 public abstract class AbstractFrame<T> implements Component {
 
     public static final String EQUALIZATION          = "EQUA";
@@ -107,14 +109,14 @@ public abstract class AbstractFrame<T> implements Component {
     @Override
     public byte[] getBytes() {
 
-        byte[] frameBody = Arrays.copyOf(frameBytes, frameBytes.length);
+        byte[] frameBody  = Arrays.copyOf(frameBytes, frameBytes.length);
         byte[] fieldBytes = header.buildFlagFields(frameBody.length);
 
         if (header.isFrameCompressed()) {
             frameBody = compressFrame(frameBody);
         }
         if (header.isFrameUnsynch()) {
-            frameBody = UnsynchronisationUtils.toUnsynch(frameBody);
+            frameBody = toUnsynch(frameBody);
         }
 
         byte[] frame = new byte[frameBody.length + fieldBytes.length];
@@ -143,8 +145,9 @@ public abstract class AbstractFrame<T> implements Component {
             compressedOut.close();
 
             return byteArrayOut.toByteArray();
+
         } catch (IOException e) {
-            return frame;
+            throw new RuntimeException(e);
         }
     }
 
@@ -159,8 +162,9 @@ public abstract class AbstractFrame<T> implements Component {
             decompressedOut.close();
 
             return byteArrayOut.toByteArray();
+
         } catch (IOException e) {
-            return compressedFrame;
+            throw new RuntimeException(e);
         }
     }
 }

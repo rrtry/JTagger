@@ -109,6 +109,9 @@ public class AttachedPicture {
     }
 
     public void setMimeType(String mimeType) {
+        if (!ImageReader.isPictureMimeType(mimeType)) {
+            throw new IllegalArgumentException("Invalid mime type: " + mimeType);
+        }
         this.mimeType = mimeType;
     }
 
