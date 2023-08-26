@@ -65,10 +65,11 @@ class FrameParser {
             FrameHeader frameHeader = frameHeaderParser.parseFrameHeader(frameData, position);
             if (frameHeader == null) break;
 
+            final int frameSize = frameHeader.getFrameSize();
             AbstractFrame frame = parseFrame(position, frameHeader);
             if (frame != null) frames.add(frame);
 
-            position += (frameHeader.getFrameSize() + FrameHeader.FRAME_HEADER_LENGTH);
+            position += (frameSize + FrameHeader.FRAME_HEADER_LENGTH);
         }
         return frames;
     }
