@@ -13,15 +13,11 @@ public class LRCParser {
 
     public static HashMap<Integer, String> parseSynchronisedLyrics(File fileObj) throws IOException {
 
-        if (!fileObj.isFile()) {
-            return new HashMap<>();
-        }
-
         BufferedReader reader = new BufferedReader(new FileReader(fileObj));
-        String line = reader.readLine();
-
         HashMap<Integer, String> syncedLyrics = new HashMap<>();
-        while (line != null) {
+        String line;
+
+        while ((line = reader.readLine()) != null) {
 
             if (line.isEmpty()) {
                 continue;
@@ -59,9 +55,9 @@ public class LRCParser {
                 int timestamp = minutes * 60 * 1000 + seconds * 1000 + millis;
                 syncedLyrics.put(timestamp, lyrics);
             }
-
-            line = reader.readLine();
         }
+
+        reader.close();
         return syncedLyrics;
     }
 }

@@ -45,8 +45,8 @@ public class FrameHeaderParser {
             if (id.equals("\0\0\0\0")) return null;
 
             int frameSize = parseFrameSize();
-            byte[] flags = parseFlags();
-            byte version = tagHeader.getMajorVersion();
+            byte[] flags  = parseFlags();
+            byte version  = tagHeader.getMajorVersion();
 
             FrameHeader header = FrameHeader.newBuilder(version)
                     .setIdentifier(id, version)
@@ -60,6 +60,7 @@ public class FrameHeaderParser {
             return header;
 
         } catch (IllegalArgumentException | IllegalStateException e) {
+            e.printStackTrace();
             return null;
         }
     }

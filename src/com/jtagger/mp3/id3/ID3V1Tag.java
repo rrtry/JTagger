@@ -6,7 +6,7 @@ import java.util.Arrays;
 
 public class ID3V1Tag extends ID3Tag {
 
-    public static final String ID = "TAG";
+    public static final String ID     = "TAG";
     private static final int TAG_SIZE = 128;
 
     public static final byte ID_OFFSET      = 0;
@@ -18,7 +18,7 @@ public class ID3V1Tag extends ID3Tag {
     public static final byte TRACK_NUMBER   = 126;
     public static final byte GENRE_OFFSET   = 127;
 
-    public static final byte ID3V1 = 0;
+    public static final byte ID3V1   = 0;
     public static final byte ID3V1_1 = 1;
 
     public static final int BLUES                   = 0;
@@ -409,52 +409,54 @@ public class ID3V1Tag extends ID3Tag {
             "Garage Rock",
             "Psybient",
             "Unknown",
-
     };
 
     private byte[] tagBytes;
-    private String title;
-    private String artist;
-    private String album;
-    private String year;
-    private String comment;
+    private String title   = " ".repeat(30);
+    private String artist  = " ".repeat(30);
+    private String album   = " ".repeat(30);
+    private String year    = " ".repeat(4);
+    private String comment = " ".repeat(30);
 
-    private byte genre;
-    private byte trackNumber;
-    private byte version;
+    private byte genre       = (byte) UNKNOWN;
+    private byte trackNumber = 0;
+    private byte version     = ID3V1_1;
 
     @Override
     protected <T> void setFieldValue(String fieldId, T value) {
 
         String fieldValue = (String) value;
-
-        if (fieldId.equals(AbstractTag.TITLE))   setTitle(fieldValue);
-        if (fieldId.equals(AbstractTag.ARTIST))  setArtist(fieldValue);
-        if (fieldId.equals(AbstractTag.ALBUM))   setAlbum(fieldValue);
-        if (fieldId.equals(AbstractTag.YEAR))    setYear(fieldValue);
-        if (fieldId.equals(AbstractTag.COMMENT)) setComment(fieldValue);
-        if (fieldId.equals(AbstractTag.GENRE))   setGenre(Integer.parseInt(fieldValue));
+        if (fieldId.equals(AbstractTag.TITLE))        setTitle(fieldValue);
+        if (fieldId.equals(AbstractTag.ARTIST))       setArtist(fieldValue);
+        if (fieldId.equals(AbstractTag.ALBUM))        setAlbum(fieldValue);
+        if (fieldId.equals(AbstractTag.YEAR))         setYear(fieldValue);
+        if (fieldId.equals(AbstractTag.COMMENT))      setComment(fieldValue);
+        if (fieldId.equals(AbstractTag.GENRE))        setGenre(Integer.parseInt(fieldValue));
         if (fieldId.equals(AbstractTag.TRACK_NUMBER)) setAlbumTrack(Integer.parseInt(fieldValue));
     }
 
     @Override
     @SuppressWarnings("unchecked")
     protected <T> T getFieldValue(String fieldId) {
-
-        if (fieldId.equals(AbstractTag.TITLE))   return (T) title;
-        if (fieldId.equals(AbstractTag.ARTIST))  return (T) artist;
-        if (fieldId.equals(AbstractTag.ALBUM))   return (T) album;
-        if (fieldId.equals(AbstractTag.YEAR))    return (T) String.valueOf(year);
-        if (fieldId.equals(AbstractTag.COMMENT)) return (T) comment;
-        if (fieldId.equals(AbstractTag.GENRE))   return (T) String.valueOf(genre);
+        if (fieldId.equals(AbstractTag.TITLE))        return (T) title;
+        if (fieldId.equals(AbstractTag.ARTIST))       return (T) artist;
+        if (fieldId.equals(AbstractTag.ALBUM))        return (T) album;
+        if (fieldId.equals(AbstractTag.YEAR))         return (T) String.valueOf(year);
+        if (fieldId.equals(AbstractTag.COMMENT))      return (T) comment;
+        if (fieldId.equals(AbstractTag.GENRE))        return (T) String.valueOf(genre);
         if (fieldId.equals(AbstractTag.TRACK_NUMBER)) return (T) String.valueOf(trackNumber);
-
         return null;
     }
 
     @Override
     public void removeField(String fieldId) {
-
+        if (fieldId.equals(AbstractTag.TITLE))        title   = " ".repeat(30);
+        if (fieldId.equals(AbstractTag.ARTIST))       artist  = " ".repeat(30);
+        if (fieldId.equals(AbstractTag.ALBUM))        album   = " ".repeat(30);
+        if (fieldId.equals(AbstractTag.YEAR))         year    = " ".repeat(4);
+        if (fieldId.equals(AbstractTag.COMMENT))      comment = " ".repeat(30);
+        if (fieldId.equals(AbstractTag.GENRE))        setGenre(UNKNOWN);
+        if (fieldId.equals(AbstractTag.TRACK_NUMBER)) setAlbumTrack(0);
     }
 
     @Override
@@ -488,7 +490,9 @@ public class ID3V1Tag extends ID3Tag {
 
     @Override
     public void setVersion(byte version) {
-        if (version != ID3V1 && version != ID3V1_1) throw new IllegalArgumentException("Invalid version number");
+        if (version != ID3V1 && version != ID3V1_1) {
+            throw new IllegalArgumentException("Invalid version number");
+        }
         this.version = version;
     }
 
@@ -505,29 +509,40 @@ public class ID3V1Tag extends ID3Tag {
     }
 
     public void setTitle(String title) {
-        if (title.length() > 30) title = title.substring(0, 30);
-        this.title = title;
+        if (title.length() > 30) {
+            this.title = title.substring(0, 30);
+            return;
+        }
+        this.title = title + " ".repeat(30 - title.length());
     }
 
     public void setArtist(String artist) {
-        if (artist.length() > 30) artist = artist.substring(0, 30);
-        this.artist = artist;
+        if (artist.length() > 30) {
+            this.artist = artist.substring(0, 30);
+            return;
+        }
+        this.artist = artist + " ".repeat(30 - artist.length());
     }
 
     public void setAlbum(String album) {
-        if (album.length() > 30) album = album.substring(0, 30);
-        this.album = album;
+        if (album.length() > 30) {
+            this.album = album.substring(0, 30);
+            return;
+        }
+        this.album = album + " ".repeat(30 - album.length());
     }
 
     public void setYear(String year) {
-        if (year.contains("[a-zA-Z]+")) throw new IllegalArgumentException("'YEAR' must be numeric string");
-        if (year.length() > 4) year = year.substring(0, 4);
-        this.year = year;
+        if (year.length() > 4) {
+            this.year = year.substring(0, 4);
+            return;
+        }
+        this.year = year + " ".repeat(4 - year.length());
     }
 
     public void setComment(String comment) {
         if (comment.length() > 30) comment = comment.substring(0, 30);
-        this.comment = comment;
+        this.comment = comment + " ".repeat(30 - comment.length());
     }
 
     public void setGenre(int genre) {
@@ -549,11 +564,15 @@ public class ID3V1Tag extends ID3Tag {
     @Override
     public byte[] assemble(byte version) {
 
-        if (version != ID3V1 && version != ID3V1_1) throw new IllegalArgumentException("Invalid version number: " + version);
-        if (version == ID3V1_1 && comment.length() > 28) comment = comment.substring(0, 28);
+        if (version != ID3V1 && version != ID3V1_1) {
+            throw new IllegalArgumentException("Invalid version number: " + version);
+        }
+        if (version == ID3V1_1 && comment.length() > 28) {
+            comment = comment.substring(0, 28);
+        }
 
         this.version = version;
-        byte[] tag = new byte[TAG_SIZE];
+        byte[] tag   = new byte[TAG_SIZE];
 
         byte[] tagIdBytes   = ID.getBytes(StandardCharsets.ISO_8859_1);
         byte[] titleBytes   = title.getBytes(StandardCharsets.ISO_8859_1);
@@ -562,18 +581,22 @@ public class ID3V1Tag extends ID3Tag {
         byte[] yearBytes    = year.getBytes(StandardCharsets.ISO_8859_1);
         byte[] commentBytes = comment.getBytes(StandardCharsets.ISO_8859_1);
 
-        if (version == ID3V1_1) commentBytes = Arrays.copyOf(commentBytes, commentBytes.length + 1);
+        if (version == ID3V1_1) {
+            commentBytes = Arrays.copyOf(commentBytes, commentBytes.length + 1);
+        }
 
-        System.arraycopy(tagIdBytes, 0, tag, ID_OFFSET, tagIdBytes.length);
-        System.arraycopy(titleBytes, 0, tag, TITLE_OFFSET, titleBytes.length);
-        System.arraycopy(artistBytes, 0, tag, ARTIST_OFFSET, artistBytes.length);
-        System.arraycopy(albumBytes, 0, tag, ALBUM_OFFSET, albumBytes.length);
-        System.arraycopy(yearBytes, 0, tag, YEAR_OFFSET, yearBytes.length);
+        System.arraycopy(tagIdBytes,   0, tag, ID_OFFSET,      tagIdBytes.length);
+        System.arraycopy(titleBytes,   0, tag, TITLE_OFFSET,   titleBytes.length);
+        System.arraycopy(artistBytes,  0, tag, ARTIST_OFFSET,  artistBytes.length);
+        System.arraycopy(albumBytes,   0, tag, ALBUM_OFFSET,   albumBytes.length);
+        System.arraycopy(yearBytes,    0, tag, YEAR_OFFSET,    yearBytes.length);
         System.arraycopy(commentBytes, 0, tag, COMMENT_OFFSET, commentBytes.length);
 
-        if (version == ID3V1_1) tag[TRACK_NUMBER] = trackNumber;
-        tag[GENRE_OFFSET] = genre;
+        if (version == ID3V1_1) {
+            tag[TRACK_NUMBER] = trackNumber;
+        }
 
+        tag[GENRE_OFFSET] = genre;
         this.tagBytes = tag;
         return tag;
     }
@@ -583,8 +606,13 @@ public class ID3V1Tag extends ID3Tag {
         return tagBytes;
     }
 
-    public static Builder newBuilder() { return new ID3V1Tag().new Builder(); }
-    public static Builder newBuilder(ID3V1Tag tag) { return tag.new Builder(); }
+    public static Builder newBuilder() {
+        return new ID3V1Tag().new Builder();
+    }
+
+    public static Builder newBuilder(ID3V1Tag tag) {
+        return tag.new Builder();
+    }
 
     public class Builder {
 

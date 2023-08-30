@@ -15,7 +15,6 @@ public class ID3V1TagParser implements TagParser<ID3V1Tag> {
         try {
 
             byte[] buffer = new byte[128];
-
             file.seek(file.length() - 128);
             file.read(buffer, 0, buffer.length);
 
@@ -25,19 +24,19 @@ public class ID3V1TagParser implements TagParser<ID3V1Tag> {
             );
             if (!id.equals(ID)) return null; // tag is not present
 
-            byte version = ID3V1;
+            byte version       = ID3V1;
             byte commentLength = 30;
 
             if (buffer[COMMENT_OFFSET + 28] == 0x00 && buffer[TRACK_NUMBER] != 0x00) {
-                version = ID3V1_1;
+                version       = ID3V1_1;
                 commentLength = 28;
             }
 
-            String title   = new String(Arrays.copyOfRange(buffer, TITLE_OFFSET, TITLE_OFFSET + 30)).replace("\0", "");
-            String artist  = new String(Arrays.copyOfRange(buffer, ARTIST_OFFSET, ARTIST_OFFSET + 30)).replace("\0", "");
-            String album   = new String(Arrays.copyOfRange(buffer, ALBUM_OFFSET, ALBUM_OFFSET + 30)).replace("\0", "");
-            String year    = new String(Arrays.copyOfRange(buffer, YEAR_OFFSET, YEAR_OFFSET + 4)).replace("\0", "");
-            String comment = new String(Arrays.copyOfRange(buffer, COMMENT_OFFSET, COMMENT_OFFSET + commentLength)).replace("\0", "");
+            String title   = new String(Arrays.copyOfRange(buffer, TITLE_OFFSET, TITLE_OFFSET + 30));
+            String artist  = new String(Arrays.copyOfRange(buffer, ARTIST_OFFSET, ARTIST_OFFSET + 30));
+            String album   = new String(Arrays.copyOfRange(buffer, ALBUM_OFFSET, ALBUM_OFFSET + 30));
+            String year    = new String(Arrays.copyOfRange(buffer, YEAR_OFFSET, YEAR_OFFSET + 4));
+            String comment = new String(Arrays.copyOfRange(buffer, COMMENT_OFFSET, COMMENT_OFFSET + commentLength));
             int genre      = Byte.toUnsignedInt(buffer[GENRE_OFFSET]);
 
             ID3V1Tag.Builder builder = ID3V1Tag.newBuilder()

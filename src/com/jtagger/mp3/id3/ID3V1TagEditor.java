@@ -9,9 +9,7 @@ public class ID3V1TagEditor extends AbstractTagEditor<ID3V1Tag> {
 
     @Override
     protected final void parseTag() throws IOException {
-
         ID3V1TagParser parser = new ID3V1TagParser();
-
         this.tag          = parser.parseTag(file);
         this.isTagPresent = tag != null;
     }

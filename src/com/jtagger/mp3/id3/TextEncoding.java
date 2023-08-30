@@ -19,7 +19,7 @@ public class TextEncoding {
 
     public static final int UTF_16_BOM_LENGTH = 2;
 
-    public static byte getAppropriateEncoding(byte version) {
+    public static byte getEncodingForVersion(byte version) {
         if (version == ID3V2_3) return ENCODING_UTF_16;
         if (version == ID3V2_4) return ENCODING_UTF_8;
         throw new IllegalArgumentException("Invalid version: " + version);

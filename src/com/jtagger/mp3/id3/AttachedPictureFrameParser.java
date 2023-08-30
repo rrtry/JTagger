@@ -1,74 +1,54 @@
 package com.jtagger.mp3.id3;
 
-import java.nio.charset.Charset;
 import java.util.Arrays;
+import static com.jtagger.mp3.id3.AttachedPictureFrame.MIME_TYPE_MAX_LENGTH;
 
-public class AttachedPictureFrameParser implements FrameBodyParser<AttachedPictureFrame> {
+public class AttachedPictureFrameParser extends ContentDescriptionFrameParser<AttachedPictureFrame> {
 
-    private int position;
-    private static final int ENCODING_OFFSET = 0;
+    private static final int ENCODING_OFFSET  = 0;
     private static final int MIME_TYPE_OFFSET = 1;
 
     @Override
     public AttachedPictureFrame parse(String identifier, FrameHeader frameHeader, byte[] frameData, TagHeader tagHeader) {
 
-        position = 0;
+        byte encoding;
+        byte pictureType;
 
-        byte encoding   = frameData[ENCODING_OFFSET];
-        String mimeType = parseMimeType(frameData);
+        String mimeType;
+        String description;
 
-        byte pictureType = frameData[position];
-        String pictureDescription = parsePictureDescription(frameData, TextEncoding.getCharset(encoding));
+        encoding    = frameData[ENCODING_OFFSET];
+        mimeType    = parseMimeType(frameData);
+        pictureType = frameData[position++];
+        description = parseContentDescription(frameData, TextEncoding.getCharset(encoding));
 
-        byte[] pictureData = parsePictureData(frameData);
         return AttachedPictureFrame.newBuilder()
                 .setHeader(frameHeader)
                 .setMimeType(mimeType)
-                .setDescription(pictureDescription)
-                .setPictureData(pictureData)
+                .setDescription(description)
+                .setPictureData(parsePictureData(frameData))
                 .setPictureType(pictureType)
                 .setEncoding(encoding)
                 .build(frameData);
     }
 
     private byte[] parsePictureData(byte[] frameData) {
-        return Arrays.copyOfRange(frameData, ++position, frameData.length);
-    }
-
-    private String parsePictureDescription(byte[] frameData, Charset charset) {
-
-        final int from = ++position;
-
-        if (TextEncoding.hasByteOrderMark(frameData, position)) {
-            position += TextEncoding.UTF_16_BOM_LENGTH;
-        }
-
-        int step = 1;
-        if (TextEncoding.isUTF16(charset)) step++;
-
-        while (toCharFromByte(frameData[position]) != '\0') {
-            position += step;
-        }
-
-        final String description = new String(Arrays.copyOfRange(frameData, from, position), charset);
-        if (TextEncoding.isUTF16(charset)) position += 1;
-        return description;
+        return Arrays.copyOfRange(frameData, position, frameData.length);
     }
 
     private String parseMimeType(byte[] frameData) {
 
         position += MIME_TYPE_OFFSET;
+        final int to = position + MIME_TYPE_MAX_LENGTH + 1;
 
         StringBuilder mimeType = new StringBuilder();
-        char ch = toCharFromByte(frameData[position]);
+        char ch;
 
-        while (ch != '\0' && position < 30) {
-            ch = toCharFromByte(frameData[position]);
+        while ((ch = (char) (frameData[position] & 0xFF)) != '\0' && position < to) {
             mimeType.append(ch);
             position++;
         }
-        return mimeType.toString().replace("\0", "");
+        position++;
+        return mimeType.toString();
     }
-
-    private char toCharFromByte(byte b) { return (char) (b & 0xFF); }
 }

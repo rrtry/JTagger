@@ -4,6 +4,7 @@ import com.jtagger.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Set;
 
 import static com.jtagger.mp3.id3.ID3SynchSafeInteger.toSynchSafeInteger;
 import static com.jtagger.mp3.id3.ID3V2Tag.ID3V2_3;
@@ -72,13 +73,13 @@ public class FrameHeader implements Component {
 
     public void setIdentifier(String identifier, byte version) {
 
-        String[] frames;
+        Set<String> frames;
 
         if (version == ID3V2_3) frames = AbstractFrame.V2_3_FRAMES;
         else if (version == ID3V2_4) frames = AbstractFrame.V2_4_FRAMES;
         else throw new IllegalArgumentException("Unsupported tag version: " + version);
 
-        if (Arrays.stream(frames).noneMatch(identifier::equals)) {
+        if (!frames.contains(identifier)) {
             throw new IllegalArgumentException("Unknown frame identifier: " + identifier);
         }
         this.identifier = identifier;
@@ -360,6 +361,11 @@ public class FrameHeader implements Component {
 
         public Builder setEncrypted(boolean encrypted) {
             FrameHeader.this.setFrameEncrypted(encrypted);
+            return this;
+        }
+
+        public Builder setUnsynch(boolean unsynch) {
+            FrameHeader.this.setFrameUnsynch(unsynch);
             return this;
         }
 

@@ -40,15 +40,9 @@ class FrameParser {
                 frameHeader.getFrameSize()
         );
 
-        if (frameHeader.isFrameEncrypted()) {
-            return null;
-        }
-        if (frameHeader.isFrameUnsynch()) {
-            frame = fromUnsynch(frame);
-        }
-        if (frameHeader.isFrameCompressed()) {
-            frame = decompressFrame(frame);
-        }
+        if (frameHeader.isFrameEncrypted())  return null;
+        if (frameHeader.isFrameUnsynch())    frame = fromUnsynch(frame);
+        if (frameHeader.isFrameCompressed()) frame = decompressFrame(frame);
 
         FrameBodyParser frameParser = FrameParserFactory.getParser(frameType);
         return frameParser.parse(frameHeader.getIdentifier(), frameHeader, frame, tagHeader);

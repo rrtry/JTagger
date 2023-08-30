@@ -1,9 +1,11 @@
 package com.jtagger.mp3.id3;
 
 import com.jtagger.utils.IntegerUtils;
-import java.util.HashMap;
-import java.util.SortedSet;
-import java.util.TreeSet;
+
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+
+import static com.jtagger.mp3.id3.CommentFrame.isISOLanguage;
 
 public class SynchronisedLyricsFrame extends AbstractFrame<HashMap<Integer, String>> {
 
@@ -24,8 +26,8 @@ public class SynchronisedLyricsFrame extends AbstractFrame<HashMap<Integer, Stri
     private byte timestampFormat = TIMESTAMP_FORMAT_MILLIS;
     private byte contentType     = CONTENT_TYPE_LYRICS;
 
-    private String language;
-    private String description;
+    private String language    = Locale.ENGLISH.getISO3Language();
+    private String description = "Synchronised lyrics";
 
     private byte[] synchLyrics;
     private HashMap<Integer, String> lyricsMap;
@@ -57,6 +59,11 @@ public class SynchronisedLyricsFrame extends AbstractFrame<HashMap<Integer, Stri
     }
 
     @Override
+    public String getKey() {
+        return String.format("%s:%s:%s", getIdentifier(), getLanguage(), getDescription());
+    }
+
+    @Override
     public byte[] assemble(byte version) {
 
         final byte encodingOffset    = 0;
@@ -65,7 +72,7 @@ public class SynchronisedLyricsFrame extends AbstractFrame<HashMap<Integer, Stri
         final byte contentTypeOffset = 5;
         final byte descriptionOffset = 6;
 
-        byte[] languageBuffer    = language.getBytes(TextEncoding.getCharset(encoding));
+        byte[] languageBuffer    = language.getBytes(StandardCharsets.ISO_8859_1);
         byte[] descriptionBuffer = TextEncoding.getStringBytes(description, encoding);
 
         assembleSynchLyrics();
@@ -89,8 +96,16 @@ public class SynchronisedLyricsFrame extends AbstractFrame<HashMap<Integer, Stri
         return frame;
     }
 
-    public void setDescription(String desc) {
-        this.description = desc;
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public byte getEncoding() {
+        return encoding;
     }
 
     public void setEncoding(byte encoding) {
@@ -100,9 +115,31 @@ public class SynchronisedLyricsFrame extends AbstractFrame<HashMap<Integer, Stri
         this.encoding = encoding;
     }
 
+    public String getLanguage() {
+        return language;
+    }
+
     public void setLanguage(String language) {
-        if (language.length() != 3) throw new IllegalArgumentException("Invalid language code: " + language);
+        if (!isISOLanguage(language)) {
+            throw new IllegalArgumentException("Invalid language code: " + language);
+        }
         this.language = language;
+    }
+
+    public byte getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(byte contentType) {
+        this.contentType = contentType;
+    }
+
+    public byte getTimestampFormat() {
+        return timestampFormat;
+    }
+
+    public void setTimestampFormat(byte timestampFormat) {
+        this.timestampFormat = timestampFormat;
     }
 
     public static SynchronisedLyricsFrame.Builder newBuilder() {
@@ -120,7 +157,6 @@ public class SynchronisedLyricsFrame extends AbstractFrame<HashMap<Integer, Stri
         return SynchronisedLyricsFrame.newBuilder()
                 .setHeader(FrameHeader.createFrameHeader(S_LYRICS, version))
                 .setLanguage(language)
-                .setDescription("")
                 .setLyrics(syncLyrics)
                 .build(version);
     }
@@ -138,6 +174,9 @@ public class SynchronisedLyricsFrame extends AbstractFrame<HashMap<Integer, Stri
     public class Builder {
 
         public SynchronisedLyricsFrame.Builder setHeader(FrameHeader header) {
+            if (!header.getIdentifier().equals(S_LYRICS)) {
+                throw new IllegalArgumentException("Expected frame id: " + S_LYRICS);
+            }
             SynchronisedLyricsFrame.this.header = header;
             return this;
         }
@@ -159,6 +198,16 @@ public class SynchronisedLyricsFrame extends AbstractFrame<HashMap<Integer, Stri
 
         public SynchronisedLyricsFrame.Builder setLanguage(String language) {
             SynchronisedLyricsFrame.this.setLanguage(language);
+            return this;
+        }
+
+        public SynchronisedLyricsFrame.Builder setContentType(byte contentType) {
+            SynchronisedLyricsFrame.this.setContentType(contentType);
+            return this;
+        }
+
+        public SynchronisedLyricsFrame.Builder setTimestampFormat(byte timestampFormat) {
+            SynchronisedLyricsFrame.this.setTimestampFormat(timestampFormat);
             return this;
         }
 

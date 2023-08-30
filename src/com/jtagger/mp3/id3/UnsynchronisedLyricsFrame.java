@@ -10,19 +10,19 @@ public class UnsynchronisedLyricsFrame extends CommentFrame {
         );
     }
 
-    public static Builder newBuilder() {
+    public static UnsynchronisedLyricsFrame.Builder newBuilder() {
         return new UnsynchronisedLyricsFrame().new Builder();
     }
 
-    public static Builder newBuilder(UnsynchronisedLyricsFrame frame) {
+    public static UnsynchronisedLyricsFrame.Builder newBuilder(UnsynchronisedLyricsFrame frame) {
         return frame.new Builder();
     }
 
-    public static UnsynchronisedLyricsFrame createInstance(String lyrics, String language, byte version) {
+    public static UnsynchronisedLyricsFrame createInstance(String lyrics, String language, String description, byte version) {
         return (UnsynchronisedLyricsFrame) UnsynchronisedLyricsFrame.newBuilder()
                 .setHeader(FrameHeader.createFrameHeader(U_LYRICS, version))
                 .setLanguage(language)
-                .setDescription("")
+                .setDescription(description)
                 .setText(lyrics)
                 .build(version);
     }

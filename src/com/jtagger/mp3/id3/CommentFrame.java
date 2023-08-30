@@ -1,6 +1,8 @@
 package com.jtagger.mp3.id3;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
+import java.util.Objects;
 
 /*
     <Header for 'Comment', ID: "COMM">
@@ -25,6 +27,24 @@ public class CommentFrame extends AbstractFrame<String> {
         );
     }
 
+    public static boolean isISOLanguage(String language) {
+
+        if (language.length() != 3) return false;
+        if (language.equals("XXX")) return true; // undefined
+
+        for (Locale locale : Locale.getAvailableLocales()) {
+            if (locale.getISO3Language().equals(language)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public String getKey() {
+        return String.format("%s:%s:%s", getIdentifier(), getLanguage(), getDescription());
+    }
+
     @Override
     public final byte[] assemble(byte version) {
 
@@ -34,10 +54,10 @@ public class CommentFrame extends AbstractFrame<String> {
 
         int size = 1 + languageBuffer.length + descriptionBuffer.length + commentBuffer.length;
 
-        final int encodingOffset = 0;
-        final int languageOffset = 1;
+        final int encodingOffset    = 0;
+        final int languageOffset    = 1;
         final int descriptionOffset = languageOffset + languageBuffer.length;
-        final int commentOffset = descriptionOffset + descriptionBuffer.length;
+        final int commentOffset     = descriptionOffset + descriptionBuffer.length;
 
         byte[] frame = new byte[size];
         frame[encodingOffset] = encoding;
@@ -47,7 +67,6 @@ public class CommentFrame extends AbstractFrame<String> {
         System.arraycopy(commentBuffer, 0, frame, commentOffset, commentBuffer.length);
 
         this.frameBytes = frame;
-
         header = FrameHeader.newBuilder(header)
                 .setFrameSize(getBytes().length)
                 .build(version);
@@ -63,6 +82,10 @@ public class CommentFrame extends AbstractFrame<String> {
         this.text = comment;
     }
 
+    public byte getEncoding() {
+        return encoding;
+    }
+
     public void setEncoding(byte encoding) {
         if (!TextEncoding.isValidEncodingByte(encoding)) {
             throw new IllegalArgumentException("Invalid encoding: " + encoding);
@@ -70,9 +93,19 @@ public class CommentFrame extends AbstractFrame<String> {
         this.encoding = encoding;
     }
 
+    public String getLanguage() {
+        return language;
+    }
+
     public void setLanguage(String language) {
-        if (language.length() != 3) throw new IllegalArgumentException("Invalid language code: " + language);
+        if (!isISOLanguage(language)) {
+            throw new IllegalArgumentException("Invalid language code: " + language);
+        }
         this.language = language;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public void setDescription(String description) {
@@ -91,11 +124,11 @@ public class CommentFrame extends AbstractFrame<String> {
         return frame.new Builder();
     }
 
-    public static CommentFrame createInstance(String comment, String language, byte version) {
+    public static CommentFrame createInstance(String comment, String language, String description, byte version) {
         return CommentFrame.newBuilder()
                 .setHeader(FrameHeader.createFrameHeader(COMMENT, version))
                 .setLanguage(language)
-                .setDescription("")
+                .setDescription(description)
                 .setText(comment)
                 .build(version);
     }

@@ -32,33 +32,43 @@ package com.jtagger.mp3.id3;
                   $14  Publisher/Studio logotype
  */
 
+import com.jtagger.AbstractTag;
 import com.jtagger.AttachedPicture;
 import java.io.*;
 import java.net.URL;
+import java.util.Objects;
 
 public class AttachedPictureFrame extends AbstractFrame<AttachedPicture> {
+
+    public static final int DESCRIPTION_MAX_LENGTH = 64;
+    public static final int MIME_TYPE_MAX_LENGTH   = 10;
 
     private AttachedPicture picture = new AttachedPicture();
     private byte encoding;
 
     @Override
+    public String getKey() {
+        byte type = getPictureType();
+        return type != 0x01 && type != 0x02 ? String.format("%s:%s", getIdentifier(), getDescription()) : AbstractFrame.PICTURE;
+    }
+
+    @Override
     public final byte[] assemble(byte version) {
 
         byte[] pictureBytes = getPictureData();
-
-        byte[] mimeType = TextEncoding.getStringBytes(getMimeType(), TextEncoding.ENCODING_LATIN_1);
-        byte[] description = TextEncoding.getStringBytes(getDescription(), encoding);
+        byte[] mimeType     = TextEncoding.getStringBytes(getMimeType(), TextEncoding.ENCODING_LATIN_1);
+        byte[] description  = TextEncoding.getStringBytes(getDescription(), encoding);
         int size = 1 + mimeType.length + 1 + description.length + pictureBytes.length;
 
         byte[] frame = new byte[size];
 
-        final int encodingOffset = 0;
-        final int mimeTypeOffset = 1;
+        final int encodingOffset    = 0;
+        final int mimeTypeOffset    = 1;
         final int pictureTypeOffset = mimeTypeOffset + mimeType.length;
         final int descriptionOffset = pictureTypeOffset + 1;
         final int pictureDataOffset = descriptionOffset + description.length;
 
-        frame[encodingOffset] = encoding;
+        frame[encodingOffset]    = encoding;
         frame[pictureTypeOffset] = getPictureType();
 
         System.arraycopy(mimeType, 0, frame, mimeTypeOffset, mimeType.length);
@@ -66,7 +76,6 @@ public class AttachedPictureFrame extends AbstractFrame<AttachedPicture> {
         System.arraycopy(pictureBytes, 0, frame, pictureDataOffset, pictureBytes.length);
 
         this.frameBytes = frame;
-
         header = FrameHeader.newBuilder(header)
                 .setFrameSize(getBytes().length)
                 .build(version);
@@ -147,7 +156,7 @@ public class AttachedPictureFrame extends AbstractFrame<AttachedPicture> {
     public static AttachedPictureFrame createInstance(String description, String mimeType, byte pictureType, byte[] buffer, byte version) {
         return AttachedPictureFrame.newBuilder()
                 .setHeader(FrameHeader.createFrameHeader(PICTURE, version))
-                .setEncoding(TextEncoding.getAppropriateEncoding(version))
+                .setEncoding(TextEncoding.getEncodingForVersion(version))
                 .setDescription(description)
                 .setMimeType(mimeType)
                 .setPictureType(pictureType)

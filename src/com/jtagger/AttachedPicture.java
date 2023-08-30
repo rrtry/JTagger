@@ -6,6 +6,9 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+
+import static com.jtagger.mp3.id3.AttachedPictureFrame.DESCRIPTION_MAX_LENGTH;
 
 public class AttachedPicture {
 
@@ -13,6 +16,7 @@ public class AttachedPicture {
 
     public static final byte PICTURE_TYPE_OTHER                = 0x00;
     public static final byte PICTURE_TYPE_PNG_ICON             = 0x01;
+    public static final byte PICTURE_TYPE_OTHER_ICON           = 0x02;
     public static final byte PICTURE_TYPE_FRONT_COVER          = 0x03;
     public static final byte PICTURE_TYPE_BACK_COVER           = 0x04;
     public static final byte PICTURE_TYPE_LEAFLET_PAGE         = 0x05;
@@ -31,6 +35,32 @@ public class AttachedPicture {
     public static final byte PICTURE_TYPE_ILLUSTRATION         = 0x12;
     public static final byte PICTURE_TYPE_BAND_LOGO            = 0x13;
     public static final byte PICTURE_TYPE_STUDIO_LOGO          = 0x14;
+
+    private static final HashMap<Integer, String> PICTURE_TYPE_NAME_MAP = new HashMap<>();
+
+    static {
+        PICTURE_TYPE_NAME_MAP.put(0x00, "Other");
+        PICTURE_TYPE_NAME_MAP.put(0x01, "PNG Icon");
+        PICTURE_TYPE_NAME_MAP.put(0x02, "Other Icon");
+        PICTURE_TYPE_NAME_MAP.put(0x03, "Front cover");
+        PICTURE_TYPE_NAME_MAP.put(0x04, "Back cover");
+        PICTURE_TYPE_NAME_MAP.put(0x05, "Leaflet page");
+        PICTURE_TYPE_NAME_MAP.put(0x06, "Media");
+        PICTURE_TYPE_NAME_MAP.put(0x07, "Lead artist");
+        PICTURE_TYPE_NAME_MAP.put(0x08, "Artist");
+        PICTURE_TYPE_NAME_MAP.put(0x09, "Conductor");
+        PICTURE_TYPE_NAME_MAP.put(0x0A, "Band");
+        PICTURE_TYPE_NAME_MAP.put(0x0B, "Composer");
+        PICTURE_TYPE_NAME_MAP.put(0x0C, "Text writer");
+        PICTURE_TYPE_NAME_MAP.put(0x0D, "Recording location");
+        PICTURE_TYPE_NAME_MAP.put(0x0E, "During recording");
+        PICTURE_TYPE_NAME_MAP.put(0x0F, "During performance");
+        PICTURE_TYPE_NAME_MAP.put(0x10, "Movie screen capture");
+        PICTURE_TYPE_NAME_MAP.put(0x11, "Coloured fish");
+        PICTURE_TYPE_NAME_MAP.put(0x12, "Illustration");
+        PICTURE_TYPE_NAME_MAP.put(0x13, "Band logo");
+        PICTURE_TYPE_NAME_MAP.put(0x14, "Studio logo");
+    }
 
     private String mimeType    = "image/png";
     private String description = "Front cover";
@@ -60,6 +90,10 @@ public class AttachedPicture {
         this.height      = height;
         this.colorDepth  = colorDepth;
         this.pictureData = pictureData;
+    }
+
+    public static String getDescriptionFromType(int type) {
+        return PICTURE_TYPE_NAME_MAP.getOrDefault(type, "");
     }
 
     public int getPictureType() {
@@ -101,11 +135,10 @@ public class AttachedPicture {
     }
 
     public void setPictureType(int type) {
-        if (type >= PICTURE_TYPE_OTHER && type <= PICTURE_TYPE_STUDIO_LOGO) {
-            this.pictureType = type;
-            return;
+        if (type < PICTURE_TYPE_OTHER || type > PICTURE_TYPE_STUDIO_LOGO) {
+            throw new IllegalArgumentException("Invalid picture type: " + type);
         }
-        throw new IllegalArgumentException("Invalid picture type: " + type);
+        this.pictureType = type;
     }
 
     public void setMimeType(String mimeType) {
@@ -116,6 +149,9 @@ public class AttachedPicture {
     }
 
     public void setDescription(String description) {
+        if (description.length() > DESCRIPTION_MAX_LENGTH) {
+            throw new IllegalArgumentException("Picture description should be <= 64 characters long");
+        }
         this.description = description;
     }
 

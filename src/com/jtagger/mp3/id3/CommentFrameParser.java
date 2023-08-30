@@ -11,37 +11,24 @@ package com.jtagger.mp3.id3;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
-public class CommentFrameParser implements FrameBodyParser<CommentFrame> {
+public class CommentFrameParser extends ContentDescriptionFrameParser<CommentFrame> {
 
-    private int position;
-    public final int ENCODING_OFFSET = 0;
-    public final int LANGUAGE_OFFSET = 1;
-    public final int LANGUAGE_LENGTH = 3;
+    public final int ENCODING_OFFSET    = 0;
+    public final int LANGUAGE_OFFSET    = 1;
+    public final int LANGUAGE_LENGTH    = 3;
     public final int DESCRIPTION_OFFSET = 4;
+
+    @Override
+    protected String parseContentDescription(byte[] frameData, Charset charset) {
+        position = DESCRIPTION_OFFSET;
+        return super.parseContentDescription(frameData, charset);
+    }
 
     protected String parseComment(byte[] frameData, Charset charset) {
         return new String(
-                Arrays.copyOfRange(frameData, ++position, frameData.length),
+                Arrays.copyOfRange(frameData, position, frameData.length),
                 charset
-        ).replace("\0", "");
-    }
-
-    protected String parseCommentDescription(byte[] frameData, Charset charset) {
-
-        final int from = DESCRIPTION_OFFSET;
-        position = from;
-        int step = 1;
-
-        if (TextEncoding.isUTF16(charset)) step++;
-        if (TextEncoding.hasByteOrderMark(frameData, position)) position += TextEncoding.UTF_16_BOM_LENGTH;
-
-        while (frameData[position] != '\0') {
-            position += step;
-        }
-
-        final String description = new String(Arrays.copyOfRange(frameData, from, position), charset);
-        if (TextEncoding.isUTF16(charset)) position += 1;
-        return description.replace("\0", "");
+        ).trim();
     }
 
     protected String parseLanguageCode(byte[] frameData) {
@@ -55,7 +42,7 @@ public class CommentFrameParser implements FrameBodyParser<CommentFrame> {
         Charset charset = TextEncoding.getCharset(encoding);
 
         String language    = parseLanguageCode(frameData);
-        String description = parseCommentDescription(frameData, charset);
+        String description = parseContentDescription(frameData, charset);
         String comment     = parseComment(frameData, charset);
 
         return CommentFrame.newBuilder()
