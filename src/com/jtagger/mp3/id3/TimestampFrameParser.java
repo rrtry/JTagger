@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.time.Year;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,14 +38,20 @@ public class TimestampFrameParser implements FrameBodyParser<TimestampFrame> {
             }
         }
 
-        TimestampFrame.Builder builder = TimestampFrame.newBuilder().setHeader(frameHeader);
         if (index == -1) return null;
+        TimestampFrame.Builder builder = TimestampFrame.newBuilder().setHeader(frameHeader);
 
-        if (index == 0) builder = builder.setYear(Year.parse(recordingTime));
-        if (index == 1) builder = builder.setYearMonth(YearMonth.parse(recordingTime));
-        if (index == 2) builder = builder.setDate(LocalDate.parse(recordingTime, DateTimeFormatter.ofPattern(formatPattern)));
-        if (index >= 3) builder = builder.setDateTime(LocalDateTime.parse(recordingTime, DateTimeFormatter.ofPattern(formatPattern)));
+        try {
 
-        return builder.build(tagHeader.getMajorVersion());
+            if (index == 0) builder = builder.setYear(Year.parse(recordingTime));
+            if (index == 1) builder = builder.setYearMonth(YearMonth.parse(recordingTime));
+            if (index == 2) builder = builder.setDate(LocalDate.parse(recordingTime, DateTimeFormatter.ofPattern(formatPattern)));
+            if (index >= 3) builder = builder.setDateTime(LocalDateTime.parse(recordingTime, DateTimeFormatter.ofPattern(formatPattern)));
+            return builder.build(tagHeader.getMajorVersion());
+
+        } catch (DateTimeParseException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
