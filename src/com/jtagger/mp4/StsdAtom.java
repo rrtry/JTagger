@@ -2,57 +2,18 @@ package com.jtagger.mp4;
 
 public class StsdAtom extends MP4Atom {
 
-    private final int channels;
-    private final int sampleSize;
-    private final int sampleRate;
-    private final int bufferSize;
-    private final int maxBitrate;
-    private final int avgBitrate;
-    private final int streamType;
-    private final int codec;
+    private int esStreamType = -1;
+    private int esObjectType = -1;
 
-    public StsdAtom(
-            String type, byte[] data,
-            int channels,
-            int sampleSize,
-            int sampleRate,
-            int bufferSize,
-            int maxBitrate,
-            int avgBitrate,
-            int streamType,
-            int codec
-    ) {
+    private int channels;
+    private int sampleSize;
+    private int sampleRate;
+    private int bufferSize;
+    private int maxBitrate;
+    private int avgBitrate;
+
+    public StsdAtom(String type, byte[] data) {
         super(type, data);
-        this.channels   = channels;
-        this.sampleSize = sampleSize;
-        this.sampleRate = sampleRate;
-        this.bufferSize = bufferSize;
-        this.maxBitrate = maxBitrate;
-        this.avgBitrate = avgBitrate;
-        this.streamType = streamType;
-        this.codec      = codec;
-    }
-
-    public StsdAtom(
-            String type,
-            short channels,
-            short sampleSize,
-            int sampleRate,
-            int bufferSize,
-            int maxBitrate,
-            int avgBitrate,
-            int streamType,
-            int codec
-    ) {
-        super(type);
-        this.channels   = channels;
-        this.sampleSize = sampleSize;
-        this.sampleRate = sampleRate;
-        this.bufferSize = bufferSize;
-        this.maxBitrate = maxBitrate;
-        this.avgBitrate = avgBitrate;
-        this.streamType = streamType;
-        this.codec      = codec;
     }
 
     public int getChannels() {
@@ -79,11 +40,43 @@ public class StsdAtom extends MP4Atom {
         return avgBitrate;
     }
 
-    public int getCodec() {
-        return codec;
+    public int getEsStreamType() {
+        return esStreamType;
     }
 
-    public int getStreamType() {
-        return streamType;
+    public int getEsObjectType() {
+        return esObjectType;
+    }
+
+    public void setChannels(int channels) {
+        this.channels = channels;
+    }
+
+    public void setSampleSize(int sampleSize) {
+        this.sampleSize = sampleSize;
+    }
+
+    public void setSampleRate(int sampleRate) {
+        this.sampleRate = sampleRate;
+    }
+
+    public void setBufferSize(int bufferSize) {
+        this.bufferSize = bufferSize;
+    }
+
+    public void setMaxBitrate(int maxBitrate) {
+        this.maxBitrate = maxBitrate;
+    }
+
+    public void setAvgBitrate(int avgBitrate) {
+        this.avgBitrate = avgBitrate;
+    }
+
+    public void setEsStreamType(int esStreamType) {
+        this.esStreamType = esStreamType;
+    }
+
+    public void setEsObjectType(int esObjectType) {
+        this.esObjectType = esObjectType;
     }
 }

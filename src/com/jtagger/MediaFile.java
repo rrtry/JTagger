@@ -125,7 +125,7 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements A
             final String oggMagic    = "OggS";
             final String id3Magic    = "ID3";
             final String flacMagic   = "fLaC";
-            final String m4aMagic    = "ftypM4A";
+            final String m4aMagic    = "ftyp";
             final String[] mpegMagic = new String[] { "ÿû", "ÿó", "ÿò" };
 
             byte[] buffer = new byte[20];
