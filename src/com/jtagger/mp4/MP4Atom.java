@@ -81,13 +81,15 @@ public class MP4Atom implements Component {
     }
 
     public boolean hasChildAtoms() {
-        return childAtoms.size() > 0;
+        return !childAtoms.isEmpty();
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends MP4Atom> ArrayList<T> getChildAtoms() {
         return (ArrayList<T>) childAtoms;
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends MP4Atom> void setChildAtoms(ArrayList<T> childAtoms) {
         if (childAtoms.isEmpty()) {
             removeAllChildAtoms(); return;

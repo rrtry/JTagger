@@ -25,6 +25,6 @@ public class UnknownAtom extends ItunesAtom<byte[]> {
 
     @Override
     public void setAtomData(byte[] data) {
-
+        this.data = data;
     }
 }

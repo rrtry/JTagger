@@ -112,9 +112,9 @@ public class MP4 extends AbstractTag implements StreamInfo {
     }
 
     public MP4(ArrayList<MP4Atom> atoms, int mdatStart, int mdatEnd) {
-        this.atoms       = atoms;
-        this.mdatStart   = mdatStart;
-        this.mdatEnd     = mdatEnd;
+        this.atoms     = atoms;
+        this.mdatStart = mdatStart;
+        this.mdatEnd   = mdatEnd;
     }
 
     @Override
@@ -155,7 +155,8 @@ public class MP4 extends AbstractTag implements StreamInfo {
         for (MP4Atom atom : currentAtom.getChildAtoms()) {
             if (atom.getType().equals(type)) {
                 return atom;
-            } else if (atom.hasChildAtoms()) {
+            }
+            else if (atom.hasChildAtoms()) {
                 MP4Atom childAtom = findMetadataAtom(type, atom);
                 if (childAtom == null) continue; else return childAtom;
             }
@@ -190,17 +191,17 @@ public class MP4 extends AbstractTag implements StreamInfo {
 
     public void removeMetadataAtom(String type) {
 
-        ArrayList<ItunesAtom> atoms = getMetadataAtoms();
+        ArrayList<ItunesAtom> metadataAtoms = getMetadataAtoms();
         ItunesAtom atom = null;
 
-        for (ItunesAtom childAtom : atoms) {
+        for (ItunesAtom childAtom : metadataAtoms) {
             if (childAtom.getType().equals(type)) {
                 atom = childAtom;
                 break;
             }
         }
         if (atom != null) {
-            atoms.remove(atom);
+            metadataAtoms.remove(atom);
         }
     }
 
