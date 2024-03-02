@@ -2,18 +2,24 @@ package com.jtagger.mp4;
 
 public class StsdAtom extends MP4Atom {
 
-    private int esStreamType = -1;
-    private int esObjectType = -1;
+    private String codec;
 
-    private int channels;
-    private int sampleSize;
-    private int sampleRate;
-    private int bufferSize;
-    private int maxBitrate;
-    private int avgBitrate;
+    private int esStreamType = 0;
+    private int esObjectType = 0;
+
+    private int channels    = 0;
+    private int sampleSize  = 0;
+    private int sampleRate  = 0;
+    private int bufferSize  = 0;
+    private int maxBitrate  = 0;
+    private int avgBitrate  = 0;
 
     public StsdAtom(String type, byte[] data) {
         super(type, data);
+    }
+
+    public String getCodec() {
+        return codec;
     }
 
     public int getChannels() {
@@ -46,6 +52,10 @@ public class StsdAtom extends MP4Atom {
 
     public int getEsObjectType() {
         return esObjectType;
+    }
+
+    public void setCodec(String codec) {
+        this.codec = codec;
     }
 
     public void setChannels(int channels) {

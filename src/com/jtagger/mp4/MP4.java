@@ -210,7 +210,7 @@ public class MP4 extends AbstractTag implements StreamInfo {
 
     @Override
     @SuppressWarnings({"rawtypes"})
-    protected <T> void setFieldValue(String fieldId, T value) {
+    public <T> void setFieldValue(String fieldId, T value) {
 
         String atomType = FIELD_MAP.get(fieldId);
         if (atomType == null) return;
@@ -348,25 +348,25 @@ public class MP4 extends AbstractTag implements StreamInfo {
     @Override
     public byte getChannelCount() {
         if (stsdAtom == null) stsdAtom = (StsdAtom) findMetadataAtom("stsd", getMoovAtom());
-        return (byte) stsdAtom.getChannels();
+        return stsdAtom == null ? 0 : (byte) stsdAtom.getChannels();
     }
 
     @Override
     public int getDuration() {
         if (mdhdAtom == null) mdhdAtom = (MdhdAtom) findMetadataAtom("mdhd", getMoovAtom());
-        return (int) (mdhdAtom.getDuration() / mdhdAtom.getTimescale());
+        return mdhdAtom == null ? 0 : (int) (mdhdAtom.getDuration() / mdhdAtom.getTimescale());
     }
 
     @Override
     public int getBitrate() {
         if (stsdAtom == null) stsdAtom = (StsdAtom) findMetadataAtom("stsd", getMoovAtom());
-        return stsdAtom.getAvgBitrate() / 1000;
+        return stsdAtom == null ? 0 : stsdAtom.getAvgBitrate() / 1000;
     }
 
     @Override
     public int getSampleRate() {
         if (stsdAtom == null) stsdAtom = (StsdAtom) findMetadataAtom("stsd", getMoovAtom());
-        return stsdAtom.getSampleRate();
+        return stsdAtom == null ? 0 : stsdAtom.getSampleRate();
     }
 
     @Override
