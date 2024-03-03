@@ -58,9 +58,11 @@ public class TrackNumberAtom extends ItunesAtom<TrackNumber> {
 
     @Override
     public void setAtomData(byte[] data) {
-        int posNum   = IntegerUtils.toUInt16BE(Arrays.copyOfRange(data, 2, 4));
-        int trackNum = IntegerUtils.toUInt16BE(Arrays.copyOfRange(data, 4, 6));
-        this.trackNumber = new TrackNumber(posNum, trackNum);
+        if (data.length == 6) {
+            int posNum       = IntegerUtils.toUInt16BE(Arrays.copyOfRange(data, 2, 4));
+            int trackNum     = IntegerUtils.toUInt16BE(Arrays.copyOfRange(data, 4, 6));
+            this.trackNumber = new TrackNumber(posNum, trackNum);
+        }
     }
 
     @Override

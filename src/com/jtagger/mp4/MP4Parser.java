@@ -17,7 +17,6 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
 
     private static final String AS_ENTRY_ALAC = "alac";
     private static final String AS_ENTRY_AC3  = "ac-3";
-    private static final String AS_ENTRY_EC3  = "ec-3";
     private static final String AS_ENTRY_MP4A = "mp4a";
 
     private static final String SPEC_BOX_ALAC = "alac";
@@ -254,10 +253,6 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
         byte[] atomData = Arrays.copyOfRange(atom, index + 8, index + length - 8);
         int dataType    = toUInt32BE(Arrays.copyOfRange(atom, index, index + 4));
 
-        if (dataType != TYPE_UTF8 && dataType != TYPE_UTF16) {
-            throw new InvalidAtomException("Unsupported freeform data type: " + dataType);
-        }
-
         FreeFormAtom freeFormAtom = new FreeFormAtom(mean, name, atom, dataType, dataOffset);
         freeFormAtom.setAtomData(atomData);
         return freeFormAtom;
@@ -341,8 +336,7 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
     private void parseAtom(
             MP4Atom parentAtom,
             byte[] childAtom,
-            boolean hasVersionInt,
-            ArrayList<MP4Atom> atoms) throws InvalidAtomException
+            boolean hasVersionInt) throws InvalidAtomException
     {
         int index = hasVersionInt ? 12 : 8;
         while (index < childAtom.length) {
@@ -366,10 +360,10 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
             byte[] atomData = Arrays.copyOfRange(childAtom, startOffset, endOffset);
             MP4Atom atom = new MP4Atom(atomType, atomData);
 
-            if (parentAtom.getType().equals("ilst")) {
+            if (parentAtom.getType().equals("ilst") && !atom.getType().equals("----")) {
                 atom = parseItunesAtom(atomData);
+                atom.setParentAtom(parentAtom);
                 parentAtom.appendChildAtom(atom);
-                atoms.add(atom);
             }
             else {
                 boolean isContainer = false;
@@ -399,14 +393,15 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
                     case "stbl":
                         isContainer = true;
                 }
+
+                atom.setParentAtom(parentAtom);
                 parentAtom.appendChildAtom(atom);
-                atoms.add(atom);
+
                 if (isContainer) {
                     parseAtom(
                             atom,
                             atomData,
-                            atomType.equals("meta"),
-                            atoms
+                            atomType.equals("meta")
                     );
                 }
             }
@@ -436,6 +431,11 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
                 int atomSize    = toUInt32BE(sizeBytes);
                 String atomType = new String(typeBytes, ISO_8859_1);
 
+                if (atomSize < 8) {
+                    System.err.println("MP4Parser: " + atomType + " has invalid size");
+                    break;
+                }
+
                 if (atomType.equals("mdat")) {
                     mdatStart = (int) file.getFilePointer() - 8;
                     mdatEnd   = mdatStart + atomSize;
@@ -452,12 +452,11 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
                     atoms.add(mp4Atom);
 
                     if (atomType.equals("moov")) {
-                        parseAtom(mp4Atom, atomData, false, atoms);
+                        parseAtom(mp4Atom, atomData, false);
                     }
                 }
             }
 
-            atoms.removeIf(atom -> !atom.isTopLevelAtom());
             this.mp4 = new MP4(atoms, mdatStart, mdatEnd);
             return mp4;
 

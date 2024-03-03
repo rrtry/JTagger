@@ -7,7 +7,7 @@ import static java.nio.charset.StandardCharsets.ISO_8859_1;
 public class NumberAtom extends ItunesAtom<Number> {
 
     private Number number;
-    private byte length;
+    private byte length = Integer.BYTES;
 
     NumberAtom(String type, byte[] atomData) {
         super(type, atomData);

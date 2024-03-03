@@ -131,7 +131,7 @@ public class MP4 extends AbstractTag implements StreamInfo {
 
     private static void iterateOverAtomTree(StringBuilder sb, MP4Atom parent, int depth) {
         for (MP4Atom atom : parent.getChildAtoms()) {
-            sb.append("---".repeat(depth)).append(atom.toString()).append("\n");
+            sb.append("---".repeat(depth)).append(atom.toString()).append(" -> ").append(atom.getParentAtom().toString()).append("\n");
             if (atom.hasChildAtoms()) {
                 iterateOverAtomTree(sb, atom, depth + 1);
             }
@@ -165,11 +165,22 @@ public class MP4 extends AbstractTag implements StreamInfo {
     }
 
     private MP4Atom getIlstAtom() {
+
         if (ilstAtom != null) {
             return ilstAtom;
         }
+
         ilstAtom = findMetadataAtom("ilst", getMoovAtom());
-        if (ilstAtom == null) throw new IllegalStateException("MP4: ilst atom is missing");
+        if (ilstAtom == null) {
+
+            MP4Atom metaAtom;
+            metaAtom = findMetadataAtom("meta", getMoovAtom());
+            if (metaAtom == null) {
+                throw new IllegalStateException("MP4: missing meta atom");
+            }
+            ilstAtom = new MP4Atom("ilst");
+            metaAtom.appendChildAtom(ilstAtom);
+        }
         return ilstAtom;
     }
 
@@ -205,8 +216,22 @@ public class MP4 extends AbstractTag implements StreamInfo {
         }
     }
 
+    void removeAtom(String type) {
+
+        MP4Atom atomToRemove = findMetadataAtom(type, getMoovAtom());
+        MP4Atom parentAtom   = atomToRemove.getParentAtom();
+
+        if (parentAtom == null) {
+            atoms.removeIf(atom -> atom.getType().equals(type));
+            return;
+        }
+
+        ArrayList<MP4Atom> atomList = parentAtom.getChildAtoms();
+        atomList.removeIf(atom -> atom.getType().equals(type));
+    }
+
     public void removeMetadataAtoms() {
-        getIlstAtom().removeAllChildAtoms();
+        removeAtom("ilst");
     }
 
     @Override
@@ -344,6 +369,11 @@ public class MP4 extends AbstractTag implements StreamInfo {
 
     int getMdatEnd() {
         return mdatEnd;
+    }
+
+    public String getCodec() {
+        if (stsdAtom == null) stsdAtom = (StsdAtom) findMetadataAtom("stsd", getMoovAtom());
+        return stsdAtom == null ? "" : stsdAtom.getCodec();
     }
 
     @Override

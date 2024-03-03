@@ -1,6 +1,7 @@
 package com.jtagger.mp4;
 
 import com.jtagger.Component;
+import com.jtagger.mp3.id3.AbstractFrame;
 import com.jtagger.utils.IntegerUtils;
 
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ public class MP4Atom implements Component {
     private final String type;
     protected byte[] data;
 
+    private MP4Atom parentAtom;
     private ArrayList<MP4Atom> childAtoms = new ArrayList<>();
     private boolean isTopLevelAtom = false;
 
@@ -29,6 +31,14 @@ public class MP4Atom implements Component {
     @Override
     public String toString() {
         return type;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        MP4Atom atom = (MP4Atom) obj;
+        return getType().equals(atom.getType());
     }
 
     @Override
@@ -72,6 +82,10 @@ public class MP4Atom implements Component {
         return getData();
     }
 
+    public MP4Atom getParentAtom() {
+        return parentAtom;
+    }
+
     public String getType() {
         return type;
     }
@@ -87,6 +101,10 @@ public class MP4Atom implements Component {
     @SuppressWarnings("unchecked")
     public <T extends MP4Atom> ArrayList<T> getChildAtoms() {
         return (ArrayList<T>) childAtoms;
+    }
+
+    public void setParentAtom(MP4Atom parentAtom) {
+        this.parentAtom = parentAtom;
     }
 
     @SuppressWarnings("unchecked")

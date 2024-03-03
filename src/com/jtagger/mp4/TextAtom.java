@@ -3,6 +3,7 @@ package com.jtagger.mp4;
 import com.jtagger.utils.IntegerUtils;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static java.nio.charset.StandardCharsets.*;
 
@@ -48,7 +49,7 @@ public class TextAtom extends ItunesAtom<String> {
     public static Charset getCharset(String type, int atomType) {
         if (atomType == TYPE_UTF8)  return UTF_8;
         if (atomType == TYPE_UTF16) return UTF_16BE;
-        throw new IllegalStateException("Invalid data type for atom " + type);
+        return ISO_8859_1;
     }
 
     @Override
