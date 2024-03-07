@@ -16,7 +16,7 @@ public class StcoAtom extends MP4Atom {
     public byte[] assemble(byte version) {
 
         byte[] stco = new byte[8 + 1 + 3 + 4 + offsets.length * 4];
-        stco[8]     = 0x0;
+        stco[8] = 0x0;
 
         System.arraycopy(IntegerUtils.fromUInt32BE(stco.length), 0, stco, 0, 4);
         System.arraycopy("stco".getBytes(ISO_8859_1), 0, stco, 4, 4);

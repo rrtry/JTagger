@@ -24,6 +24,7 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
     private static final String SPEC_BOX_MP4A = "esds";
 
     private MP4 mp4;
+    private long globalOffset;
 
     private MdhdAtom parseMdhdAtom(byte[] atom) {
 
@@ -339,13 +340,14 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
             boolean hasVersionInt) throws InvalidAtomException
     {
         int index = hasVersionInt ? 12 : 8;
+        globalOffset += index;
         while (index < childAtom.length) {
 
+            final String atomType;
             final int startOffset = index;
             final int endOffset;
             final int atomSize;
 
-            String atomType;
             byte[] sizeBytes = Arrays.copyOfRange(childAtom, index, index += 4);
             byte[] typeBytes = Arrays.copyOfRange(childAtom, index, index + 4);
 
@@ -360,13 +362,17 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
             byte[] atomData = Arrays.copyOfRange(childAtom, startOffset, endOffset);
             MP4Atom atom = new MP4Atom(atomType, atomData);
 
+            boolean isContainer = false;
             if (parentAtom.getType().equals("ilst") && !atom.getType().equals("----")) {
+
                 atom = parseItunesAtom(atomData);
+                atom.setAtomStart(globalOffset);
+                atom.setAtomEnd(globalOffset + atomSize);
+
                 atom.setParentAtom(parentAtom);
                 parentAtom.appendChildAtom(atom);
             }
             else {
-                boolean isContainer = false;
                 switch (atomType) {
 
                     case "----":
@@ -383,7 +389,9 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
                         break;
 
                     case "moov":
+                    case "moof":
                     case "ilst":
+                    case "traf":
                     case "udta":
                     case "meta":
                     case "trak":
@@ -393,6 +401,9 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
                     case "stbl":
                         isContainer = true;
                 }
+
+                atom.setAtomStart(globalOffset);
+                atom.setAtomEnd(globalOffset + atomSize);
 
                 atom.setParentAtom(parentAtom);
                 parentAtom.appendChildAtom(atom);
@@ -405,6 +416,9 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
                     );
                 }
             }
+            if (!isContainer) {
+                globalOffset += atomSize;
+            }
             index = endOffset;
         }
     }
@@ -415,11 +429,9 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
 
             MP4Atom mp4Atom;
             ArrayList<MP4Atom> atoms = new ArrayList<>();
-
-            int mdatStart = 0;
-            int mdatEnd   = 0;
             file.seek(0);
 
+            boolean isFragmented = false;
             while (file.getFilePointer() < file.length()) {
 
                 byte[] sizeBytes = new byte[4];
@@ -436,28 +448,40 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
                     break;
                 }
 
-                if (atomType.equals("mdat")) {
-                    mdatStart = (int) file.getFilePointer() - 8;
-                    mdatEnd   = mdatStart + atomSize;
+                if (!atomType.equals("moov") && !atomType.equals("moof")) {
+                    mp4Atom = new MP4Atom(atomType, new byte[0]);
+                    mp4Atom.setAtomStart(file.getFilePointer() - 8);
+                    mp4Atom.setAtomEnd(mp4Atom.getAtomStart() + atomSize);
+                    atoms.add(mp4Atom);
                     file.skipBytes(atomSize - 8);
                 } else {
+
+                    final long atomStart;
+                    final long atomEnd;
+
+                    atomStart    = file.getFilePointer() - 8;
+                    globalOffset = atomStart;
 
                     byte[] atomData = new byte[atomSize];
                     System.arraycopy(sizeBytes, 0, atomData, 0, 4);
                     System.arraycopy(typeBytes, 0, atomData, 4, 4);
 
                     file.read(atomData, 8, atomSize - 8);
+                    atomEnd = file.getFilePointer();
+
                     mp4Atom = new MP4Atom(atomType, atomData);
-                    mp4Atom.setTopLevelAtom(true);
+                    mp4Atom.setAtomStart(atomStart);
+                    mp4Atom.setAtomEnd(atomEnd);
                     atoms.add(mp4Atom);
 
-                    if (atomType.equals("moov")) {
-                        parseAtom(mp4Atom, atomData, false);
+                    if (atomType.equals("moof")) {
+                        isFragmented = true;
                     }
+                    parseAtom(mp4Atom, atomData, false);
                 }
             }
 
-            this.mp4 = new MP4(atoms, mdatStart, mdatEnd);
+            this.mp4 = new MP4(atoms, isFragmented);
             return mp4;
 
         } catch (IOException | InvalidAtomException e) {

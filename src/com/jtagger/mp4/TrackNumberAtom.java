@@ -34,7 +34,7 @@ public class TrackNumberAtom extends ItunesAtom<TrackNumber> {
         System.arraycopy(IntegerUtils.fromUInt32BE(dataAtom.length), 0, dataAtom, 0, 4); index += 4;
         System.arraycopy("data".getBytes(ISO_8859_1), 0, dataAtom, index, 4); index += 4;
 
-        System.arraycopy(IntegerUtils.fromUInt32BE(getAtomType()), 0, dataAtom, index, 4); index += 4; // FLAG_BINARY
+        System.arraycopy(IntegerUtils.fromUInt32BE(getAtomType()), 0, dataAtom, index, 4); index += 4;
         System.arraycopy(IntegerUtils.fromUInt32BE(0x000000), 0, dataAtom, index, 4); index += 4;
         System.arraycopy(intBytes, 0, dataAtom, index, intBytes.length);
 
@@ -58,7 +58,7 @@ public class TrackNumberAtom extends ItunesAtom<TrackNumber> {
 
     @Override
     public void setAtomData(byte[] data) {
-        if (data.length == 6) {
+        if (data.length >= 6) {
             int posNum       = IntegerUtils.toUInt16BE(Arrays.copyOfRange(data, 2, 4));
             int trackNum     = IntegerUtils.toUInt16BE(Arrays.copyOfRange(data, 4, 6));
             this.trackNumber = new TrackNumber(posNum, trackNum);

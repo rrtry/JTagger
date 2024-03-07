@@ -1,23 +1,28 @@
 package com.jtagger.mp4;
 
 import com.jtagger.Component;
-import com.jtagger.mp3.id3.AbstractFrame;
 import com.jtagger.utils.IntegerUtils;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 public class MP4Atom implements Component {
+
+    public static int PADDING = 1024 * 10; // 10K
+
+    private long atomStart;
+    private long atomEnd;
 
     private final String type;
     protected byte[] data;
 
     private MP4Atom parentAtom;
     private ArrayList<MP4Atom> childAtoms = new ArrayList<>();
-    private boolean isTopLevelAtom = false;
+
+    private boolean assembled = false;
 
     public MP4Atom(String type, byte[] data) {
         this.type = type;
@@ -43,35 +48,63 @@ public class MP4Atom implements Component {
 
     @Override
     public byte[] assemble(byte version) {
+        System.out.println("MP4.assemble: " + type);
+        if (hasChildAtoms() && !assembled) {
 
-        ArrayList<Byte> byteList = new ArrayList<>();
-        boolean isMeta = type.equals("meta");
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            boolean isMeta = type.equals("meta");
 
-        if (hasChildAtoms()) {
+            try {
 
-            for (MP4Atom atom : childAtoms) {
-                byte[] childAtom = atom.assemble();
-                byteList.addAll(
-                        IntStream.range(0, childAtom.length).mapToObj(i -> childAtom[i])
-                                .collect(Collectors.toList())
-                );
+                MP4Atom currentAtom;
+                MP4Atom nextAtom;
+
+                for (int i = 0; i < childAtoms.size(); i++) {
+                    currentAtom = childAtoms.get(i);
+                    if ((i + 1) < childAtoms.size()) {
+                        nextAtom = childAtoms.get(i + 1);
+                        if (!currentAtom.getType().equals("free") && nextAtom.getType().equals("free")) {
+                            // there's 'free' atom after currentAtom, use padding space
+                            final int delta       = currentAtom.getData().length - currentAtom.assemble().length;
+                            final int freeSize    = nextAtom.getData().length;
+                            final int paddingSize = freeSize + delta;
+
+                            out.write(currentAtom.getData());
+                            if (delta != 0) {
+                                if ((paddingSize - 8) >= 0) {
+                                    addPadding(out, paddingSize);
+                                }
+                                i++; // skip next 'free' atom
+                            }
+                            continue;
+                        }
+                        out.write(currentAtom.assemble());
+                    }
+                    else if (currentAtom.getType().equals("ilst")) {
+                        // there's no 'free' atom after ilst, write padding manually
+                        out.write(currentAtom.assemble());
+                        addPadding(out, PADDING); // 10K
+                    }
+                    else {
+                        out.write(currentAtom.assemble());
+                    }
+                }
+            } catch (IOException e) {
+                throw new IllegalStateException("Failed to write atom data");
             }
 
-            byte[] atom = new byte[byteList.size() + 8 + (isMeta ? 4 : 0)];
+            byte[] buffer = out.toByteArray();
+            byte[] atom   = new byte[buffer.length + 8 + (isMeta ? 4 : 0)];
             System.arraycopy(IntegerUtils.fromUInt32BE(atom.length), 0, atom, 0, 4);
             System.arraycopy(type.getBytes(ISO_8859_1), 0, atom, 4, 4);
 
             if (isMeta) {
-                for (int i = 8; i < 12; i++) {
-                    atom[i] = 0x0;
-                }
+                System.arraycopy(IntegerUtils.fromUInt32BE(0), 0, atom, 8, 4);
             }
 
-            for (int i = (isMeta ? 12 : 8); i < atom.length; i++) {
-                atom[i] = byteList.get(i - (isMeta ? 12 : 8));
-            }
-
+            System.arraycopy(buffer, 0, atom, isMeta ? 12 : 8, buffer.length);
             this.data = atom;
+            this.assembled = true;
             return atom;
         }
         return data;
@@ -82,16 +115,30 @@ public class MP4Atom implements Component {
         return getData();
     }
 
+    private static void addPadding(ByteArrayOutputStream out, int paddingSize) throws IOException {
+
+        out.write(IntegerUtils.fromUInt32BE(paddingSize + 8)); // paddingSize + atom header
+        out.write("free".getBytes(ISO_8859_1));
+
+        for (int j = 0; j < (paddingSize - 8); j++) {
+            out.write((byte) 0x0);
+        }
+    }
+
+    public long getAtomStart() {
+        return atomStart;
+    }
+
+    public long getAtomEnd() {
+        return atomEnd;
+    }
+
     public MP4Atom getParentAtom() {
         return parentAtom;
     }
 
     public String getType() {
         return type;
-    }
-
-    public boolean isTopLevelAtom() {
-        return isTopLevelAtom;
     }
 
     public boolean hasChildAtoms() {
@@ -107,6 +154,14 @@ public class MP4Atom implements Component {
         this.parentAtom = parentAtom;
     }
 
+    public void setAtomStart(long atomStart) {
+        this.atomStart = atomStart;
+    }
+
+    public void setAtomEnd(long atomEnd) {
+        this.atomEnd = atomEnd;
+    }
+
     @SuppressWarnings("unchecked")
     public <T extends MP4Atom> void setChildAtoms(ArrayList<T> childAtoms) {
         if (childAtoms.isEmpty()) {
@@ -117,10 +172,6 @@ public class MP4Atom implements Component {
 
     public void appendChildAtom(MP4Atom atom) {
         if (!childAtoms.contains(atom)) childAtoms.add(atom);
-    }
-
-    public void setTopLevelAtom(boolean isTopLevelAtom) {
-        this.isTopLevelAtom = isTopLevelAtom;
     }
 
     public void removeAllChildAtoms() {

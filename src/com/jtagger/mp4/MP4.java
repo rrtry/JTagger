@@ -3,6 +3,7 @@ package com.jtagger.mp4;
 import com.jtagger.AbstractTag;
 import com.jtagger.AttachedPicture;
 import com.jtagger.StreamInfo;
+import com.jtagger.utils.IntegerUtils;
 
 import java.util.*;
 
@@ -12,18 +13,17 @@ public class MP4 extends AbstractTag implements StreamInfo {
     private final ArrayList<MP4Atom> atoms;
     private byte[] bytes;
 
-    private final int mdatStart;
-    private final int mdatEnd;
+    private boolean isMoovLast   = false;
+    private boolean isFragmented = false;
+
+    private int moovStart = 0;
+    private int moovEnd   = 0;
+    private int moovSize  = 0;
 
     private StsdAtom stsdAtom;
     private MdhdAtom mdhdAtom;
     private MP4Atom ilstAtom;
     private MP4Atom moovAtom;
-
-    public static String[] ATOMS = new String[] {
-            "moov", "udta", "meta", "ilst", "trak", "mdia",
-            "minf", "dinf", "stbl"
-    };
 
     public static final String TITLE             = "©nam";
     public static final String WORK              = "©wrk";
@@ -111,10 +111,9 @@ public class MP4 extends AbstractTag implements StreamInfo {
         FIELD_MAP.put(AbstractTag.WORK             ,WORK);
     }
 
-    public MP4(ArrayList<MP4Atom> atoms, int mdatStart, int mdatEnd) {
-        this.atoms     = atoms;
-        this.mdatStart = mdatStart;
-        this.mdatEnd   = mdatEnd;
+    public MP4(ArrayList<MP4Atom> atoms, boolean isFragmented) {
+        this.atoms = atoms;
+        this.isFragmented = isFragmented;
     }
 
     @Override
@@ -131,27 +130,63 @@ public class MP4 extends AbstractTag implements StreamInfo {
 
     private static void iterateOverAtomTree(StringBuilder sb, MP4Atom parent, int depth) {
         for (MP4Atom atom : parent.getChildAtoms()) {
-            sb.append("---".repeat(depth)).append(atom.toString()).append(" -> ").append(atom.getParentAtom().toString()).append("\n");
+            sb.append("---".repeat(depth)).append(" ")
+                    .append(atom.getType()).append(" ")
+                    .append(atom.getAtomStart())
+                    .append(" + ")
+                    .append(atom.getData().length)
+                    .append(" -> ")
+                    .append(atom.getAtomEnd())
+                    .append("\n");
             if (atom.hasChildAtoms()) {
                 iterateOverAtomTree(sb, atom, depth + 1);
             }
         }
     }
 
+    ArrayList<MP4Atom> getAtoms() {
+        return atoms;
+    }
+
+    boolean isFragmented() {
+        return isFragmented;
+    }
+
+    boolean isMoovLast() {
+        return isMoovLast;
+    }
+
+    int getMoovStart() {
+        return moovStart;
+    }
+
+    int getMoovSize() {
+        return moovSize;
+    }
+
+    int getMoovEnd() {
+        return moovEnd;
+    }
+
     private MP4Atom getMoovAtom() {
+
         if (moovAtom != null) {
             return moovAtom;
         }
-        for (MP4Atom atom : atoms) {
+
+        MP4Atom atom;
+        for (int i = 0; i < atoms.size(); i++) {
+            atom = atoms.get(i);
             if (atom.getType().equals("moov")) {
-                moovAtom = atom;
+                isMoovLast = i == (atoms.size() - 1);
+                moovAtom   = atom;
                 return atom;
             }
         }
         throw new IllegalStateException("MP4: moov atom is missing");
     }
 
-    private MP4Atom findMetadataAtom(String type, MP4Atom currentAtom) {
+    MP4Atom findMetadataAtom(String type, MP4Atom currentAtom) {
         for (MP4Atom atom : currentAtom.getChildAtoms()) {
             if (atom.getType().equals(type)) {
                 return atom;
@@ -221,13 +256,10 @@ public class MP4 extends AbstractTag implements StreamInfo {
         MP4Atom atomToRemove = findMetadataAtom(type, getMoovAtom());
         MP4Atom parentAtom   = atomToRemove.getParentAtom();
 
-        if (parentAtom == null) {
-            atoms.removeIf(atom -> atom.getType().equals(type));
-            return;
+        if (parentAtom != null) {
+            ArrayList<MP4Atom> atomList = parentAtom.getChildAtoms();
+            atomList.removeIf(atom -> atom.getType().equals(type));
         }
-
-        ArrayList<MP4Atom> atomList = parentAtom.getChildAtoms();
-        atomList.removeIf(atom -> atom.getType().equals(type));
     }
 
     public void removeMetadataAtoms() {
@@ -326,34 +358,50 @@ public class MP4 extends AbstractTag implements StreamInfo {
         removeMetadataAtom(atomType);
     }
 
-    private int assembleAtoms() {
-
-        int size = 0;
-        for (MP4Atom atom : atoms) {
-            size += atom.getType().equals("moov") ? atom.assemble().length : atom.getData().length;
-        }
-
-        return size;
-    }
-
     // TODO: make usage of 'free' atom
     @Override
     public byte[] assemble(byte version) {
 
-        int size  = assembleAtoms();
-        int delta = size - mdatStart;
+        final int sizeDiff;
+        final int prevSize;
+        final int newSize;
 
-        MP4Atom moovAtom  = getMoovAtom();
-        StcoAtom stcoAtom = (StcoAtom) findMetadataAtom("stco", moovAtom);
-        stcoAtom.updateOffsets(delta);
+        getMoovAtom();
+        moovStart = (int) moovAtom.getAtomStart();
+        moovEnd   = (int) moovAtom.getAtomEnd();
+        moovSize  = moovAtom.getData().length;
 
-        size  = assembleAtoms();
-        bytes = new byte[size];
+        prevSize = moovSize;
+        newSize  = moovAtom.assemble().length;
+        sizeDiff = newSize - prevSize;
+        bytes    = moovAtom.getData();
 
-        int i = 0;
-        for (MP4Atom atom : atoms) {
-            System.arraycopy(atom.getData(), 0, bytes, i, atom.getData().length);
-            i += atom.getData().length;
+        if (!isFragmented) {
+
+            StcoAtom stcoAtom;
+            MP4Atom mdatAtom;
+
+            mdatAtom = null;
+            for (MP4Atom atom : atoms) {
+                if (atom.getType().equals("mdat")) {
+                    mdatAtom = atom;
+                    break;
+                }
+            }
+
+            assert mdatAtom != null;
+            if (mdatAtom.getAtomStart() > moovAtom.getAtomStart()) {
+
+                stcoAtom = (StcoAtom) findMetadataAtom("stco", moovAtom);
+                assert stcoAtom != null;
+                stcoAtom.updateOffsets(sizeDiff);
+
+                int j = (int) ((stcoAtom.getAtomStart() - moovAtom.getAtomStart()) + 16);
+                for (int offset : stcoAtom.getOffsets()) {
+                    System.arraycopy(IntegerUtils.fromUInt32BE(offset), 0, bytes, j, 4);
+                    j += 4;
+                }
+            }
         }
         return bytes;
     }
@@ -361,14 +409,6 @@ public class MP4 extends AbstractTag implements StreamInfo {
     @Override
     public byte[] getBytes() {
         return bytes;
-    }
-
-    int getMdatStart() {
-        return mdatStart;
-    }
-
-    int getMdatEnd() {
-        return mdatEnd;
     }
 
     public String getCodec() {
