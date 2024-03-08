@@ -432,6 +432,9 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
             file.seek(0);
 
             boolean isFragmented = false;
+            int mdatStart = 0;
+            int mdatEnd   = 0;
+
             while (file.getFilePointer() < file.length()) {
 
                 byte[] sizeBytes = new byte[4];
@@ -448,26 +451,29 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
                     break;
                 }
 
+                final int atomStart = (int) file.getFilePointer() - 8;
+                final int atomEnd   = atomStart + atomSize;
+
                 if (!atomType.equals("moov") && !atomType.equals("moof")) {
+
+                    if (atomType.equals("mdat")) {
+                        mdatStart = atomStart;
+                        mdatEnd   = atomEnd;
+                    }
+
                     mp4Atom = new MP4Atom(atomType, new byte[0]);
-                    mp4Atom.setAtomStart(file.getFilePointer() - 8);
-                    mp4Atom.setAtomEnd(mp4Atom.getAtomStart() + atomSize);
+                    mp4Atom.setAtomStart(atomStart);
+                    mp4Atom.setAtomEnd(atomEnd);
                     atoms.add(mp4Atom);
                     file.skipBytes(atomSize - 8);
                 } else {
 
-                    final long atomStart;
-                    final long atomEnd;
-
-                    atomStart    = file.getFilePointer() - 8;
                     globalOffset = atomStart;
 
                     byte[] atomData = new byte[atomSize];
                     System.arraycopy(sizeBytes, 0, atomData, 0, 4);
                     System.arraycopy(typeBytes, 0, atomData, 4, 4);
-
                     file.read(atomData, 8, atomSize - 8);
-                    atomEnd = file.getFilePointer();
 
                     mp4Atom = new MP4Atom(atomType, atomData);
                     mp4Atom.setAtomStart(atomStart);
@@ -481,7 +487,7 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
                 }
             }
 
-            this.mp4 = new MP4(atoms, isFragmented);
+            this.mp4 = new MP4(atoms, isFragmented, mdatStart, mdatEnd);
             return mp4;
 
         } catch (IOException | InvalidAtomException e) {

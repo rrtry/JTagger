@@ -6,12 +6,15 @@ import com.jtagger.utils.IntegerUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 public class MP4Atom implements Component {
 
     public static int PADDING = 1024 * 10; // 10K
+    private static final Set<String> DUPLICATES = new HashSet<>();
 
     private long atomStart;
     private long atomEnd;
@@ -23,6 +26,11 @@ public class MP4Atom implements Component {
     private ArrayList<MP4Atom> childAtoms = new ArrayList<>();
 
     private boolean assembled = false;
+
+    static {
+        DUPLICATES.add("mdat");
+        DUPLICATES.add("moof");
+    }
 
     public MP4Atom(String type, byte[] data) {
         this.type = type;
@@ -43,12 +51,14 @@ public class MP4Atom implements Component {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
         MP4Atom atom = (MP4Atom) obj;
+        if (DUPLICATES.contains(atom.getType()) || DUPLICATES.contains(getType())) {
+            return false;
+        }
         return getType().equals(atom.getType());
     }
 
     @Override
     public byte[] assemble(byte version) {
-        System.out.println("MP4.assemble: " + type);
         if (hasChildAtoms() && !assembled) {
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -69,6 +79,12 @@ public class MP4Atom implements Component {
                             final int freeSize    = nextAtom.getData().length;
                             final int paddingSize = freeSize + delta;
 
+                            if (currentAtom.getType().equals("ilst")) {
+                                System.out.println("resizing padding");
+                                System.out.println("MP4Atom.assemble: delta -> " + delta);
+                                System.out.println("MP4Atom.assemble: freeSize -> " + freeSize);
+                                System.out.println("MP4Atom.assemble: paddingSie -> " + paddingSize);
+                            }
                             out.write(currentAtom.getData());
                             if (delta != 0) {
                                 if ((paddingSize - 8) >= 0) {
@@ -82,6 +98,7 @@ public class MP4Atom implements Component {
                     }
                     else if (currentAtom.getType().equals("ilst")) {
                         // there's no 'free' atom after ilst, write padding manually
+                        System.out.println("adding padding: size -> " + PADDING);
                         out.write(currentAtom.assemble());
                         addPadding(out, PADDING); // 10K
                     }
@@ -99,6 +116,7 @@ public class MP4Atom implements Component {
             System.arraycopy(type.getBytes(ISO_8859_1), 0, atom, 4, 4);
 
             if (isMeta) {
+                System.out.println("MP4.assemble: meta size diff -> " + (data.length - atom.length));
                 System.arraycopy(IntegerUtils.fromUInt32BE(0), 0, atom, 8, 4);
             }
 
@@ -117,7 +135,7 @@ public class MP4Atom implements Component {
 
     private static void addPadding(ByteArrayOutputStream out, int paddingSize) throws IOException {
 
-        out.write(IntegerUtils.fromUInt32BE(paddingSize + 8)); // paddingSize + atom header
+        out.write(IntegerUtils.fromUInt32BE(paddingSize));
         out.write("free".getBytes(ISO_8859_1));
 
         for (int j = 0; j < (paddingSize - 8); j++) {

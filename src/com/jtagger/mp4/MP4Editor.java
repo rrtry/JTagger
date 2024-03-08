@@ -7,7 +7,6 @@ import com.jtagger.utils.IntegerUtils;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
 import java.util.UUID;
 
 public class MP4Editor extends AbstractTagEditor<MP4> {
@@ -24,11 +23,31 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
         this.tag = parser.parseTag(file);
     }
 
-    private void updateTfhd(ArrayList<MP4Atom> atoms, int moovStart, int newSize, int currentSize) throws IOException {
-        System.out.println(atoms);
-        for (MP4Atom atom : atoms) {
-            if (atom.getType().equals("moof") && atom.getAtomStart() > moovStart) {
-                MP4Atom tfhd = tag.findMetadataAtom("tfhd", atom);
+    private void updateStco(int delta) {
+
+        StcoAtom stcoAtom;
+        MP4Atom moovAtom;
+
+        moovAtom = tag.getMoovAtom();
+        if (tag.getMdatStart() > tag.getMoovStart()) {
+
+            stcoAtom = (StcoAtom) tag.findAtom("stco", moovAtom);
+            assert stcoAtom != null;
+            stcoAtom.updateOffsets(delta);
+
+            int j = (int) ((stcoAtom.getAtomStart() - tag.getMoovStart()) + 16);
+            for (int offset : stcoAtom.getOffsets()) {
+                System.arraycopy(IntegerUtils.fromUInt32BE(offset), 0, tag.getBytes(), j, 4);
+                j += 4;
+            }
+        }
+    }
+
+    private void updateTfhd(int delta) throws IOException {
+        for (MP4Atom atom : tag.getAtoms()) {
+            if (atom.getType().equals("moof") && atom.getAtomStart() > tag.getMoovStart()) {
+
+                MP4Atom tfhd = tag.findAtom("tfhd", atom);
                 if (tfhd != null) {
 
                     file.seek(tfhd.getAtomStart() + 8);
@@ -38,7 +57,7 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
                         file.skipBytes(4); // track_id
                         long baseDataOffset = file.readLong();
                         file.seek(file.getFilePointer() - 8);
-                        file.write(IntegerUtils.fromUInt64BE(baseDataOffset + (newSize - currentSize)));
+                        file.write(IntegerUtils.fromUInt64BE(baseDataOffset + delta));
                     }
                 }
             }
@@ -53,22 +72,25 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
             throw new IllegalStateException("Corrupted mp4 file");
         }
 
-        final int fileLength  = (int) file.length();
-        final int newSize     = tag.getBytes().length;
-        final int currentSize = tag.getMoovSize();
+        final int fileLength = (int) file.length();
+        final int newSize    = tag.getBytes().length;
+        final int prevSize   = tag.getMoovSize();
 
         final int moovStart = tag.getMoovStart();
         final int moovEnd   = tag.getMoovEnd();
-
-        ArrayList<MP4Atom> atoms = tag.getAtoms();
-        boolean stripPadding = atoms.get(atoms.size() - 2).getType().equals("moov") &&
-                               atoms.get(atoms.size() - 1).getType().equals("free");
+        final int delta     = newSize - prevSize;
 
         if (tag.isFragmented()) {
-            updateTfhd(atoms, moovStart, newSize, currentSize);
+            System.out.println("MP4Editor.commit: MP4 is fragmented updating tfhd atom");
+            updateTfhd(delta);
+        } else {
+            System.out.println("MP4Editor.commit: MP4 is not fragmented updating stco atom");
+            updateStco(delta);
         }
-        if (!tag.isMoovLast() && !stripPadding && (newSize != currentSize)) {
 
+        if (!tag.isMoovLast() && delta != 0) {
+
+            System.out.println("MP4Editor.commit: moov size changed, rewriting file");
             byte[] tempBuffer = new byte[1024];
             File temp = File.createTempFile(UUID.randomUUID().toString(), ".tmp");
             RandomAccessFile tempFile = new RandomAccessFile(temp.getAbsolutePath(), "rw");
@@ -99,12 +121,12 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
             return;
         }
 
-        System.out.println("MP4Editor::commit using padding space to write tag");
+        System.out.println("MP4Editor.commit: using padding space to write tag");
         file.seek(moovStart);
         file.write(tag.getBytes());
 
-        if (stripPadding || tag.isMoovLast()) {
-            System.out.println("MP4Editor:: truncating file");
+        if (tag.isMoovLast()) {
+            System.out.println("MP4Editor.commit: truncating file");
             file.setLength(file.getFilePointer());
         }
     }
