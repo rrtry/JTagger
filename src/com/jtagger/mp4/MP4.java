@@ -13,13 +13,13 @@ public class MP4 extends AbstractTag implements StreamInfo {
     private byte[] bytes;
 
     private boolean isFragmented = false;
+    private boolean isNew = false;
 
-    private int moovStart = 0;
-    private int moovEnd   = 0;
-    private int moovSize  = 0;
+    private int ilstStart = 0;
+    private int ilstEnd   = 0;
+    private int ilstSize  = 0;
 
-    private int mdatStart;
-    private int mdatEnd;
+    private final int mdatStart;
 
     private StsdAtom stsdAtom;
     private MdhdAtom mdhdAtom;
@@ -74,6 +74,7 @@ public class MP4 extends AbstractTag implements StreamInfo {
 
     private static final HashMap<String, String> FIELD_MAP = new HashMap<>();
 
+    public static final List<String> DUPLICATES     = List.of("mdat", "moof");
     public static final List<String> INT_PAIR_ATOMS = Arrays.asList("trkn", "disk");
     public static final List<String> BYTE_ATOMS     = Arrays.asList("cpil", "pgap", "pcst", "hdvd", "shwm", "stik", "rtng", "akID");
     public static final List<String> INT_ATOMS      = Arrays.asList("tmpo", "©mvi", "©mvc", "tvsn", "tves", "cnID", "sfID", "atID", "geID", "cmID", "gnre");
@@ -112,11 +113,10 @@ public class MP4 extends AbstractTag implements StreamInfo {
         FIELD_MAP.put(AbstractTag.WORK             ,WORK);
     }
 
-    public MP4(ArrayList<MP4Atom> atoms, boolean isFragmented, int mdatStart, int mdatEnd) {
+    public MP4(ArrayList<MP4Atom> atoms, boolean isFragmented, int mdatStart) {
         this.atoms = atoms;
         this.isFragmented = isFragmented;
         this.mdatStart = mdatStart;
-        this.mdatEnd = mdatEnd;
     }
 
     @Override
@@ -155,30 +155,24 @@ public class MP4 extends AbstractTag implements StreamInfo {
         return isFragmented;
     }
 
-    boolean isMoovLast() {
-        return atoms.get(atoms.size() - 1).getType().equals("moov") ||
-               atoms.get(atoms.size() - 2).getType().equals("moov") &&
-               atoms.get(atoms.size() - 1).getType().equals("free");
+    boolean isNew() {
+        return isNew;
     }
 
     int getMdatStart() {
         return mdatStart;
     }
 
-    int getMdatEnd() {
-        return mdatEnd;
+    int getIlstStart() {
+        return ilstStart;
     }
 
-    int getMoovStart() {
-        return moovStart;
+    int getIlstSize() {
+        return ilstSize;
     }
 
-    int getMoovSize() {
-        return moovSize;
-    }
-
-    int getMoovEnd() {
-        return moovEnd;
+    int getIlstEnd() {
+        return ilstEnd;
     }
 
     MP4Atom findAtom(String type, MP4Atom currentAtom) {
@@ -231,10 +225,6 @@ public class MP4 extends AbstractTag implements StreamInfo {
 
     public ArrayList<ItunesAtom> getMetadataAtoms() {
         return getIlstAtom().getChildren();
-    }
-
-    public <T extends ItunesAtom> T getMetadataAtom(String type) {
-        return (T) findAtom(type, getIlstAtom());
     }
 
     public void addMetadataAtom(ItunesAtom atom) {
@@ -373,12 +363,12 @@ public class MP4 extends AbstractTag implements StreamInfo {
     @Override
     public byte[] assemble(byte version) {
 
-        getMoovAtom();
-        moovStart = (int) moovAtom.getStart();
-        moovEnd   = (int) moovAtom.getEnd();
-        moovSize  = moovAtom.getData().length;
-        bytes     = moovAtom.assemble();
+        getIlstAtom();
+        ilstStart = ilstAtom.getStart();
+        ilstEnd   = ilstAtom.getEnd();
+        ilstSize  = ilstAtom.getSize();
 
+        bytes = ilstAtom.assemble();
         return bytes;
     }
 

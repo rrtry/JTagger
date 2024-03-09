@@ -376,7 +376,7 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
             atomStart = file.getFilePointer() - 8;
             atomEnd   = atomStart + atomSize;
 
-            MP4Atom atom = new MP4Atom(atomType);
+            MP4Atom atom = new MP4Atom(atomType, atomSize);
             if (parentAtom.getType().equals("ilst") &&
                 !atom.getType().equals("----") &&
                 !atom.getType().equals("free"))
@@ -400,9 +400,9 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
 
                     case "meta":
                         file.skipBytes(4);
+                    case "ilst":
                     case "moof":
                     case "moov":
-                    case "ilst":
                     case "traf":
                     case "udta":
                     case "trak":
@@ -418,8 +418,8 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
                 }
             }
 
-            atom.setStart(atomStart);
-            atom.setEnd(atomEnd);
+            atom.setStart((int) atomStart);
+            atom.setEnd((int) atomEnd);
 
             atom.setParent(parentAtom);
             parentAtom.appendChild(atom);
@@ -446,8 +446,6 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
             String atomType;
 
             int mdatStart = 0;
-            int mdatEnd   = 0;
-
             byte[] header = new byte[8];
             ArrayList<MP4Atom> atoms = new ArrayList<>();
 
@@ -464,9 +462,9 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
                 atomStart = file.getFilePointer() - 8;
                 atomEnd   = atomStart + atomSize;
 
-                MP4Atom atom = new MP4Atom(atomType);
-                atom.setStart(atomStart);
-                atom.setEnd(atomEnd);
+                MP4Atom atom = new MP4Atom(atomType, atomSize);
+                atom.setStart((int) atomStart);
+                atom.setEnd((int) atomEnd);
 
                 switch (atomType) {
 
@@ -479,14 +477,13 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
 
                     case "mdat":
                         mdatStart = (int) atomStart;
-                        mdatEnd   = (int) atomEnd;
 
                     default:
                         atoms.add(atom);
                         file.seek(atomEnd);
                 }
             }
-            return new MP4(atoms, isFragmented, mdatStart, mdatEnd);
+            return new MP4(atoms, isFragmented, mdatStart);
         } catch (IOException | InvalidAtomException e) {
             System.err.println("MP4Parser error: " + e.getMessage());
             return null;
