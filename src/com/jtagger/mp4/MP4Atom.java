@@ -23,7 +23,7 @@ public class MP4Atom implements Component {
     protected byte[] data;
 
     private MP4Atom parentAtom;
-    private ArrayList<MP4Atom> childAtoms = new ArrayList<>();
+    private ArrayList<MP4Atom> children = new ArrayList<>();
 
     private boolean assembled = false;
 
@@ -59,7 +59,7 @@ public class MP4Atom implements Component {
 
     @Override
     public byte[] assemble(byte version) {
-        if (hasChildAtoms() && !assembled) {
+        if (hasChildren() && !assembled) {
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             boolean isMeta = type.equals("meta");
@@ -69,10 +69,10 @@ public class MP4Atom implements Component {
                 MP4Atom currentAtom;
                 MP4Atom nextAtom;
 
-                for (int i = 0; i < childAtoms.size(); i++) {
-                    currentAtom = childAtoms.get(i);
-                    if ((i + 1) < childAtoms.size()) {
-                        nextAtom = childAtoms.get(i + 1);
+                for (int i = 0; i < children.size(); i++) {
+                    currentAtom = children.get(i);
+                    if ((i + 1) < children.size()) {
+                        nextAtom = children.get(i + 1);
                         if (!currentAtom.getType().equals("free") && nextAtom.getType().equals("free")) {
                             // there's 'free' atom after currentAtom, use padding space
                             final int delta       = currentAtom.getData().length - currentAtom.assemble().length;
@@ -143,15 +143,15 @@ public class MP4Atom implements Component {
         }
     }
 
-    public long getAtomStart() {
+    public long getStart() {
         return atomStart;
     }
 
-    public long getAtomEnd() {
+    public long getEnd() {
         return atomEnd;
     }
 
-    public MP4Atom getParentAtom() {
+    public MP4Atom getParent() {
         return parentAtom;
     }
 
@@ -159,42 +159,42 @@ public class MP4Atom implements Component {
         return type;
     }
 
-    public boolean hasChildAtoms() {
-        return !childAtoms.isEmpty();
+    public boolean hasChildren() {
+        return !children.isEmpty();
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends MP4Atom> ArrayList<T> getChildAtoms() {
-        return (ArrayList<T>) childAtoms;
+    public <T extends MP4Atom> ArrayList<T> getChildren() {
+        return (ArrayList<T>) children;
     }
 
-    public void setParentAtom(MP4Atom parentAtom) {
+    public void setParent(MP4Atom parentAtom) {
         this.parentAtom = parentAtom;
     }
 
-    public void setAtomStart(long atomStart) {
+    public void setStart(long atomStart) {
         this.atomStart = atomStart;
     }
 
-    public void setAtomEnd(long atomEnd) {
+    public void setEnd(long atomEnd) {
         this.atomEnd = atomEnd;
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends MP4Atom> void setChildAtoms(ArrayList<T> childAtoms) {
-        if (childAtoms.isEmpty()) {
-            removeAllChildAtoms(); return;
+    public <T extends MP4Atom> void setChildren(ArrayList<T> childrenList) {
+        if (childrenList.isEmpty()) {
+            removeChildren(); return;
         }
-        this.childAtoms = (ArrayList<MP4Atom>) childAtoms;
+        this.children = (ArrayList<MP4Atom>) childrenList;
     }
 
-    public void appendChildAtom(MP4Atom atom) {
-        if (!childAtoms.contains(atom)) childAtoms.add(atom);
+    public void appendChild(MP4Atom atom) {
+        if (!children.contains(atom)) children.add(atom);
     }
 
-    public void removeAllChildAtoms() {
+    public void removeChildren() {
 
-        this.childAtoms = new ArrayList<>();
+        this.children = new ArrayList<>();
         data = new byte[8];
 
         System.arraycopy(IntegerUtils.fromUInt32BE(data.length), 0, data, 0, 4);
@@ -203,5 +203,9 @@ public class MP4Atom implements Component {
 
     public byte[] getData() {
         return data;
+    }
+
+    void setData(byte[] data) {
+        this.data = data;
     }
 }

@@ -35,7 +35,7 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
             assert stcoAtom != null;
             stcoAtom.updateOffsets(delta);
 
-            int j = (int) ((stcoAtom.getAtomStart() - tag.getMoovStart()) + 16);
+            int j = (int) ((stcoAtom.getStart() - tag.getMoovStart()) + 16);
             for (int offset : stcoAtom.getOffsets()) {
                 System.arraycopy(IntegerUtils.fromUInt32BE(offset), 0, tag.getBytes(), j, 4);
                 j += 4;
@@ -45,12 +45,12 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
 
     private void updateTfhd(int delta) throws IOException {
         for (MP4Atom atom : tag.getAtoms()) {
-            if (atom.getType().equals("moof") && atom.getAtomStart() > tag.getMoovStart()) {
+            if (atom.getType().equals("moof") && atom.getStart() > tag.getMoovStart()) {
 
                 MP4Atom tfhd = tag.findAtom("tfhd", atom);
                 if (tfhd != null) {
 
-                    file.seek(tfhd.getAtomStart() + 8);
+                    file.seek(tfhd.getStart() + 8);
                     int flags = file.readInt();
 
                     if ((flags & 0x1) == 1) {
