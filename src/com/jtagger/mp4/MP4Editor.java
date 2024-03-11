@@ -2,6 +2,7 @@ package com.jtagger.mp4;
 
 import com.jtagger.AbstractTag;
 import com.jtagger.AbstractTagEditor;
+import com.jtagger.utils.FileIO;
 import com.jtagger.utils.IntegerUtils;
 
 import java.io.File;
@@ -10,6 +11,9 @@ import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.UUID;
+
+import static com.jtagger.utils.IntegerUtils.fromUInt32BE;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 public class MP4Editor extends AbstractTagEditor<MP4> {
 
@@ -37,19 +41,18 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
             file.seek(parent.getStart());
             size = file.readInt();
             file.seek(file.getFilePointer() - 4);
-            file.write(IntegerUtils.fromUInt32BE(size + delta));
+            file.write(fromUInt32BE(size + delta));
             parent = parent.getParent();
         }
     }
 
     private void writePadding(int paddingSize) throws IOException {
 
-        file.write(IntegerUtils.fromUInt32BE(paddingSize));
-        file.write("free".getBytes(StandardCharsets.ISO_8859_1));
+        byte[] paddingBuffer = new byte[PADDING];
+        System.arraycopy(fromUInt32BE(paddingSize), 0, paddingBuffer, 0, 4);
+        System.arraycopy("free".getBytes(ISO_8859_1), 0, paddingBuffer, 4, 4);
 
-        for (int i = 0; i < paddingSize - 8; i++) {
-            file.write(0x0);
-        }
+        file.write(paddingBuffer);
     }
 
     private void updateStco(int delta) throws IOException {
@@ -66,7 +69,7 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
                 file.seek(stcoAtom.getStart() + 16);
 
                 for (int offset : stcoAtom.getOffsets()) {
-                    file.write(IntegerUtils.fromUInt32BE(offset));
+                    file.write(fromUInt32BE(offset));
                 }
             }
         }
@@ -104,13 +107,14 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
         final int prevSize    = tag.getIlstSize();
         final int newSize     = tag.getBytes().length;
 
-        int delta     = newSize - prevSize;
+        int sizeDiff  = newSize - prevSize;
         int ilstStart = tag.getIlstStart();
         int ilstEnd   = tag.getIlstEnd();
 
-        if (delta == 0) {
-            file.seek(ilstStart);
-            file.write(tag.getBytes());
+        if (sizeDiff == 0) {
+            FileIO.writeBlock(
+                    file, tag.getBytes(), ilstStart
+            );
             return;
         }
 
@@ -118,9 +122,8 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
         MP4Atom ilstParent = ilstAtom.getParent();
 
         if (ilstEnd == fileLength) {
-            updateParents(ilstParent, delta);
-            file.seek(ilstStart);
-            file.write(tag.getBytes());
+            updateParents(ilstParent, sizeDiff);
+            FileIO.writeBlock(file, tag.getBytes(), ilstStart);
             return;
         }
 
@@ -133,49 +136,43 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
             if (free.getType().equals("free")) {
                 int paddingSize = free.getSize() + (prevSize - newSize);
                 if (paddingSize >= 8) {
-                    file.seek(ilstStart);
-                    file.write(tag.getBytes());
+                    FileIO.writeBlock(file, tag.getBytes(), ilstStart);
                     writePadding(paddingSize);
                     return;
                 }
-                delta += (PADDING - free.getSize());
+                sizeDiff += (PADDING - free.getSize());
                 ilstEnd = free.getEnd();
             }
         } else {
-            delta += PADDING;
+            sizeDiff += PADDING;
         }
 
-        updateOffsets(delta);
-        updateParents(ilstParent, delta);
+        updateOffsets(sizeDiff);
+        updateParents(ilstParent, sizeDiff);
 
-        byte[] tempBuffer = new byte[1024];
-        File temp = File.createTempFile(UUID.randomUUID().toString(), ".tmp");
-        RandomAccessFile tempFile = new RandomAccessFile(temp.getAbsolutePath(), "rw");
+        /*
+        FileIO.resize(file,
+                ilstEnd,
+                ilstEnd + sizeDiff,
+                sizeDiff,
+                (int) fileLength - ilstEnd
+        );
+        FileIO.writeBlock(file, tag.getBytes(), ilstStart);
+        writePadding(PADDING); */
 
-        file.seek(ilstEnd);
-        while (file.getFilePointer() < fileLength) {
-            int size = (int) Math.min(tempBuffer.length, fileLength - file.getFilePointer());
-            if (file.read(tempBuffer, 0, size) == -1) {
-                break;
-            }
-            tempFile.write(tempBuffer, 0, size);
-        }
+        byte[] paddingBuffer = new byte[PADDING];
+        System.arraycopy(fromUInt32BE(paddingBuffer.length), 0, paddingBuffer, 0, Integer.BYTES);
+        System.arraycopy("free".getBytes(ISO_8859_1), 0, paddingBuffer, 4, 4);
 
-        file.seek(ilstStart);
-        file.write(tag.getBytes());
-        writePadding(PADDING);
-        tempFile.seek(0);
-
-        while (tempFile.read(tempBuffer) != -1) {
-            file.write(tempBuffer);
-        }
-
-        file.setLength(ilstStart + (newSize + PADDING) + tempFile.length());
-        tempFile.close();
-
-        if (!temp.delete()) {
-            System.err.println("Could not delete temp file");
-        }
+        FileIO.overwrite(
+                file,
+                tag.getBytes(),
+                paddingBuffer,
+                ilstEnd,
+                ilstStart,
+                sizeDiff,
+                (int) file.length() - ilstEnd
+        );
     }
 
     @Override
