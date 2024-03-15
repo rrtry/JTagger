@@ -12,9 +12,9 @@ public class MP4 extends AbstractTag implements StreamInfo {
     private final ArrayList<MP4Atom> atoms;
     private byte[] bytes;
 
-    private boolean isFragmented = false;
-    private boolean isNew = false;
+    private final boolean isFragmented;
 
+    private int moovStart = 0;
     private int ilstStart = 0;
     private int ilstEnd   = 0;
     private int ilstSize  = 0;
@@ -155,8 +155,8 @@ public class MP4 extends AbstractTag implements StreamInfo {
         return isFragmented;
     }
 
-    boolean isNew() {
-        return isNew;
+    int getMoovStart() {
+        return moovStart;
     }
 
     int getMdatStart() {
@@ -173,6 +173,18 @@ public class MP4 extends AbstractTag implements StreamInfo {
 
     int getIlstEnd() {
         return ilstEnd;
+    }
+
+    void findAtoms(MP4Atom parent, ArrayList<MP4Atom> atoms, String...atomPath) {
+        for (MP4Atom atom : parent.getChildren()) {
+            if (atom.getType().equals(atomPath[atoms.size()])) {
+                atoms.add(atom);
+                if (atom.hasChildren() && atoms.size() < atomPath.length) {
+                    findAtoms(atom, atoms, atomPath);
+                    break;
+                }
+            }
+        }
     }
 
     MP4Atom findAtom(String type, MP4Atom currentAtom) {
@@ -211,14 +223,7 @@ public class MP4 extends AbstractTag implements StreamInfo {
 
         ilstAtom = findAtom("ilst", getMoovAtom());
         if (ilstAtom == null) {
-
-            MP4Atom metaAtom;
-            metaAtom = findAtom("meta", getMoovAtom());
-            if (metaAtom == null) {
-                throw new IllegalStateException("MP4: missing meta atom");
-            }
             ilstAtom = new MP4Atom("ilst");
-            metaAtom.appendChild(ilstAtom);
         }
         return ilstAtom;
     }
@@ -249,18 +254,6 @@ public class MP4 extends AbstractTag implements StreamInfo {
         if (atom != null) {
             metadataAtoms.remove(atom);
         }
-    }
-
-    boolean removeAtom(String type) {
-
-        MP4Atom atomToRemove = findAtom(type, getMoovAtom());
-        MP4Atom parentAtom   = atomToRemove.getParent();
-
-        if (parentAtom != null) {
-            ArrayList<MP4Atom> atomList = parentAtom.getChildren();
-            return atomList.removeIf(atom -> atom.getType().equals(type));
-        }
-        return atoms.removeIf(atom -> atom.getType().equals(type));
     }
 
     public void removeMetadataAtoms() {
@@ -359,16 +352,13 @@ public class MP4 extends AbstractTag implements StreamInfo {
         removeMetadataAtom(atomType);
     }
 
-    // TODO: make usage of 'free' atom
     @Override
     public byte[] assemble(byte version) {
-
         getIlstAtom();
         ilstStart = ilstAtom.getStart();
         ilstEnd   = ilstAtom.getEnd();
         ilstSize  = ilstAtom.getSize();
-
-        bytes = ilstAtom.assemble();
+        bytes     = ilstAtom.assemble();
         return bytes;
     }
 

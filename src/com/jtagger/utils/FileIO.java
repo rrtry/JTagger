@@ -75,7 +75,7 @@ public class FileIO {
         }
     }
 
-    public static void resize(
+    public static void moveBlock(
             RandomAccessFile file,
             int from,
             int to,

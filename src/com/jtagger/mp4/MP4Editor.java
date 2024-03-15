@@ -5,12 +5,9 @@ import com.jtagger.AbstractTagEditor;
 import com.jtagger.utils.FileIO;
 import com.jtagger.utils.IntegerUtils;
 
-import java.io.File;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.UUID;
 
 import static com.jtagger.utils.IntegerUtils.fromUInt32BE;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
@@ -77,11 +74,12 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
 
     private void updateTfhd(int delta) throws IOException {
         for (MP4Atom atom : tag.getAtoms()) {
-            if (atom.getType().equals("moof") && atom.getStart() > tag.getIlstStart()) {
+            if (atom.getType().equals("moof") && atom.getStart() > tag.getMoovStart()) {
 
                 MP4Atom tfhd = tag.findAtom("tfhd", atom);
                 if (tfhd != null) {
 
+                    System.out.println("udateTfhd: " + tfhd.getType());
                     file.seek(tfhd.getStart() + 8);
                     int flags = file.readInt();
 
@@ -96,12 +94,63 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
         }
     }
 
-    @Override
-    public void commit() throws IOException {
+    private void writeNewTag(ArrayList<MP4Atom> path) throws IOException {
 
-        if (tag == null) {
-            throw new IllegalStateException("Corrupted mp4 file");
+        int delta;
+        int size;
+
+        int from;
+        int to;
+        int tagOffset;
+
+        ArrayList<MP4Atom> moovChildren = tag.getMoovAtom().getChildren();
+        size  = tag.getBytes().length + 8 + 12 + 33 + PADDING;
+        delta = size - (path.isEmpty() ? 0 : path.get(0).getSize());
+
+        MP4Atom adjacent = path.isEmpty() ? moovChildren.get(moovChildren.size() - 1) : path.get(0);
+        tagOffset = path.isEmpty() ? adjacent.getEnd() : adjacent.getStart();
+        from = adjacent.getEnd();
+        to   = from + delta;
+
+        byte[] reserved = new byte[4];
+        ByteArrayOutputStream out = new ByteArrayOutputStream(size);
+        out.write(IntegerUtils.fromUInt32BE(size));
+        out.write("udta".getBytes(ISO_8859_1));
+        out.write(IntegerUtils.fromUInt32BE(size - 8));
+        out.write("meta".getBytes(ISO_8859_1));
+        out.write(reserved);
+        out.write(IntegerUtils.fromUInt32BE(33));
+        out.write("hdlr".getBytes(ISO_8859_1));
+        out.write(reserved);
+        out.write(reserved);
+        out.write("mdir".getBytes(ISO_8859_1));
+        out.write("appl".getBytes(ISO_8859_1));
+        out.write(reserved);
+        out.write(reserved);
+        out.write(0x0);
+        out.write(tag.getBytes());
+        out.write(IntegerUtils.fromUInt32BE(PADDING));
+        out.write("free".getBytes(ISO_8859_1));
+
+        byte[] tagBuffer = out.toByteArray();
+        MP4Atom parent = path.isEmpty() ? tag.getMoovAtom() :
+                (path.size() == 3 ? path.get(1) : path.get(path.size() - 1));
+
+        updateOffsets(delta);
+        updateParents(parent, delta);
+
+        if (tag.getAtoms().indexOf(tag.getMoovAtom()) != tag.getAtoms().size() - 1) {
+            FileIO.moveBlock(file,
+                    from,
+                    to,
+                    delta,
+                    (int) file.length() - from
+            );
         }
+        FileIO.writeBlock(file, tagBuffer, tagOffset);
+    }
+
+    private void updateTag() throws IOException {
 
         final long fileLength = file.length();
         final int prevSize    = tag.getIlstSize();
@@ -120,7 +169,6 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
 
         MP4Atom ilstAtom   = tag.getIlstAtom();
         MP4Atom ilstParent = ilstAtom.getParent();
-
         if (ilstEnd == fileLength) {
             updateParents(ilstParent, sizeDiff);
             FileIO.writeBlock(file, tag.getBytes(), ilstStart);
@@ -129,7 +177,6 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
 
         ArrayList<MP4Atom> children = ilstParent.getChildren();
         int ilstIndex = children.indexOf(ilstAtom);
-
         if ((ilstIndex + 1) < children.size()) {
 
             MP4Atom free = children.get(ilstIndex + 1);
@@ -150,29 +197,30 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
         updateOffsets(sizeDiff);
         updateParents(ilstParent, sizeDiff);
 
-        /*
-        FileIO.resize(file,
+        FileIO.moveBlock(file,
                 ilstEnd,
                 ilstEnd + sizeDiff,
                 sizeDiff,
                 (int) fileLength - ilstEnd
         );
         FileIO.writeBlock(file, tag.getBytes(), ilstStart);
-        writePadding(PADDING); */
+        writePadding(PADDING);
+    }
 
-        byte[] paddingBuffer = new byte[PADDING];
-        System.arraycopy(fromUInt32BE(paddingBuffer.length), 0, paddingBuffer, 0, Integer.BYTES);
-        System.arraycopy("free".getBytes(ISO_8859_1), 0, paddingBuffer, 4, 4);
+    @Override
+    public void commit() throws IOException {
 
-        FileIO.overwrite(
-                file,
-                tag.getBytes(),
-                paddingBuffer,
-                ilstEnd,
-                ilstStart,
-                sizeDiff,
-                (int) file.length() - ilstEnd
-        );
+        if (tag == null) {
+            throw new IllegalStateException("Corrupted mp4 file");
+        }
+
+        ArrayList<MP4Atom> path = new ArrayList<>(3);
+        tag.findAtoms(tag.getMoovAtom(), path, "udta", "meta", "ilst");
+        if (path.size() != 3) {
+            writeNewTag(path);
+            return;
+        }
+        updateTag();
     }
 
     @Override
