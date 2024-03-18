@@ -24,11 +24,11 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
     @Override
     protected void parseTag() {
         parser = new MP4Parser();
-        this.tag = parser.parseTag(file);
+        tag = parser.parseTag(file);
     }
 
     private void updateOffsets(int delta) throws IOException {
-        if (tag.isFragmented()) updateTfhd(delta); else updateStco(delta);
+        if (parser.isMP4Fragmented()) updateTfhd(delta); else updateStco(delta);
     }
 
     private void updateParents(MP4Atom parent, int delta) throws IOException {
@@ -43,10 +43,10 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
         }
     }
 
-    private void writePadding(int paddingSize) throws IOException {
+    private void writePadding() throws IOException {
 
         byte[] paddingBuffer = new byte[PADDING];
-        System.arraycopy(fromUInt32BE(paddingSize), 0, paddingBuffer, 0, 4);
+        System.arraycopy(fromUInt32BE(PADDING), 0, paddingBuffer, 0, 4);
         System.arraycopy("free".getBytes(ISO_8859_1), 0, paddingBuffer, 4, 4);
 
         file.write(paddingBuffer);
@@ -58,7 +58,7 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
         MP4Atom moovAtom;
 
         moovAtom = tag.getMoovAtom();
-        if (tag.getMdatStart() > tag.getIlstStart()) {
+        if (parser.getMdatStart() > parser.getMoovStart()) {
             stcoAtom = (StcoAtom) tag.findAtom("stco", moovAtom);
             if (stcoAtom != null) {
 
@@ -74,12 +74,11 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
 
     private void updateTfhd(int delta) throws IOException {
         for (MP4Atom atom : tag.getAtoms()) {
-            if (atom.getType().equals("moof") && atom.getStart() > tag.getMoovStart()) {
+            if (atom.getType().equals("moof") && atom.getStart() > parser.getMoovStart()) {
 
                 MP4Atom tfhd = tag.findAtom("tfhd", atom);
                 if (tfhd != null) {
 
-                    System.out.println("udateTfhd: " + tfhd.getType());
                     file.seek(tfhd.getStart() + 8);
                     int flags = file.readInt();
 
@@ -153,12 +152,12 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
     private void updateTag() throws IOException {
 
         final long fileLength = file.length();
-        final int prevSize    = tag.getIlstSize();
+        final int prevSize    = parser.getIlstSize();
         final int newSize     = tag.getBytes().length;
 
         int sizeDiff  = newSize - prevSize;
-        int ilstStart = tag.getIlstStart();
-        int ilstEnd   = tag.getIlstEnd();
+        int ilstStart = parser.getIlstStart();
+        int ilstEnd   = parser.getIlstEnd();
 
         if (sizeDiff == 0) {
             FileIO.writeBlock(
@@ -181,10 +180,21 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
 
             MP4Atom free = children.get(ilstIndex + 1);
             if (free.getType().equals("free")) {
-                int paddingSize = free.getSize() + (prevSize - newSize);
+
+                int paddingDiff = prevSize - newSize;
+                int paddingSize = free.getSize() + paddingDiff;
+
+                if (paddingSize == 0) {
+                    FileIO.writeBlock(file, tag.getBytes(), ilstStart);
+                    return;
+                }
                 if (paddingSize >= 8) {
                     FileIO.writeBlock(file, tag.getBytes(), ilstStart);
-                    writePadding(paddingSize);
+                    file.write(IntegerUtils.fromUInt32BE(paddingSize));
+                    file.write("free".getBytes(ISO_8859_1));
+                    if (paddingDiff > 0) {
+                        file.write(new byte[paddingDiff]);
+                    }
                     return;
                 }
                 sizeDiff += (PADDING - free.getSize());
@@ -204,7 +214,7 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
                 (int) fileLength - ilstEnd
         );
         FileIO.writeBlock(file, tag.getBytes(), ilstStart);
-        writePadding(PADDING);
+        writePadding();
     }
 
     @Override

@@ -6,7 +6,6 @@ import com.jtagger.utils.IntegerUtils;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -25,7 +24,38 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
     private static final String SPEC_BOX_MP4A = "esds";
 
     private MP4 mp4;
-    private long globalOffset;
+    private boolean isFragmented = false;
+
+    private int moovStart;
+    private int mdatStart;
+
+    private int ilstStart;
+    private int ilstSize;
+    private int ilstEnd;
+
+    boolean isMP4Fragmented() {
+        return isFragmented;
+    }
+
+    int getMoovStart() {
+        return moovStart;
+    }
+
+    int getMdatStart() {
+        return mdatStart;
+    }
+
+    int getIlstStart() {
+        return ilstStart;
+    }
+
+    int getIlstSize() {
+        return ilstSize;
+    }
+
+    int getIlstEnd() {
+        return ilstEnd;
+    }
 
     private MdhdAtom parseMdhdAtom(byte[] atom) {
 
@@ -401,6 +431,9 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
                     case "meta":
                         file.skipBytes(4);
                     case "ilst":
+                        ilstStart = (int) atomStart;
+                        ilstEnd   = (int) atomEnd;
+                        ilstSize  = atomSize;
                     case "moof":
                     case "moov":
                     case "traf":
@@ -437,7 +470,7 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
     public MP4 parseTag(RandomAccessFile file) {
         try {
 
-            boolean isFragmented = false;
+            boolean hasMoovAtom = false;
             long fileLength = file.length();
             long atomStart;
             long atomEnd;
@@ -445,7 +478,6 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
             int atomSize;
             String atomType;
 
-            int mdatStart = 0;
             byte[] header = new byte[8];
             ArrayList<MP4Atom> atoms = new ArrayList<>();
 
@@ -470,7 +502,13 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
 
                     case "moof":
                         isFragmented = true;
+                        parseAtom(file, atom);
+                        atoms.add(atom);
+                        break;
+
                     case "moov":
+                        moovStart = (int) atomStart;
+                        hasMoovAtom = true;
                         parseAtom(file, atom);
                         atoms.add(atom);
                         break;
@@ -483,7 +521,11 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
                         file.seek(atomEnd);
                 }
             }
-            return new MP4(atoms, isFragmented, mdatStart);
+            if (!hasMoovAtom) {
+                throw new InvalidAtomException("Missing 'moov' atom");
+            }
+            mp4 = new MP4(atoms);
+            return mp4;
         } catch (IOException | InvalidAtomException e) {
             System.err.println("MP4Parser error: " + e.getMessage());
             return null;
