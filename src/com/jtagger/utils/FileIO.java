@@ -7,7 +7,13 @@ import java.util.UUID;
 
 public class FileIO {
 
+    public static final int PADDING_MAX = 1024 * 1024;
+    public static final int PADDING_MIN = 1024;
     public static final int BUFFER_SIZE = 8192;
+
+    public static int getPadding(int fileLength) {
+        return Math.min(Math.max(fileLength / 100, PADDING_MIN), PADDING_MAX);
+    }
 
     public static void writeBlock(
             RandomAccessFile file,
@@ -83,6 +89,7 @@ public class FileIO {
             int count) throws IOException
     {
         if (sizeDiff == 0) {
+            System.out.println("FileIO.moveBlock: sizeDiff == 0");
             return;
         }
         if (from == to) {

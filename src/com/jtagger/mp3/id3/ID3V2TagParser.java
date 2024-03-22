@@ -36,7 +36,7 @@ public class ID3V2TagParser implements TagParser<ID3V2Tag> {
             tagHeaderParser.setHeaderData(tagHeader);
             TagHeader header = tagHeaderParser.parse();
 
-            byte[] frameData    = new byte[header.getTagSize()];
+            byte[] frameData = new byte[header.getTagSize()];
             file.read(frameData, 0, header.getTagSize());
 
             int frameDataOffset = 0;
@@ -45,28 +45,26 @@ public class ID3V2TagParser implements TagParser<ID3V2Tag> {
             }
             if (header.hasExtendedHeader()) {
 
-                byte[] sizeBytes = Arrays.copyOfRange(frameData, HEADER_LENGTH, 4);
-                int extendedHeaderSize = header.getMajorVersion() == ID3V2_4 ? fromSynchSafeInteger(toUInt32BE(sizeBytes)) : toUInt32BE(sizeBytes);
+                byte[] sizeBytes = Arrays.copyOfRange(frameData, 0, 4);
+                int extendedHeaderSize = header.getMajorVersion() == ID3V2_4 ?
+                        fromSynchSafeInteger(toUInt32BE(sizeBytes)) : toUInt32BE(sizeBytes);
 
                 if (header.getMajorVersion() == ID3V2_4) {
                     frameDataOffset += extendedHeaderSize;
                 } else {
-                    frameDataOffset += extendedHeaderSize + 6;
+                    frameDataOffset += extendedHeaderSize + 4;
                 }
             }
 
-            byte[] tag = new byte[tagHeader.length + frameData.length];
-            System.arraycopy(tagHeader, 0, tag, 0, tagHeader.length);
-            System.arraycopy(frameData, 0, tag, tagHeader.length, frameData.length);
-
             frameParser.setTagHeader(header);
-            frameParser.setFrames(Arrays.copyOfRange(frameData, frameDataOffset, frameData.length));
-            ArrayList<AbstractFrame> frames = frameParser.parseFrames();
+            frameParser.setFramesOffset(frameDataOffset);
+            frameParser.setFrames(frameData);
 
+            ArrayList<AbstractFrame> frames = frameParser.parseFrames();
             return ID3V2Tag.newBuilder()
                     .setFrames(frames)
                     .setHeader(header)
-                    .buildExisting(tag);
+                    .build();
 
         } catch (IOException | InvalidTagException e) {
             e.printStackTrace();

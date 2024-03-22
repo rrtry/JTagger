@@ -17,7 +17,6 @@ public class TagHeader implements Component {
     private byte[] headerBytes = new byte[HEADER_LENGTH];
 
     private int tagSize;
-    private int extendedHeaderSize;
 
     private byte majorVersion = ID3V2_4;
     private byte minorVersion = 0x00;
@@ -97,10 +96,10 @@ public class TagHeader implements Component {
     public byte[] assemble(byte version) {
 
         byte[] header = new byte[HEADER_LENGTH];
-        byte[] id = new byte[] { 0x49, 0x44, 0x33 };
-        byte[] size = fromUInt32BE(toSynchSafeInteger(tagSize));
+        byte[] magic  = new byte[] { 0x49, 0x44, 0x33 };
+        byte[] size   = fromUInt32BE(toSynchSafeInteger(tagSize));
 
-        System.arraycopy(id, 0, header, 0, id.length);
+        System.arraycopy(magic, 0, header, 0, magic.length);
         System.arraycopy(size, 0, header, SIZE_OFFSET, size.length);
 
         header[MAJOR_VERSION_OFFSET] = majorVersion;
@@ -128,11 +127,6 @@ public class TagHeader implements Component {
 
         public Builder setTagSize(int size) {
             TagHeader.this.tagSize = size;
-            return this;
-        }
-
-        public Builder setExtendedHeaderSize(int size) {
-            TagHeader.this.extendedHeaderSize = size;
             return this;
         }
 

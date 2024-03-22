@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import static com.jtagger.mp3.id3.AbstractFrame.decompressFrame;
+import static com.jtagger.mp3.id3.TagHeaderParser.HEADER_LENGTH;
 import static com.jtagger.mp3.id3.UnsynchronisationUtils.fromUnsynch;
 
 @SuppressWarnings("rawtypes")
@@ -12,19 +13,32 @@ class FrameParser {
     private TagHeader tagHeader;
     private byte[] frameData;
 
-    void setTagHeader(TagHeader tagHeader) {
+    private int paddingOffset = 0;
+    private int framesOffset  = 0;
+
+    public int getPaddingOffset() {
+        return paddingOffset;
+    }
+
+    public int getFramesOffset() {
+        return framesOffset;
+    }
+
+    public void setFramesOffset(int framesOffset) {
+        this.framesOffset = framesOffset;
+    }
+
+    public void setTagHeader(TagHeader tagHeader) {
         this.tagHeader = tagHeader;
     }
 
-    void setFrames(byte[] frameData) {
+    public void setFrames(byte[] frameData) {
         this.frameData = frameData;
     }
 
     private byte[] copyFrame(int pos, int frameSize) {
-
         int from = pos + FrameHeader.FRAME_HEADER_DATA_OFFSET;
         int to = from + frameSize;
-
         return Arrays.copyOfRange(frameData, from, to);
     }
 
@@ -53,16 +67,20 @@ class FrameParser {
         FrameHeaderParser frameHeaderParser = new FrameHeaderParser(tagHeader);
         ArrayList<AbstractFrame> frames = new ArrayList<>();
 
-        int position = 0;
+        int position = framesOffset;
         while (position < frameData.length) {
 
             FrameHeader frameHeader = frameHeaderParser.parseFrameHeader(frameData, position);
-            if (frameHeader == null) break;
+            if (frameHeader == null) {
+                paddingOffset = frameHeaderParser.getPaddingOffset();
+                break;
+            }
 
             final int frameSize = frameHeader.getFrameSize();
             AbstractFrame frame = parseFrame(position, frameHeader);
             if (frame != null) frames.add(frame);
 
+            System.out.println(frame);
             position += (frameSize + FrameHeader.FRAME_HEADER_LENGTH);
         }
         return frames;

@@ -125,8 +125,6 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
     private TagHeader tagHeader;
     private byte[] tagBytes;
 
-    private int padding = MIN_PADDING;
-
     public LinkedHashMap<String, AbstractFrame> getFrameMap() {
         return frameMap;
     }
@@ -238,14 +236,12 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
 
     @Override
     public int getPaddingAmount() {
-        return padding;
+        return 0;
     }
 
     @Override
     public void setPaddingAmount(int padding) {
-        if (padding == 0 || (padding >= MIN_PADDING && padding <= MAX_PADDING)) {
-            this.padding = padding;
-        }
+
     }
 
     @Override
@@ -316,11 +312,10 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
         tagHeader.setHasExtendedHeader(false);
         tagHeader.setHasFooter(false);
 
-        int tagSize  = getFrameDataSize(version) + padding;
+        int tagSize  = getFrameDataSize(version);
         int position = HEADER_LENGTH;
 
         byte[] tag = new byte[tagSize + HEADER_LENGTH];
-
         for (AbstractFrame frame : getFrames()) {
 
             if (frame.getHeader().getVersion() != version) {
@@ -636,8 +631,7 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
             return this;
         }
 
-        public ID3V2Tag buildExisting(byte[] data) {
-            tagBytes = data;
+        public ID3V2Tag build() {
             return ID3V2Tag.this;
         }
 
