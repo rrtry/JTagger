@@ -2,116 +2,77 @@ package com.jtagger.flac;
 
 import com.jtagger.AbstractTagEditor;
 import com.jtagger.AbstractTag;
+import com.jtagger.utils.FileIO;
+import com.jtagger.utils.IntegerUtils;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-
-import static com.jtagger.PaddingTag.MAX_PADDING;
-import static com.jtagger.PaddingTag.MIN_PADDING;
 import static com.jtagger.flac.AbstractMetadataBlock.*;
-import static com.jtagger.flac.FlacTag.MAGIC;
 
-public class FlacTagEditor extends AbstractTagEditor<FlacTag> {
+public class FlacTagEditor extends AbstractTagEditor<FLAC> {
 
     private FlacParser parser;
-    private StreamInfoBlock streamInfo;
-    private int originalTagSize;
-
-    @Override
-    protected void parseTag() throws IOException {
-
-        parser       = new FlacParser();
-        tag          = parser.parseTag(file);
-        isTagPresent = tag != null;
-
-        if (!isTagPresent) return;
-        streamInfo = tag.getBlock(BLOCK_TYPE_STREAMINFO);
-
-        if (streamInfo == null) throw new IllegalStateException("Missing STREAMINFO block");
-        originalTagSize = tag.getBlockDataSize();
-    }
+    private StreamInfoBlock sInfo;
 
     public FlacParser getParser() {
         return parser;
     }
 
     @Override
+    protected void parseTag() throws IOException {
+        parser = new FlacParser();
+        tag    = parser.parseTag(file);
+        sInfo  = (StreamInfoBlock) tag.getBlocks().get(0);
+    }
+
+    @Override
     public void removeTag() {
         tag.removeBlock(BLOCK_TYPE_VORBIS_COMMENT);
         tag.removeBlock(BLOCK_TYPE_PICTURE);
+        tag.assemble();
     }
 
     @Override
     public void commit() throws IOException {
 
-        if (tag == null) return;
+        byte[] tagBuffer = tag.getBytes();
+        int maxPad  = FileIO.getPadding((int) file.length());
+        int padding = parser.getOriginalSize() - tagBuffer.length - 4;
 
-        int padding;
-        int paddingBlockSize = 0;
-
-        UnknownMetadataBlock paddingBlock = tag.getBlock(BLOCK_TYPE_PADDING);
-        if (paddingBlock != null) {
-            paddingBlockSize = paddingBlock.getBytes().length - BLOCK_HEADER_LENGTH;
-        }
-
-        padding = originalTagSize - (tag.getBlockDataSize() - paddingBlockSize);
-        if (padding >= MIN_PADDING && padding <= MAX_PADDING) {
-
-            tag.setPaddingAmount(padding);
-            tag.assemble();
-
-            file.seek(0);
-            file.write(tag.getBytes()); // fit tag in padding space
+        file.seek(4);
+        if (padding > 0 && padding <= maxPad) {
+            file.write(tagBuffer);
+            file.write(BLOCK_TYPE_PADDING | 0x80);
+            file.write(IntegerUtils.fromUInt24BE(padding));
+            file.write(new byte[padding]);
             return;
+        } else {
+            padding = FileIO.PADDING_MIN - 4;
         }
 
-        final long initialLength = file.length();
-        final int bufferSize     = 4096;
-        final String suffix      = ".tmp";
+        int delta = tagBuffer.length - parser.getOriginalSize();
+        int from  = parser.getStreamOffset();
+        int to    = from + delta + padding;
 
-        File temp = File.createTempFile(MAGIC, suffix);
-        byte[] tempBuffer = new byte[bufferSize];
-
-        try (RandomAccessFile tempFile = new RandomAccessFile(temp.getAbsolutePath(), "rw")) {
-
-            byte[] tagBuffer = tag.getBytes();
-            tempFile.write(tagBuffer, 0, tagBuffer.length);
-
-            file.seek(originalTagSize + MAGIC.length());
-
-            while (file.read(tempBuffer, 0, tempBuffer.length) != -1) {
-                tempFile.write(tempBuffer, 0, tempBuffer.length);
-            }
-
-            file.seek(0);
-            tempFile.seek(0);
-
-            while (tempFile.read(tempBuffer, 0, tempBuffer.length) != -1) {
-                file.write(tempBuffer, 0, tempBuffer.length);
-            }
-
-            long tempLength = tempFile.length();
-            if (tempLength < initialLength) {
-                file.setLength(tempLength);
-            }
-
-        } finally {
-            temp.delete();
-        }
+        FileIO.moveBlock(
+                file, from, to, delta, (int) file.length() - from
+        );
+        FileIO.writeBlock(file, tagBuffer, 4);
+        file.write(BLOCK_TYPE_PADDING | 0x80);
+        file.write(IntegerUtils.fromUInt24BE(padding));
+        file.write(new byte[padding]);
     }
 
     @Override
     public void setTag(AbstractTag tag) {
 
-        if (tag instanceof FlacTag) {
+        if (tag instanceof FLAC) {
             tag.assemble();
-            this.tag = (FlacTag) tag;
+            this.tag = (FLAC) tag;
             return;
         }
 
-        FlacTag flacTag = new FlacTag();
-        flacTag.addBlock(streamInfo);
+        FLAC flacTag = new FLAC();
+        flacTag.addBlock(sInfo);
 
         convertTag(tag, this.tag);
         this.tag.assemble();

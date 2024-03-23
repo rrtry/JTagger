@@ -47,6 +47,10 @@ public class VorbisComments extends AbstractTag {
         return vendorString;
     }
 
+    public LinkedHashMap<String, String> getCommentsMap() {
+        return commentsMap;
+    }
+
     public String getComment(String field) {
         return commentsMap.getOrDefault(field.toUpperCase(), "");
     }

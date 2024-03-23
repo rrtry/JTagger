@@ -7,62 +7,84 @@ import com.jtagger.utils.IntegerUtils;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import static com.jtagger.flac.FlacTag.*;
+import static com.jtagger.flac.FLAC.*;
 import static com.jtagger.flac.AbstractMetadataBlock.*;
 
-public class FlacParser implements TagParser<FlacTag>, StreamInfoParser<StreamInfoBlock> {
+public class FlacParser implements TagParser<FLAC>, StreamInfoParser<StreamInfoBlock> {
 
-    private FlacTag tag;
+    private FLAC flac;
+    private int streamOffset = 0;
+    private int originalSize = 0;
 
     public static boolean isValidBlockType(int blockType) {
         return blockType >= 0x00 && blockType <= 0x7E;
     }
 
     @SuppressWarnings("rawtypes")
-    public static BlockBodyParser getBlockParser(int blockType) {
-        if (blockType == BLOCK_TYPE_VORBIS_COMMENT) return new VorbisCommentBlockParser();
-        if (blockType == BLOCK_TYPE_PICTURE)        return new PictureBlockParser();
-        if (blockType == BLOCK_TYPE_STREAMINFO)     return new StreamInfoBlockParser();
-        return null;
+    private static BlockBodyParser getBlockParser(int blockType) {
+        BlockBodyParser parser = null;
+        switch (blockType) {
+
+            case BLOCK_TYPE_STREAMINFO:
+                parser = new StreamInfoBlockParser();
+                break;
+            case BLOCK_TYPE_VORBIS_COMMENT:
+                parser = new VorbisCommentBlockParser();
+                break;
+            case BLOCK_TYPE_PICTURE:
+                parser = new PictureBlockParser();
+                break;
+        }
+        return parser;
     }
 
     public static int getBitrate(StreamInfo streamInfo, int streamLength) {
         return (int) ((streamLength * 8f) / (streamInfo.getDuration() * 1000f));
     }
 
+    int getOriginalSize() {
+        return originalSize;
+    }
+
+    int getStreamOffset() {
+        return streamOffset;
+    }
+
     @Override
     public StreamInfoBlock parseStreamInfo(RandomAccessFile file) throws IOException {
 
-        if (tag == null) {
+        if (flac == null) {
             parseTag(file);
         }
 
         StreamInfoBlock streamInfo;
         int streamLength;
-        int bitRate;
+        int bitrate;
 
-        streamInfo   = tag.getBlock(BLOCK_TYPE_STREAMINFO);
-        streamLength = (int) (file.length() - tag.getBytes().length);
-        bitRate      = getBitrate(streamInfo, streamLength);
+        streamInfo   = flac.getBlock(BLOCK_TYPE_STREAMINFO);
+        streamLength = (int) (file.length() - streamOffset);
+        bitrate      = getBitrate(streamInfo, streamLength);
 
-        streamInfo.setBitrate(bitRate);
+        streamInfo.setBitrate(bitrate);
         return streamInfo;
     }
 
     @Override
     @SuppressWarnings("rawtypes")
-    public FlacTag parseTag(RandomAccessFile file) throws IOException {
+    public FLAC parseTag(RandomAccessFile file) throws IOException {
 
-        if (this.tag != null) return tag;
-        FlacTag tag = new FlacTag();
+        if (flac != null) return flac;
+        flac = new FLAC();
 
-        byte[] magicBytes = new byte[MAGIC.length()];
+        byte[] magicBytes = new byte[4];
         file.read(magicBytes, 0, magicBytes.length);
 
         String magic = new String(magicBytes);
-        if (!magic.equals(MAGIC)) throw new IllegalStateException("Invalid file signature");
+        if (!magic.equals(MAGIC)) {
+            throw new IllegalStateException("Invalid file signature");
+        }
 
-        file.seek(magicBytes.length);
+        int blockIndex = 0;
         while (file.getFilePointer() < file.length()) {
 
             boolean isLastBlock;
@@ -81,24 +103,32 @@ public class FlacParser implements TagParser<FlacTag>, StreamInfoParser<StreamIn
             if (!isValidBlockType(blockType)) {
                 throw new IllegalStateException("Invalid block type " + blockType);
             }
+            if (blockIndex == 0 && blockType != BLOCK_TYPE_STREAMINFO) {
+                throw new IllegalStateException("First block should be STREAMINFO");
+            }
 
             file.read(lengthBytes, 0, lengthBytes.length);
             blockLength = IntegerUtils.toUInt24BE(lengthBytes);
-            blockData   = new byte[blockLength];
 
-            file.read(blockData, 0, blockData.length);
-            BlockBodyParser parser = getBlockParser(blockType);
+            originalSize += 4 + blockLength;
+            if (blockType != BLOCK_TYPE_PADDING) {
 
-            if (parser != null) {
-                tag.addBlock(parser.parse(blockData));
-            } else {
-                tag.addBlock(new UnknownMetadataBlock(blockData, blockHeader));
+                blockData = new byte[blockLength];
+                file.read(blockData, 0, blockData.length);
+                BlockBodyParser parser = getBlockParser(blockType);
+
+                flac.addBlock(parser != null ? parser.parse(blockData) :
+                        new UnknownMetadataBlock(blockData, blockHeader));
             }
-            if (isLastBlock) break;
+            if (isLastBlock) {
+                streamOffset = (int) file.getFilePointer();
+                break;
+            }
+            blockIndex++;
         }
-
-        tag.assemble();
-        this.tag = tag;
-        return tag;
+        if (flac.getBlocks().isEmpty()) {
+            throw new IllegalStateException("FLAC must contain one STREAMINFO block");
+        }
+        return flac;
     }
 }

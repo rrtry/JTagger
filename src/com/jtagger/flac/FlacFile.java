@@ -4,7 +4,7 @@ import com.jtagger.MediaFile;
 
 import static com.jtagger.MediaFile.FileContentTypeDetector.FLAC_MIME_TYPE;
 
-public class FlacFile extends MediaFile<FlacTag, StreamInfoBlock> {
+public class FlacFile extends MediaFile<FLAC, StreamInfoBlock> {
 
     @Override
     public FlacParser getParser(String mimeType) {
