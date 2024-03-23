@@ -14,42 +14,47 @@ import static java.lang.Byte.toUnsignedInt;
 
 public class MpegFrameParser {
 
-    private static final HashMap<Byte, List<Boolean>> MODE_EXTENSION    = new HashMap<>();
-    private static final HashMap<Byte, List<Integer>> SAMPLE_RATE       = new HashMap<>();
-    private static final HashMap<Byte, List<Integer>> BITRATE           = new HashMap<>();
-    private static final HashMap<Byte, List<Integer>> SAMPLES_PER_FRAME = new HashMap<>();
+    private static final int[][] MODE_EXTENSION;
+    private static final int[][] SAMPLE_RATE;
+    private static final int[][] BITRATE;
+    private static final int[][] SAMPLES_PER_FRAME;
 
     static {
-
-        SAMPLES_PER_FRAME.put(MPEG_LAYER_1, Arrays.asList(384, -1, 384, 384));
-        SAMPLES_PER_FRAME.put(MPEG_LAYER_2, Arrays.asList(1152, -1, 1152, 1152));
-        SAMPLES_PER_FRAME.put(MPEG_LAYER_3, Arrays.asList(576, -1, 576, 1152));
-
-        MODE_EXTENSION.put((byte) 0x00, Arrays.asList(false, false));
-        MODE_EXTENSION.put((byte) 0x01, Arrays.asList(true, false));
-        MODE_EXTENSION.put((byte) 0x02, Arrays.asList(false, true));
-        MODE_EXTENSION.put((byte) 0x03, Arrays.asList(true, true));
-
-        SAMPLE_RATE.put((byte) 0x00, Arrays.asList(11025, -1, 22050, 44100));
-        SAMPLE_RATE.put((byte) 0x01, Arrays.asList(12000, -1, 24000, 48000));
-        SAMPLE_RATE.put((byte) 0x02, Arrays.asList(8000,  -1, 16000, 32000));
-
-        BITRATE.put((byte) 0x0, Arrays.asList(0, 0, 0, 0, 0)); // VBR
-        BITRATE.put((byte) 0x1, Arrays.asList(32,32,32,32,8));
-        BITRATE.put((byte) 0x2, Arrays.asList(64,48,40,48,16));
-        BITRATE.put((byte) 0x3, Arrays.asList(96,56,48,56,24));
-        BITRATE.put((byte) 0x4, Arrays.asList(128,64,56,64,32));
-        BITRATE.put((byte) 0x5, Arrays.asList(160,80,64,80,40));
-        BITRATE.put((byte) 0x6, Arrays.asList(192,96,80,96,48));
-        BITRATE.put((byte) 0x7, Arrays.asList(224,112,96,112,56));
-        BITRATE.put((byte) 0x8, Arrays.asList(256,128,112,128,64));
-        BITRATE.put((byte) 0x9, Arrays.asList(288,160,128,144,80));
-        BITRATE.put((byte) 0xA, Arrays.asList(320,192,160,160,96));
-        BITRATE.put((byte) 0xB, Arrays.asList(352,224,192,176,112));
-        BITRATE.put((byte) 0xC, Arrays.asList(384,256,224,192,128));
-        BITRATE.put((byte) 0xD, Arrays.asList(416,320,256,224,144));
-        BITRATE.put((byte) 0xE, Arrays.asList(448,384,320,256,160));
-        BITRATE.put((byte) 0xF, Arrays.asList(-1, -1, -1, -1, -1)); // BAD
+        SAMPLES_PER_FRAME = new int[][] {
+                {0, 0, 0, 0},
+                {576, -1, 576, 1152},
+                {1152, -1, 1152, 1152},
+                {384, -1, 384, 384}
+        };
+        MODE_EXTENSION = new int[][] {
+                {0, 0},
+                {1, 0},
+                {0, 1},
+                {1, 1}
+        };
+        SAMPLE_RATE = new int[][] {
+                {11025, -1, 22050, 44100},
+                {12000, -1, 24000, 48000},
+                {8000,  -1, 16000, 32000}
+        };
+        BITRATE = new int[][] {
+                {0, 0, 0, 0, 0},
+                {32,32,32,32,8},
+                {64,48,40,48,16},
+                {96,56,48,56,24},
+                {128,64,56,64,32},
+                {160,80,64,80,40},
+                {192,96,80,96,48},
+                {224,112,96,112,56},
+                {256,128,112,128,64},
+                {288,160,128,144,80},
+                {320,192,160,160,96},
+                {352,224,192,176,112},
+                {384,256,224,192,128},
+                {416,320,256,224,144},
+                {448,384,320,256,160},
+                {-1, -1, -1, -1, -1}
+        };
     }
 
     private ID3V2Tag id3V2Tag;
@@ -65,6 +70,10 @@ public class MpegFrameParser {
 
     public MpegFrame getMpegFrame() {
         return mpegFrame;
+    }
+
+    private static int[] getValues(int index, int[][] array) {
+        return index >= 0 && index < array.length ? array[index] : null;
     }
 
     private static boolean isSync(byte x, byte y) {
@@ -197,13 +206,12 @@ public class MpegFrameParser {
 
             if (channelMode == CHANNEL_MODE_JOIN_STEREO) {
 
-                List<Boolean> modeExtValues = MODE_EXTENSION.get(modeExtension);
+                int[] modeExtValues = getValues(modeExtension, MODE_EXTENSION);
                 if (modeExtValues == null) return null;
 
-                isIntensityStereo = modeExtValues.get(0);
-                isMidSideStereo   = modeExtValues.get(1);
+                isIntensityStereo = modeExtValues[0] == 1;
+                isMidSideStereo   = modeExtValues[1] == 1;
             }
-
             if (version == MPEG_VERSION_1) {
 
                 if (layer == MPEG_LAYER_1) index = 0;
@@ -219,17 +227,17 @@ public class MpegFrameParser {
                 return null; // invalid version
             }
 
-            List<Integer> bitrateValues         = BITRATE.get(bitrateIndex);
-            List<Integer> sampleRateValues      = SAMPLE_RATE.get(sampleRateBits);
-            List<Integer> samplesPerFrameValues = SAMPLES_PER_FRAME.get(layer);
+            int[] bitrateValues         = getValues(bitrateIndex, BITRATE);
+            int[] sampleRateValues      = getValues(sampleRateBits, SAMPLE_RATE);
+            int[] samplesPerFrameValues = getValues(layer, SAMPLES_PER_FRAME);
 
             if (bitrateValues == null) return null;
             if (sampleRateValues == null) return null;
             if (samplesPerFrameValues == null) return null;
 
-            int bitrate         = bitrateValues.get(index);
-            int sampleRate      = sampleRateValues.get(version);
-            int samplesPerFrame = samplesPerFrameValues.get(version);
+            int bitrate         = bitrateValues[index];
+            int sampleRate      = sampleRateValues[version];
+            int samplesPerFrame = samplesPerFrameValues[version];
 
             if (bitrate == -1) {
                 return null; // bad value;

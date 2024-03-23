@@ -80,7 +80,6 @@ class FrameParser {
             AbstractFrame frame = parseFrame(position, frameHeader);
             if (frame != null) frames.add(frame);
 
-            System.out.println(frame);
             position += (frameSize + FrameHeader.FRAME_HEADER_LENGTH);
         }
         return frames;
