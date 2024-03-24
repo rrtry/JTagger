@@ -14,7 +14,6 @@ import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 public class MP4Editor extends AbstractTagEditor<MP4> {
 
-    private static final int PADDING = 1024 * 100;
     private MP4Parser parser;
 
     public MP4Parser getParser() {
@@ -43,10 +42,10 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
         }
     }
 
-    private void writePadding() throws IOException {
+    private void writePadding(int padding) throws IOException {
 
-        byte[] paddingBuffer = new byte[PADDING];
-        System.arraycopy(fromUInt32BE(PADDING), 0, paddingBuffer, 0, 4);
+        byte[] paddingBuffer = new byte[padding];
+        System.arraycopy(fromUInt32BE(padding), 0, paddingBuffer, 0, 4);
         System.arraycopy("free".getBytes(ISO_8859_1), 0, paddingBuffer, 4, 4);
 
         file.write(paddingBuffer);
@@ -176,7 +175,10 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
         }
 
         ArrayList<MP4Atom> children = ilstParent.getChildren();
-        int ilstIndex = children.indexOf(ilstAtom);
+        int ilstIndex  = children.indexOf(ilstAtom);
+        int maxPadding = FileIO.getPadding((int) file.length());
+        int padding    = maxPadding;
+
         if ((ilstIndex + 1) < children.size()) {
 
             MP4Atom free = children.get(ilstIndex + 1);
@@ -189,7 +191,7 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
                     FileIO.writeBlock(file, tag.getBytes(), ilstStart);
                     return;
                 }
-                if (paddingSize >= 8 && paddingSize <= FileIO.getPadding((int) file.length())) {
+                if (paddingSize >= 8 && paddingSize <= maxPadding) {
                     FileIO.writeBlock(file, tag.getBytes(), ilstStart);
                     file.write(IntegerUtils.fromUInt32BE(paddingSize));
                     file.write("free".getBytes(ISO_8859_1));
@@ -198,11 +200,12 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
                     }
                     return;
                 }
-                sizeDiff += (FileIO.PADDING_MIN - free.getSize());
+                padding = FileIO.PADDING_MIN;
+                sizeDiff += (padding - free.getSize());
                 ilstEnd = free.getEnd();
             }
         } else {
-            sizeDiff += FileIO.getPadding((int) file.length());
+            sizeDiff += padding;
         }
 
         updateOffsets(sizeDiff);
@@ -215,7 +218,7 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
                 (int) fileLength - ilstEnd
         );
         FileIO.writeBlock(file, tag.getBytes(), ilstStart);
-        writePadding();
+        writePadding(padding);
     }
 
     @Override
