@@ -189,7 +189,7 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
                     FileIO.writeBlock(file, tag.getBytes(), ilstStart);
                     return;
                 }
-                if (paddingSize >= 8) {
+                if (paddingSize >= 8 && paddingSize <= FileIO.getPadding((int) file.length())) {
                     FileIO.writeBlock(file, tag.getBytes(), ilstStart);
                     file.write(IntegerUtils.fromUInt32BE(paddingSize));
                     file.write("free".getBytes(ISO_8859_1));
