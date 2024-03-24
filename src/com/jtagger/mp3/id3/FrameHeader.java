@@ -71,16 +71,24 @@ public class FrameHeader implements Component {
         return header;
     }
 
+    public static boolean isValidFrameId(final String id) {
+        if (id.length() != 4) {
+            return false;
+        }
+        boolean valid = true;
+        for (int i = 0; i < id.length(); i++) {
+            char ch = id.charAt(i);
+            if ((ch < 'A' || ch > 'Z') && (ch < '0' || ch > '9')) {
+                valid = false;
+                break;
+            }
+        }
+        return valid;
+    }
+
     public void setIdentifier(String identifier, byte version) {
-
-        Set<String> frames;
-
-        if (version == ID3V2_3) frames = AbstractFrame.V2_3_FRAMES;
-        else if (version == ID3V2_4) frames = AbstractFrame.V2_4_FRAMES;
-        else throw new IllegalArgumentException("Unsupported tag version: " + version);
-
-        if (!frames.contains(identifier)) {
-            throw new IllegalArgumentException("Unknown frame identifier: " + identifier);
+        if (!isValidFrameId(identifier)) {
+            throw new IllegalArgumentException("Invalid frame identifier: " + identifier);
         }
         this.identifier = identifier;
     }

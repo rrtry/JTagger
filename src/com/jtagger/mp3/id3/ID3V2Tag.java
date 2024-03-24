@@ -16,7 +16,7 @@ import static com.jtagger.mp3.id3.TextEncoding.ENCODING_LATIN_1;
 import static com.jtagger.mp3.id3.TimeFrame.TIME_FORMAT_PATTERN;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class ID3V2Tag extends ID3Tag implements PaddingTag {
+public class ID3V2Tag extends ID3Tag {
 
     private static final HashMap<String, String> FIELD_MAP_V23  = new HashMap<>();
     private static final HashMap<String, String> FIELD_MAP_V24  = new HashMap<>();
@@ -118,7 +118,6 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
         FIELD_MAP_V24.put(AbstractTag.WWW_AUDIO_SOURCE ,"WOAS");
     }
 
-    public static final byte ID3V2   = 0x02;
     public static final byte ID3V2_3 = 0x03;
     public static final byte ID3V2_4 = 0x04;
 
@@ -232,16 +231,6 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
             return unsynchTag;
         }
         return tagBytes;
-    }
-
-    @Override
-    public int getPaddingAmount() {
-        return 0;
-    }
-
-    @Override
-    public void setPaddingAmount(int padding) {
-
     }
 
     @Override
@@ -467,11 +456,11 @@ public class ID3V2Tag extends ID3Tag implements PaddingTag {
 
         if (version == ID3V2_4) {
             convertToID3V24Tag(tag);
-            frames.removeIf((frame) -> !V2_4_FRAMES.contains(frame.getIdentifier()));
+            frames.removeIf((frame) -> V23_DEPRECATED_FRAMES.contains(frame.getIdentifier()));
         }
         if (version == ID3V2_3) {
             convertToID3V23Tag(tag);
-            frames.removeIf((frame) -> !V2_3_FRAMES.contains(frame.getIdentifier()));
+            frames.removeIf((frame) -> V24_NEW_FRAMES.contains(frame.getIdentifier()));
         }
         return ID3V2Tag.newBuilder(tag).build(version);
     }

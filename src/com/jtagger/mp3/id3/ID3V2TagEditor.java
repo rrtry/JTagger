@@ -7,9 +7,11 @@ import com.jtagger.utils.FileIO;
 import java.io.*;
 
 import static com.jtagger.PaddingTag.MAX_PADDING;
+import static com.jtagger.PaddingTag.MIN_PADDING;
 import static com.jtagger.mp3.id3.ID3SynchSafeInteger.toSynchSafeInteger;
 import static com.jtagger.mp3.id3.TagHeaderParser.HEADER_LENGTH;
 import static com.jtagger.mp3.id3.TagHeaderParser.SIZE_OFFSET;
+import static com.jtagger.utils.FileIO.PADDING_MIN;
 import static com.jtagger.utils.IntegerUtils.fromUInt32BE;
 
 public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
@@ -77,15 +79,17 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
 
     @Override
     public void commit() throws IOException {
+        int padding = MIN_PADDING;
         if (tag != null) {
 
             byte[] tagBuffer = tag.getBytes();
             if (isTagPresent && !hasFooter) {
 
                 int tagData = tagBuffer.length - HEADER_LENGTH;
-                int padding = originalSize - tagData;
+                int maxPad  = FileIO.getPadding((int) file.length());
+                padding = originalSize - tagData;
 
-                if (padding >= 0 && padding <= MAX_PADDING) {
+                if (padding > 0 && padding <= maxPad) {
                     FileIO.writeBlock(file, tagBuffer, 0);
                     file.write(new byte[padding]);
                     FileIO.writeBlock(
@@ -97,7 +101,6 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
             }
 
             int headers = hasFooter ? HEADER_LENGTH * 2 : HEADER_LENGTH;
-            int padding = FileIO.getPadding((int) file.length());
             int length  = isTagPresent ? tagBuffer.length - HEADER_LENGTH + padding : tagBuffer.length + padding;
 
             int diff = length - (originalSize + (hasFooter ? HEADER_LENGTH : 0));
