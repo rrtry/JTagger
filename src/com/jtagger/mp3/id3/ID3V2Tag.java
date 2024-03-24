@@ -2,7 +2,6 @@ package com.jtagger.mp3.id3;
 
 import com.jtagger.AbstractTag;
 import com.jtagger.AttachedPicture;
-import com.jtagger.PaddingTag;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;

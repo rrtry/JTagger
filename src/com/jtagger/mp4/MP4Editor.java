@@ -101,9 +101,10 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
         int from;
         int to;
         int tagOffset;
+        int padding = FileIO.getPadding((int) file.length());
 
         ArrayList<MP4Atom> moovChildren = tag.getMoovAtom().getChildren();
-        size  = tag.getBytes().length + 8 + 12 + 33 + PADDING;
+        size  = tag.getBytes().length + 8 + 12 + 33 + padding;
         delta = size - (path.isEmpty() ? 0 : path.get(0).getSize());
 
         MP4Atom adjacent = path.isEmpty() ? moovChildren.get(moovChildren.size() - 1) : path.get(0);
@@ -128,7 +129,7 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
         out.write(reserved);
         out.write(0x0);
         out.write(tag.getBytes());
-        out.write(IntegerUtils.fromUInt32BE(PADDING));
+        out.write(IntegerUtils.fromUInt32BE(padding));
         out.write("free".getBytes(ISO_8859_1));
 
         byte[] tagBuffer = out.toByteArray();
@@ -197,11 +198,11 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
                     }
                     return;
                 }
-                sizeDiff += (PADDING - free.getSize());
+                sizeDiff += (FileIO.PADDING_MIN - free.getSize());
                 ilstEnd = free.getEnd();
             }
         } else {
-            sizeDiff += PADDING;
+            sizeDiff += FileIO.getPadding((int) file.length());
         }
 
         updateOffsets(sizeDiff);

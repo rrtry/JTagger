@@ -6,12 +6,9 @@ import com.jtagger.utils.FileIO;
 
 import java.io.*;
 
-import static com.jtagger.PaddingTag.MAX_PADDING;
-import static com.jtagger.PaddingTag.MIN_PADDING;
 import static com.jtagger.mp3.id3.ID3SynchSafeInteger.toSynchSafeInteger;
 import static com.jtagger.mp3.id3.TagHeaderParser.HEADER_LENGTH;
 import static com.jtagger.mp3.id3.TagHeaderParser.SIZE_OFFSET;
-import static com.jtagger.utils.FileIO.PADDING_MIN;
 import static com.jtagger.utils.IntegerUtils.fromUInt32BE;
 
 public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
@@ -79,7 +76,7 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
 
     @Override
     public void commit() throws IOException {
-        int padding = MIN_PADDING;
+        int padding = FileIO.PADDING_MIN;
         if (tag != null) {
 
             byte[] tagBuffer = tag.getBytes();
