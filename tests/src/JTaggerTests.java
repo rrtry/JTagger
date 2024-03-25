@@ -127,12 +127,12 @@ public class JTaggerTests {
         tag.setFrame(timestampFrame);
         ID3V2Tag converted = ID3V2Tag.convertID3V2Tag(tag, ID3V2_3);
 
-        YearFrame year = converted.getFrame(AbstractFrame.YEAR);
-        DateFrame date = converted.getFrame(AbstractFrame.DATE);
-        TimeFrame time = converted.getFrame(AbstractFrame.TIME);
+        TimestampFrame year = converted.getFrame(AbstractFrame.YEAR);
+        TimestampFrame date = converted.getFrame(AbstractFrame.DATE);
+        TimestampFrame time = converted.getFrame(AbstractFrame.TIME);
 
         Assertions.assertEquals(time.getFrameData(), "1700");
-        Assertions.assertEquals(date.getDate(), MonthDay.of(1, 18));
+        Assertions.assertEquals(date.getMonthDay(), MonthDay.of(1, 18));
         Assertions.assertEquals(year.getYear(), Year.of(2005));
         Assertions.assertNull(converted.getFrame(AbstractFrame.RECORDING_TIME));
 

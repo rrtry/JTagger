@@ -9,10 +9,10 @@ import java.time.format.DateTimeParseException;
 import java.util.*;
 
 import static com.jtagger.mp3.id3.AbstractFrame.*;
-import static com.jtagger.mp3.id3.DateFrame.DATE_FORMAT_PATTERN;
+import static com.jtagger.mp3.id3.TimestampFrame.DATE_FORMAT_PATTERN;
 import static com.jtagger.mp3.id3.TagHeaderParser.HEADER_LENGTH;
 import static com.jtagger.mp3.id3.TextEncoding.ENCODING_LATIN_1;
-import static com.jtagger.mp3.id3.TimeFrame.TIME_FORMAT_PATTERN;
+import static com.jtagger.mp3.id3.TimestampFrame.TIME_FORMAT_PATTERN;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ID3V2Tag extends ID3Tag {
@@ -198,16 +198,12 @@ public class ID3V2Tag extends ID3Tag {
         setFrame(CommentFrame.createInstance(comment, language, description, getVersion()));
     }
 
-    private void setYearFrame(String year) {
-        setFrame(YearFrame.createInstance(AbstractFrame.YEAR, Year.of(Integer.parseInt(year))));
+    private void setTYER(String year) {
+        setFrame(TimestampFrame.createInstance(AbstractFrame.YEAR, ID3V2_4, year));
     }
 
-    private void setRecordingYear(String year) {
-        TimestampFrame timestampFrame = TimestampFrame.newBuilder()
-                .setHeader(FrameHeader.createFrameHeader(RECORDING_TIME, ID3V2_4))
-                .setYear(Year.parse(year))
-                .build(ID3V2_4);
-        setFrame(timestampFrame);
+    private void setTDRC(String year) {
+        setFrame(TimestampFrame.createInstance(AbstractFrame.RECORDING_TIME, ID3V2_4, year));
     }
 
     private void setTextFrame(String id, String text, byte encoding) {
@@ -277,8 +273,8 @@ public class ID3V2Tag extends ID3Tag {
 
     public void setYear(String year) {
         byte version = getVersion();
-        if (version == ID3V2_3) setYearFrame(year);
-        if (version == ID3V2_4) setRecordingYear(year);
+        if (version == ID3V2_3) setTYER(year);
+        if (version == ID3V2_4) setTDRC(year);
     }
 
     @Override
@@ -357,7 +353,7 @@ public class ID3V2Tag extends ID3Tag {
 
         if (releaseTimeFrame != null) {
             Year year = releaseTimeFrame.getYear();
-            if (year != null) tag.setFrame(YearFrame.createInstance(ORIGINAL_RELEASE_YEAR, year));
+            if (year != null) tag.setFrame(TimestampFrame.createTORY(year));
         }
         if (timestampFrame != null) {
 
@@ -365,9 +361,9 @@ public class ID3V2Tag extends ID3Tag {
             MonthDay date  = timestampFrame.getMonthDay();
             LocalTime time = timestampFrame.getTime();
 
-            if (year != null) tag.setFrame(YearFrame.createInstance(AbstractFrame.YEAR, year));
-            if (date != null) tag.setFrame(DateFrame.createInstance(date));
-            if (time != null) tag.setFrame(TimeFrame.createInstance(time));
+            if (year != null) tag.setFrame(TimestampFrame.createTYER(year));
+            if (date != null) tag.setFrame(TimestampFrame.createTDAT(date));
+            if (time != null) tag.setFrame(TimestampFrame.createTIME(time));
 
             tag.removeFrame(AbstractFrame.RECORDING_TIME);
             tag.removeFrame(AbstractFrame.ORIGINAL_RELEASE_TIME);
@@ -381,18 +377,16 @@ public class ID3V2Tag extends ID3Tag {
         StringBuilder dateString = new StringBuilder();
         StringBuilder pattern    = new StringBuilder();
 
-        YearFrame releaseYear = tag.getFrame(AbstractFrame.ORIGINAL_RELEASE_YEAR);
-        YearFrame yearFrame   = tag.getFrame(AbstractFrame.YEAR);
-        TimeFrame timeFrame   = tag.getFrame(AbstractFrame.TIME);
-        DateFrame dateFrame   = tag.getFrame(AbstractFrame.DATE);
+        TimestampFrame releaseYear = tag.getFrame(AbstractFrame.ORIGINAL_RELEASE_YEAR);
+        TimestampFrame yearFrame   = tag.getFrame(AbstractFrame.YEAR);
+        TimestampFrame timeFrame   = tag.getFrame(AbstractFrame.TIME);
+        TimestampFrame dateFrame   = tag.getFrame(AbstractFrame.DATE);
 
         if (releaseYear != null) {
-
             TimestampFrame releaseTime = TimestampFrame.newBuilder()
                     .setHeader(FrameHeader.createFrameHeader(AbstractFrame.ORIGINAL_RELEASE_TIME, version))
-                    .setYear(Year.parse(releaseYear.getText()))
+                    .setYear(releaseYear.getYear())
                     .build(version);
-
             tag.setFrame(releaseTime);
         }
 
@@ -528,42 +522,54 @@ public class ID3V2Tag extends ID3Tag {
         String frameId = getFrameIdFromFieldName(field);
         if (frameId == null) return;
 
-        if (frameId.equals(AbstractFrame.PICTURE)) {
-            AttachedPicture picture = (AttachedPicture) value;
-            AttachedPictureFrame pictureFrame = AttachedPictureFrame.createInstance(
-                    picture.getDescription(), picture.getMimeType(),
-                    (byte) picture.getPictureType(), picture.getPictureData(),
-                    getVersion()
-            );
-            removeFrameById(AbstractFrame.PICTURE);
-            setFrame(pictureFrame);
+        //"TDAT", "TYER", "TIME", "TORY", "TRDA" id3v2.4
+        //"TDEN", "TDOR", "TDRC", "TDRL", "TDTG" id3v2.3
+        switch (frameId) {
+
+            case "APIC":
+                removeFrameById(frameId);
+                frame = (AbstractFrame<T>) AttachedPictureFrame.newBuilder()
+                        .setHeader(FrameHeader.createFrameHeader(frameId, getVersion()))
+                        .setAttachedPicture((AttachedPicture) value)
+                        .build(getVersion());
+                break;
+            case "COMM":
+                removeFrameById(frameId);
+                frame = (AbstractFrame<T>) CommentFrame.newBuilder()
+                        .setHeader(FrameHeader.createFrameHeader(frameId, getVersion()))
+                        .setLanguage("XXX")
+                        .setDescription("DEFAULT")
+                        .build(getVersion());
+                break;
+
+            case "TDAT":
+            case "TYER":
+            case "TIME":
+            case "TORY":
+            case "TRDA":
+            case "TDEN":
+            case "TDOR":
+            case "TDRC":
+            case "TDRL":
+            case "TDTG":
+                try {
+                    frame = (AbstractFrame<T>) TimestampFrame.newBuilder()
+                            .setHeader(FrameHeader.createFrameHeader(frameId, getVersion()))
+                            .setTimestamp((String) value)
+                            .build(getVersion());
+                } catch (DateTimeParseException | IllegalArgumentException e) {
+                    e.printStackTrace();
+                }
+                break;
+            default:
+                frame = (AbstractFrame<T>) TextFrame.newBuilder()
+                        .setHeader(FrameHeader.createFrameHeader(frameId, getVersion()))
+                        .setEncoding(TextEncoding.getEncodingForVersion(getVersion()))
+                        .setText((String) value)
+                        .build(getVersion());
         }
-        else if (frameId.equals(DATE)) {
-            setFrame(DateFrame.createInstance((String) value));
-        }
-        else if (YearFrame.isYearFrame(frameId)) {
-            setFrame(YearFrame.createInstance(frameId, Year.parse((String) value)));
-        }
-        else if (TimestampFrame.isTimestampFrame(frameId)) {
-            setFrame(TimestampFrame.createInstance(frameId, (String) value));
-        }
-        else if (CommentFrame.isCommentFrame(frameId)) {
-            CommentFrame commentFrame = CommentFrame.createInstance(
-                    (String) value,
-                    "XXX",
-                    "",
-                    getVersion()
-            );
-            removeFrameById(AbstractFrame.COMMENT);
-            setFrame(commentFrame);
-        }
-        else {
-            TextFrame textFrame = TextFrame.createInstance(
-                    frameId,
-                    ((String) value),
-                    TextEncoding.getEncodingForVersion(getVersion()),
-                    getVersion());
-            setFrame(textFrame);
+        if (frame != null) {
+            setFrame(frame);
         }
     }
 
@@ -590,7 +596,7 @@ public class ID3V2Tag extends ID3Tag {
         }
 
         public Builder setComment(String comment) {
-            ID3V2Tag.this.setComment(comment, "XXX", "");
+            ID3V2Tag.this.setComment(comment, "XXX", "DEFAULT");
             return this;
         }
 

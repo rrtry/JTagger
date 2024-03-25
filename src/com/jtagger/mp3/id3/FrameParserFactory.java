@@ -8,7 +8,6 @@ public class FrameParserFactory {
         FrameBodyParser parser;
 
         switch (frameType) {
-            case TIMESTAMP: parser = new TimestampFrameParser();            break;
             case TEXT:      parser = new TextFrameParser();                 break;
             case PICTURE:   parser = new AttachedPictureFrameParser();      break;
             case COMMENT:   parser = new CommentFrameParser();              break;

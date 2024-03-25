@@ -94,6 +94,8 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
                             SIZE_OFFSET
                     );
                     return;
+                } else {
+                    padding = FileIO.PADDING_MIN;
                 }
             }
 

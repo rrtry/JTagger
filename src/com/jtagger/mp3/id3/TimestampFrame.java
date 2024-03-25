@@ -1,21 +1,27 @@
 package com.jtagger.mp3.id3;
 
+import java.sql.Time;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
-import java.time.temporal.Temporal;
+import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.jtagger.mp3.id3.ID3V2Tag.ID3V2_3;
 import static com.jtagger.mp3.id3.ID3V2Tag.ID3V2_4;
 
 public class TimestampFrame extends TextFrame {
 
-    private static final String[] VALID_IDENTIFIERS = new String[] {
-            "TDEN", "TDOR", "TDRC", "TDRL", "TDTG"
-    };
+    public static final String TIME_FORMAT_PATTERN = "HHmm";
+    public static final String DATE_FORMAT_PATTERN = "ddMM";
+    public static final String YEAR_FORMAT_PATTERN = "yyyy";
+
+    public static final Set<String> V23_IDENTIFIERS = Set.of("TDAT", "TYER", "TIME", "TORY", "TRDA");
+    public static final Set<String> V24_IDENTIFIERS = Set.of("TDEN", "TDOR", "TDRC", "TDRL", "TDTG");
 
     public static final String[] VALID_PATTERNS = new String[] {
             "yyyy", "yyyy-MM", "yyyy-MM-dd", "yyyy-MM-dd'T'HH",
@@ -23,7 +29,7 @@ public class TimestampFrame extends TextFrame {
     };
 
     public static final Pattern[] REGEX_PATTERNS = new Pattern[VALID_PATTERNS.length];
-    private Temporal temporal;
+    private TemporalAccessor temporal;
 
     static {
         REGEX_PATTERNS[0] = Pattern.compile("\\d\\d\\d\\d");
@@ -38,10 +44,6 @@ public class TimestampFrame extends TextFrame {
         setEncoding(TextEncoding.ENCODING_LATIN_1);
     }
 
-    public static boolean isTimestampFrame(String id) {
-        return Arrays.asList(VALID_IDENTIFIERS).contains(id);
-    }
-
     private int getField(ChronoField field) {
         try {
             return temporal.get(field);
@@ -50,7 +52,7 @@ public class TimestampFrame extends TextFrame {
         }
     }
 
-    public Temporal getTemporal() {
+    public TemporalAccessor getTemporal() {
         return temporal;
     }
 
@@ -121,17 +123,26 @@ public class TimestampFrame extends TextFrame {
     @Override
     public void setText(String text) {
 
-        int index     = -1;
-        String format = "";
+        switch (getIdentifier()) {
+            case TIME:
+                setTime(LocalTime.parse(text, DateTimeFormatter.ofPattern("HHmm")));
+                return;
+            case DATE:
+                setMonthDay(MonthDay.parse(text, DateTimeFormatter.ofPattern("ddMM")));
+                return;
+            case YEAR:
+                setYear(Year.parse(text));
+                return;
+        }
 
+        int index = -1;
         for (int i = 0; i < REGEX_PATTERNS.length; i++) {
 
             Pattern pattern = REGEX_PATTERNS[i];
             Matcher matcher = pattern.matcher(text);
 
             if (matcher.matches()) {
-                format = VALID_PATTERNS[i];
-                index  = i;
+                index = i;
                 break;
             }
         }
@@ -140,10 +151,20 @@ public class TimestampFrame extends TextFrame {
             throw new IllegalArgumentException("Invalid timestamp string: " + text);
         }
 
-        if (index == 0) setYear(Year.parse(text));
-        if (index == 1) setYearMonth(YearMonth.parse(text, DateTimeFormatter.ofPattern(format)));
-        if (index == 2) setDate(LocalDate.parse(text, DateTimeFormatter.ofPattern(format)));
-        if (index >= 3) setDateTime(LocalDateTime.parse(text, DateTimeFormatter.ofPattern(format)));
+        String format = VALID_PATTERNS[index];
+        switch (index) {
+            case 0:
+                setYear(Year.parse(text));
+                break;
+            case 1:
+                setYearMonth(YearMonth.parse(text, DateTimeFormatter.ofPattern(format)));
+                break;
+            case 2:
+                setDate(LocalDate.parse(text, DateTimeFormatter.ofPattern(format)));
+                break;
+            default:
+                setDateTime(LocalDateTime.parse(text, DateTimeFormatter.ofPattern(format)));
+        }
     }
 
     @Override
@@ -158,41 +179,76 @@ public class TimestampFrame extends TextFrame {
         super.setText(year.toString());
     }
 
-    public void setYearMonth(YearMonth date) {
-        this.temporal = date;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
-        super.setText(date.format(formatter));
+    public void setTime(LocalTime localTime) {
+        this.temporal = localTime;
+        super.setText(localTime.format(DateTimeFormatter.ofPattern("HHmm")));
+    }
+
+    public void setMonthDay(MonthDay monthDay) {
+        this.temporal = monthDay;
+        super.setText(monthDay.format(DateTimeFormatter.ofPattern("ddMM")));
+    }
+
+    public void setYearMonth(YearMonth yearMonth) {
+        this.temporal = yearMonth;
+        super.setText(yearMonth.format(DateTimeFormatter.ofPattern("yyyy-MM")));
     }
 
     public void setDate(LocalDate localDate) {
         this.temporal = localDate;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        super.setText(formatter.format(localDate));
+        super.setText(localDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
     }
 
     public void setDateTime(LocalDateTime localDateTime) {
         this.temporal = localDateTime;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-        super.setText(formatter.format(localDateTime));
+        super.setText(localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
     }
 
     public static TimestampFrame.Builder newBuilder() { return new TimestampFrame().new Builder(); }
     public static TimestampFrame.Builder newBuilder(TimestampFrame frame) { return frame.new Builder(); }
 
-    public static TimestampFrame createInstance(String identifier, String timestamp) {
+    public static TimestampFrame createTORY(Year year) {
         return TimestampFrame.newBuilder()
-                .setHeader(FrameHeader.createFrameHeader(identifier, ID3V2_4))
+                .setHeader(FrameHeader.createFrameHeader(AbstractFrame.ORIGINAL_RELEASE_YEAR, ID3V2_3))
+                .setYear(year)
+                .build(ID3V2_3);
+    }
+
+    public static TimestampFrame createTYER(Year year) {
+        return TimestampFrame.newBuilder()
+                .setHeader(FrameHeader.createFrameHeader(AbstractFrame.YEAR, ID3V2_3))
+                .setYear(year)
+                .build(ID3V2_3);
+    }
+
+    public static TimestampFrame createTDAT(MonthDay monthDay) {
+        return TimestampFrame.newBuilder()
+                .setHeader(FrameHeader.createFrameHeader(AbstractFrame.DATE, ID3V2_3))
+                .setMonthDay(monthDay)
+                .build(ID3V2_3);
+    }
+
+    public static TimestampFrame createTIME(LocalTime time) {
+        return TimestampFrame.newBuilder()
+                .setHeader(FrameHeader.createFrameHeader(AbstractFrame.TIME, ID3V2_3))
+                .setTime(time)
+                .build(ID3V2_3);
+    }
+
+    public static TimestampFrame createInstance(String identifier, byte version, String timestamp) {
+        return TimestampFrame.newBuilder()
+                .setHeader(FrameHeader.createFrameHeader(identifier, version))
                 .setTimestamp(timestamp)
-                .build(ID3V2_4);
+                .build(version);
     }
 
     public class Builder extends TextFrame.Builder<Builder, TimestampFrame> {
 
         public TimestampFrame.Builder setHeader(FrameHeader frameHeader) {
-            if (!Arrays.asList(VALID_IDENTIFIERS).contains(frameHeader.getIdentifier())) {
-                throw new IllegalArgumentException(
-                        "Invalid identifier"
-                );
+            if ((frameHeader.getVersion() == ID3V2_3 && !V23_IDENTIFIERS.contains(frameHeader.getIdentifier())) ||
+                (frameHeader.getVersion() == ID3V2_4 && !V24_IDENTIFIERS.contains(frameHeader.getIdentifier())))
+            {
+                throw new IllegalArgumentException("TimestampFrame: Invalid identifier " + frameHeader.getIdentifier());
             }
             header = frameHeader;
             return this;
@@ -203,8 +259,18 @@ public class TimestampFrame extends TextFrame {
             throw new UnsupportedOperationException();
         }
 
-        public Builder setYearMonth(YearMonth date) {
-            TimestampFrame.this.setYearMonth(date);
+        public Builder setTime(LocalTime time) {
+            TimestampFrame.this.setTime(time);
+            return this;
+        }
+
+        public Builder setMonthDay(MonthDay monthDay) {
+            TimestampFrame.this.setMonthDay(monthDay);
+            return this;
+        }
+
+        public Builder setYearMonth(YearMonth yearMonth) {
+            TimestampFrame.this.setYearMonth(yearMonth);
             return this;
         }
 

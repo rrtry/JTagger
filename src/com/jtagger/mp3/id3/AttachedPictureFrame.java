@@ -184,6 +184,11 @@ public class AttachedPictureFrame extends AbstractFrame<AttachedPicture> {
             return this;
         }
 
+        public Builder setAttachedPicture(AttachedPicture picture) {
+            AttachedPictureFrame.this.picture = picture;
+            return this;
+        }
+
         public Builder setMimeType(String mimeType) {
             AttachedPictureFrame.this.setMimeType(mimeType);
             return this;
