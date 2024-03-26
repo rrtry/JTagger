@@ -1,8 +1,14 @@
 package com.jtagger.mp3.id3;
 
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
+
+import static com.jtagger.mp3.id3.TextEncoding.getString;
+import static com.jtagger.mp3.id3.TextEncoding.getStringLength;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 /*
     <Header for 'Comment', ID: "COMM">
@@ -48,7 +54,7 @@ public class CommentFrame extends AbstractFrame<String> {
     @Override
     public final byte[] assemble(byte version) {
 
-        byte[] languageBuffer    = language.getBytes(StandardCharsets.ISO_8859_1);
+        byte[] languageBuffer    = language.getBytes(ISO_8859_1);
         byte[] descriptionBuffer = TextEncoding.getStringBytes(description, encoding);
         byte[] commentBuffer     = TextEncoding.getStringBytes(text, encoding);
 
@@ -86,6 +92,13 @@ public class CommentFrame extends AbstractFrame<String> {
         return encoding;
     }
 
+    public void setLanguage(String language) {
+        if (!isISOLanguage(language)) {
+            throw new IllegalArgumentException("Invalid language code: " + language);
+        }
+        this.language = language;
+    }
+
     public void setEncoding(byte encoding) {
         if (!TextEncoding.isValidEncodingByte(encoding)) {
             throw new IllegalArgumentException("Invalid encoding: " + encoding);
@@ -95,13 +108,6 @@ public class CommentFrame extends AbstractFrame<String> {
 
     public String getLanguage() {
         return language;
-    }
-
-    public void setLanguage(String language) {
-        if (!isISOLanguage(language)) {
-            throw new IllegalArgumentException("Invalid language code: " + language);
-        }
-        this.language = language;
     }
 
     public String getDescription() {
@@ -141,6 +147,33 @@ public class CommentFrame extends AbstractFrame<String> {
     @Override
     public void setFrameData(String comment) {
         this.text = comment;
+    }
+
+    @Override
+    public void parseFrameData(byte[] buffer, FrameHeader header) {
+
+        String language;
+        String description;
+        String comment;
+
+        int strLength;
+        int position  = 0;
+        byte encoding = buffer[position++];
+
+        language    = new String(Arrays.copyOfRange(buffer, position, position += 3), ISO_8859_1);
+        strLength   = getStringLength(buffer, position, encoding);
+        description = getString(buffer, position, strLength, encoding);
+        position += strLength;
+
+        comment = TextEncoding.getString(
+                buffer, position, buffer.length - position, encoding
+        );
+
+        this.header = header;
+        setEncoding(encoding);
+        setLanguage(language);
+        setDescription(description);
+        setText(comment);
     }
 
     public class Builder {

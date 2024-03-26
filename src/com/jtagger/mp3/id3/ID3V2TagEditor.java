@@ -2,7 +2,7 @@ package com.jtagger.mp3.id3;
 
 import com.jtagger.AbstractTagEditor;
 import com.jtagger.AbstractTag;
-import com.jtagger.utils.FileIO;
+import com.jtagger.utils.BytesIO;
 
 import java.io.*;
 
@@ -76,26 +76,26 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
 
     @Override
     public void commit() throws IOException {
-        int padding = FileIO.PADDING_MIN;
+        int padding = BytesIO.PADDING_MIN;
         if (tag != null) {
 
             byte[] tagBuffer = tag.getBytes();
             if (isTagPresent && !hasFooter) {
 
                 int tagData = tagBuffer.length - HEADER_LENGTH;
-                int maxPad  = FileIO.getPadding((int) file.length());
+                int maxPad  = BytesIO.getPadding((int) file.length());
                 padding = originalSize - tagData;
 
                 if (padding > 0 && padding <= maxPad) {
-                    FileIO.writeBlock(file, tagBuffer, 0);
+                    BytesIO.writeBlock(file, tagBuffer, 0);
                     file.write(new byte[padding]);
-                    FileIO.writeBlock(
+                    BytesIO.writeBlock(
                             file, fromUInt32BE(toSynchSafeInteger(tagData + padding)),
                             SIZE_OFFSET
                     );
                     return;
                 } else {
-                    padding = FileIO.PADDING_MIN;
+                    padding = BytesIO.PADDING_MIN;
                 }
             }
 
@@ -106,10 +106,10 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
             int from = isTagPresent ? originalSize + headers : 0;
             int to   = from + diff;
 
-            FileIO.moveBlock(file, from, to, diff, (int) file.length() - from);
-            FileIO.writeBlock(file, tagBuffer, 0);
+            BytesIO.moveBlock(file, from, to, diff, (int) file.length() - from);
+            BytesIO.writeBlock(file, tagBuffer, 0);
             file.write(new byte[padding]);
-            FileIO.writeBlock(
+            BytesIO.writeBlock(
                     file,
                     fromUInt32BE(toSynchSafeInteger(tagBuffer.length - HEADER_LENGTH + padding)),
                     SIZE_OFFSET
@@ -117,7 +117,7 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
         }
         else if (isTagPresent) {
             int totalSize = originalSize + HEADER_LENGTH * (hasFooter ? 2 : 1);
-            FileIO.moveBlock(
+            BytesIO.moveBlock(
                     file,
                     totalSize,
                     0,

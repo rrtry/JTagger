@@ -153,6 +153,7 @@ public abstract class AbstractFrame<T> implements Component {
 
     abstract T getFrameData();
     abstract void setFrameData(T data);
+    abstract void parseFrameData(byte[] buffer, FrameHeader header);
 
     @Override
     public boolean equals(Object obj) {
@@ -170,7 +171,7 @@ public abstract class AbstractFrame<T> implements Component {
     @Override
     public byte[] getBytes() {
 
-        byte[] frameBody  = Arrays.copyOf(frameBytes, frameBytes.length);
+        byte[] frameBody  = frameBytes;
         byte[] fieldBytes = header.buildFlagFields(frameBody.length);
 
         if (header.isFrameCompressed()) frameBody = compressFrame(frameBody);

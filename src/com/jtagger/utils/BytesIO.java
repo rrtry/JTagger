@@ -1,11 +1,9 @@
 package com.jtagger.utils;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.UUID;
 
-public class FileIO {
+public class BytesIO {
 
     public static final int PADDING_MAX = 1024 * 1024;
     public static final int PADDING_MIN = 1024;
@@ -13,6 +11,20 @@ public class FileIO {
 
     public static int getPadding(int fileLength) {
         return Math.min(Math.max(fileLength / 100, PADDING_MIN), PADDING_MAX);
+    }
+
+    public static void copyBytes(InputStream in, OutputStream out) throws IOException {
+
+        int size;
+        int left = in.available();
+
+        byte[] buffer = new byte[BUFFER_SIZE];
+        while (left > 0) {
+            size = Math.min(buffer.length, left);
+            in.read(buffer, 0, size);
+            out.write(buffer, 0, size);
+            left -= size;
+        }
     }
 
     public static void writeBlock(

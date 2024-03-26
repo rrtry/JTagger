@@ -2,6 +2,7 @@
 import com.jtagger.mp3.MpegFile;
 import com.jtagger.mp3.id3.*;
 import com.jtagger.utils.ImageReader;
+import com.jtagger.utils.IntegerUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -12,9 +13,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.MonthDay;
 import java.time.Year;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
 
 import static com.jtagger.AttachedPicture.*;
 import static com.jtagger.mp3.id3.AbstractFrame.S_LYRICS;
@@ -170,10 +169,11 @@ public class JTaggerTests {
                 .setText("TITLE")
                 .build(ID3V2_4);
 
-        TextFrameParser parser = new TextFrameParser();
-        TextFrame parsedFrame = parser.parse(
-                "TIT2", titleFrame.getHeader(), titleFrame.getBytes(), new TagHeader()
-        );
+        byte[] bytes = titleFrame.getBytes();
+        byte[] frame = Arrays.copyOfRange(bytes, titleFrame.getHeader().getFrameDataOffset(), bytes.length);
+
+        TextFrame parsedFrame = new TextFrame();
+        parsedFrame.parseFrameData(frame, titleFrame.getHeader());
 
         Assertions.assertEquals(titleFrame.getEncoding(), parsedFrame.getEncoding());
         Assertions.assertEquals(titleFrame.getText(), parsedFrame.getText());
@@ -227,7 +227,7 @@ public class JTaggerTests {
                 .setDescription("LYRICS")
                 .setContentType(CONTENT_TYPE_LYRICS)
                 .setLanguage("eng")
-                .setLyrics(new HashMap<>())
+                .setLyrics(new TreeMap<>())
                 .build(ID3V2_4);
 
         SynchronisedLyricsFrame transcript = SynchronisedLyricsFrame.newBuilder()
@@ -235,7 +235,7 @@ public class JTaggerTests {
                 .setDescription("LYRICS")
                 .setContentType(CONTENT_TYPE_TRANSCRIPTION)
                 .setLanguage("rus")
-                .setLyrics(new HashMap<>())
+                .setLyrics(new TreeMap<>())
                 .build(ID3V2_4);
 
         Assertions.assertNotEquals(lyrics, transcript);
@@ -293,7 +293,7 @@ public class JTaggerTests {
                 .setDescription("LYRICS")
                 .setContentType(CONTENT_TYPE_LYRICS)
                 .setLanguage("eng")
-                .setLyrics(new HashMap<>())
+                .setLyrics(new TreeMap<>())
                 .build(ID3V2_4);
 
         SynchronisedLyricsFrame transcript = SynchronisedLyricsFrame.newBuilder()
@@ -301,7 +301,7 @@ public class JTaggerTests {
                 .setDescription("LYRICS")
                 .setContentType(CONTENT_TYPE_TRANSCRIPTION)
                 .setLanguage("eng")
-                .setLyrics(new HashMap<>())
+                .setLyrics(new TreeMap<>())
                 .build(ID3V2_4);
 
         Assertions.assertEquals(lyrics, transcript);
@@ -347,7 +347,8 @@ public class JTaggerTests {
 
     @ParameterizedTest
     @ValueSource(bytes = { ENCODING_UTF_16, ENCODING_UTF_16_BE, ENCODING_UTF_8, ENCODING_LATIN_1 })
-    public void testCompressedAttachedPictureFrame(byte encoding) {
+    public void testCompressedAttachedPictureFrame(byte encoding) throws IOException {
+
         final String path = System.getProperty("user.dir") + "/files/apic_test.jpg";
         byte[] pictureBytes = ImageReader.readFromFile(new File(path));
         FrameHeader frameHeader = FrameHeader.newBuilder(ID3V2_4)
@@ -365,14 +366,13 @@ public class JTaggerTests {
                 .build(ID3V2_4);
 
         Assertions.assertTrue(pictureFrame.getHeader().isFrameCompressed());
-
         byte[] frameBytes = pictureFrame.getBytes();
-        frameBytes = AbstractFrame.decompressFrame(
-                Arrays.copyOfRange(frameBytes, frameHeader.getFrameDataOffset(), frameBytes.length)
-        );
+        frameBytes = AbstractFrame.decompressFrame(Arrays.copyOfRange(
+                frameBytes, frameHeader.getFrameDataOffset(), frameBytes.length
+        ));
 
-        AttachedPictureFrameParser parser = new AttachedPictureFrameParser();
-        AttachedPictureFrame parsedFrame  = parser.parse("APIC", pictureFrame.getHeader(), frameBytes, new TagHeader());
+        AttachedPictureFrame parsedFrame = new AttachedPictureFrame();
+        parsedFrame.parseFrameData(frameBytes, frameHeader);
 
         Assertions.assertEquals("APIC", parsedFrame.getIdentifier());
         Assertions.assertEquals(encoding, parsedFrame.getEncoding());
@@ -384,10 +384,11 @@ public class JTaggerTests {
 
     @ParameterizedTest
     @ValueSource(bytes = { ENCODING_UTF_16, ENCODING_UTF_16_BE, ENCODING_UTF_8, ENCODING_LATIN_1 })
-    public void testAttachedPictureFrame(byte encoding) {
+    public void testAttachedPictureFrame(byte encoding) throws IOException {
 
-        final String path = System.getProperty("user.dir") + "/files/apic_test.jpg";
+        final String path   = System.getProperty("user.dir") + "/files/apic_test.jpg";
         byte[] pictureBytes = ImageReader.readFromFile(new File(path));
+
         AttachedPictureFrame pictureFrame = AttachedPictureFrame.newBuilder()
                 .setHeader(FrameHeader.createFrameHeader("APIC", ID3V2_4))
                 .setEncoding(encoding)
@@ -397,8 +398,9 @@ public class JTaggerTests {
                 .setPictureData(pictureBytes)
                 .build(ID3V2_4);
 
-        AttachedPictureFrameParser parser = new AttachedPictureFrameParser();
-        AttachedPictureFrame parsedFrame  = parser.parse("APIC", pictureFrame.getHeader(), pictureFrame.getBytes(), new TagHeader());
+        byte[] frame = pictureFrame.getBytes();
+        AttachedPictureFrame parsedFrame = new AttachedPictureFrame();
+        parsedFrame.parseFrameData(frame, pictureFrame.getHeader());
 
         Assertions.assertEquals("APIC", parsedFrame.getIdentifier());
         Assertions.assertEquals(encoding, parsedFrame.getEncoding());
@@ -426,14 +428,13 @@ public class JTaggerTests {
                 .build(ID3V2_4);
 
         Assertions.assertTrue(commentFrame.getHeader().isFrameCompressed());
-
         byte[] frameBytes = commentFrame.getBytes();
         frameBytes = AbstractFrame.decompressFrame(
                 Arrays.copyOfRange(frameBytes, frameHeader.getFrameDataOffset(), frameBytes.length)
         );
 
-        CommentFrameParser parser = new CommentFrameParser();
-        CommentFrame parsedFrame  = parser.parse("COMM", commentFrame.getHeader(), frameBytes, new TagHeader());
+        CommentFrame parsedFrame = new CommentFrame();
+        parsedFrame.parseFrameData(frameBytes, commentFrame.getHeader());
 
         Assertions.assertEquals(commentFrame.getIdentifier(), parsedFrame.getIdentifier());
         Assertions.assertEquals(commentFrame.getEncoding(), parsedFrame.getEncoding());
@@ -455,8 +456,12 @@ public class JTaggerTests {
                 .setLanguage("eng")
                 .build(ID3V2_4);
 
-        CommentFrameParser parser = new CommentFrameParser();
-        CommentFrame parsedFrame  = parser.parse("COMM", commentFrame.getHeader(), commentFrame.getBytes(), new TagHeader());
+        byte[] bytes = commentFrame.getBytes();
+        CommentFrame parsedFrame = new CommentFrame();
+        parsedFrame.parseFrameData(
+                Arrays.copyOfRange(bytes, commentFrame.getHeader().getFrameDataOffset(), bytes.length),
+                commentFrame.getHeader()
+        );
 
         Assertions.assertEquals(commentFrame.getIdentifier(), parsedFrame.getIdentifier());
         Assertions.assertEquals(commentFrame.getEncoding(), parsedFrame.getEncoding());
@@ -507,7 +512,7 @@ public class JTaggerTests {
     public void testCompressedSynchronisedLyricsFrame(byte encoding) throws IOException {
 
         final String path = System.getProperty("user.dir") + "/files/test.lrc";
-        HashMap<Integer, String> lyrics = LRCParser.parseSynchronisedLyrics(
+        TreeMap<Integer, String> lyrics = LRCParser.parseSynchronisedLyrics(
                 new File(path)
         );
 
@@ -525,19 +530,21 @@ public class JTaggerTests {
                 .build(ID3V2_4);
 
         Assertions.assertTrue(frame.getHeader().isFrameCompressed());
-
         byte[] frameBytes = frame.getBytes();
         frameBytes = AbstractFrame.decompressFrame(
                 Arrays.copyOfRange(frameBytes, header.getFrameDataOffset(), frameBytes.length)
         );
 
         Assertions.assertEquals(lyrics, frame.getFrameData());
-        SynchronisedLyricsFrameParser parser = new SynchronisedLyricsFrameParser();
-        SynchronisedLyricsFrame parsedFrame  = parser.parse(S_LYRICS, header, frameBytes, new TagHeader());
+        SynchronisedLyricsFrame parsedFrame = new SynchronisedLyricsFrame();
+        parsedFrame.parseFrameData(frameBytes, frame.getHeader());
 
         Assertions.assertEquals("Synchronised lyrics", parsedFrame.getDescription());
         Assertions.assertEquals("eng", parsedFrame.getLanguage());
-        Assertions.assertEquals(frame.getFrameData(), parsedFrame.getFrameData());
+        Assertions.assertEquals(frame.getFrameData().keySet().size(), parsedFrame.getFrameData().keySet().size());
+        for (Integer timestamp : frame.getFrameData().keySet()) {
+            Assertions.assertEquals(frame.getFrameData().get(timestamp), parsedFrame.getFrameData().get(timestamp));
+        }
     }
 
     @ParameterizedTest
@@ -545,7 +552,7 @@ public class JTaggerTests {
     public void testSynchronisedLyricsFrame(byte encoding) throws IOException {
 
         final String path = System.getProperty("user.dir") + "/files/test.lrc";
-        HashMap<Integer, String> lyrics = LRCParser.parseSynchronisedLyrics(
+        TreeMap<Integer, String> lyrics = LRCParser.parseSynchronisedLyrics(
                 new File(path)
         );
 
@@ -559,14 +566,16 @@ public class JTaggerTests {
                 .build(ID3V2_4);
 
         byte[] frameBytes = frame.getBytes();
-
         Assertions.assertEquals(lyrics, frame.getFrameData());
-        SynchronisedLyricsFrameParser parser = new SynchronisedLyricsFrameParser();
-        SynchronisedLyricsFrame parsedFrame  = parser.parse(S_LYRICS, header, frameBytes, new TagHeader());
+        SynchronisedLyricsFrame parsedFrame = new SynchronisedLyricsFrame();
+        parsedFrame.parseFrameData(Arrays.copyOfRange(frameBytes, frame.getHeader().getFrameDataOffset(), frameBytes.length), frame.getHeader());
 
         Assertions.assertEquals("Synchronised lyrics", parsedFrame.getDescription());
         Assertions.assertEquals("eng", parsedFrame.getLanguage());
-        Assertions.assertEquals(frame.getFrameData(), parsedFrame.getFrameData());
+        Assertions.assertEquals(frame.getFrameData().keySet().size(), parsedFrame.getFrameData().keySet().size());
+        for (Integer timestamp : frame.getFrameData().keySet()) {
+            Assertions.assertEquals(frame.getFrameData().get(timestamp), parsedFrame.getFrameData().get(timestamp));
+        }
     }
 
     @Test

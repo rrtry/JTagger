@@ -2,7 +2,7 @@ package com.jtagger.mp4;
 
 import com.jtagger.AbstractTag;
 import com.jtagger.AbstractTagEditor;
-import com.jtagger.utils.FileIO;
+import com.jtagger.utils.BytesIO;
 import com.jtagger.utils.IntegerUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -100,7 +100,7 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
         int from;
         int to;
         int tagOffset;
-        int padding = FileIO.getPadding((int) file.length());
+        int padding = BytesIO.getPadding((int) file.length());
 
         ArrayList<MP4Atom> moovChildren = tag.getMoovAtom().getChildren();
         size  = tag.getBytes().length + 8 + 12 + 33 + padding;
@@ -139,14 +139,14 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
         updateParents(parent, delta);
 
         if (tag.getAtoms().indexOf(tag.getMoovAtom()) != tag.getAtoms().size() - 1) {
-            FileIO.moveBlock(file,
+            BytesIO.moveBlock(file,
                     from,
                     to,
                     delta,
                     (int) file.length() - from
             );
         }
-        FileIO.writeBlock(file, tagBuffer, tagOffset);
+        BytesIO.writeBlock(file, tagBuffer, tagOffset);
     }
 
     private void updateTag() throws IOException {
@@ -160,7 +160,7 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
         int ilstEnd   = parser.getIlstEnd();
 
         if (sizeDiff == 0) {
-            FileIO.writeBlock(
+            BytesIO.writeBlock(
                     file, tag.getBytes(), ilstStart
             );
             return;
@@ -170,13 +170,13 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
         MP4Atom ilstParent = ilstAtom.getParent();
         if (ilstEnd == fileLength) {
             updateParents(ilstParent, sizeDiff);
-            FileIO.writeBlock(file, tag.getBytes(), ilstStart);
+            BytesIO.writeBlock(file, tag.getBytes(), ilstStart);
             return;
         }
 
         ArrayList<MP4Atom> children = ilstParent.getChildren();
         int ilstIndex  = children.indexOf(ilstAtom);
-        int maxPadding = FileIO.getPadding((int) file.length());
+        int maxPadding = BytesIO.getPadding((int) file.length());
         int padding    = maxPadding;
 
         if ((ilstIndex + 1) < children.size()) {
@@ -188,11 +188,11 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
                 int paddingSize = free.getSize() + paddingDiff;
 
                 if (paddingSize == 0) {
-                    FileIO.writeBlock(file, tag.getBytes(), ilstStart);
+                    BytesIO.writeBlock(file, tag.getBytes(), ilstStart);
                     return;
                 }
                 if (paddingSize >= 8 && paddingSize <= maxPadding) {
-                    FileIO.writeBlock(file, tag.getBytes(), ilstStart);
+                    BytesIO.writeBlock(file, tag.getBytes(), ilstStart);
                     file.write(IntegerUtils.fromUInt32BE(paddingSize));
                     file.write("free".getBytes(ISO_8859_1));
                     if (paddingDiff > 0) {
@@ -200,7 +200,7 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
                     }
                     return;
                 }
-                padding = FileIO.PADDING_MIN;
+                padding = BytesIO.PADDING_MIN;
                 sizeDiff += (padding - free.getSize());
                 ilstEnd = free.getEnd();
             }
@@ -211,13 +211,13 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
         updateOffsets(sizeDiff);
         updateParents(ilstParent, sizeDiff);
 
-        FileIO.moveBlock(file,
+        BytesIO.moveBlock(file,
                 ilstEnd,
                 ilstEnd + sizeDiff,
                 sizeDiff,
                 (int) fileLength - ilstEnd
         );
-        FileIO.writeBlock(file, tag.getBytes(), ilstStart);
+        BytesIO.writeBlock(file, tag.getBytes(), ilstStart);
         writePadding(padding);
     }
 

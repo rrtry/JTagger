@@ -39,6 +39,21 @@ public class TextFrame extends AbstractFrame<String> {
         setText(text);
     }
 
+    @Override
+    public void parseFrameData(byte[] buffer, FrameHeader header) {
+
+        byte encoding = buffer[0];
+        String text = TextEncoding.getString(
+                buffer,
+                1, buffer.length - 1,
+                encoding
+        );
+
+        this.header = header;
+        setEncoding(encoding);
+        setText(text);
+    }
+
     public String getText() {
         return text;
     }

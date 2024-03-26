@@ -309,7 +309,7 @@ public class ID3V2Tag extends ID3Tag {
             }
 
             byte[] frameHeader = frame.getHeader().getBytes();
-            byte[] frameData = frame.getBytes();
+            byte[] frameData   = frame.getBytes();
 
             System.arraycopy(frameHeader, 0, tag, position, frameHeader.length);
             System.arraycopy(frameData, 0, tag, position + frameHeader.length, frameData.length);

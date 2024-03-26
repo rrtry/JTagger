@@ -1,5 +1,6 @@
 package com.jtagger.mp3.id3;
 
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -44,35 +45,69 @@ class FrameParser {
 
     private AbstractFrame parseFrame(int position, FrameHeader frameHeader) {
 
-        FrameType frameType = FrameType.fromIdentifier(frameHeader.getIdentifier());
-        if (frameType == null) {
-            return new UnknownFrame(frameHeader, copyFrame(position, frameHeader.getFrameSize()));
+        String frameId = frameHeader.getIdentifier();
+        AbstractFrame frame = null;
+
+        if (TimestampFrame.isValidFrameId(frameId)) {
+            frame = new TimestampFrame();
+        }
+        else if (frameId.charAt(0) == 'T') {
+            frame = new TextFrame();
+        }
+        else {
+            switch (frameId) {
+
+                case AbstractFrame.PICTURE:
+                    frame = new AttachedPictureFrame();
+                    break;
+                case AbstractFrame.COMMENT:
+                    frame = new CommentFrame();
+                    break;
+                case AbstractFrame.U_LYRICS:
+                    frame = new UnsynchronisedLyricsFrame();
+                    break;
+                case AbstractFrame.S_LYRICS:
+                    frame = new SynchronisedLyricsFrame();
+                    break;
+                case AbstractFrame.CUSTOM:
+                    frame = new UserDefinedTextInfoFrame();
+                    break;
+            }
         }
 
-        byte[] frame = copyFrame(
+        byte[] buffer = copyFrame(
                 position + frameHeader.getFrameDataOffset(),
                 frameHeader.getFrameSize()
         );
+        if (frame == null) {
+            return new UnknownFrame(frameHeader, buffer);
+        }
 
         if (frameHeader.isFrameEncrypted())  return null;
-        if (frameHeader.isFrameUnsynch())    frame = fromUnsynch(frame);
-        if (frameHeader.isFrameCompressed()) frame = decompressFrame(frame);
+        if (frameHeader.isFrameUnsynch())    buffer = fromUnsynch(buffer);
+        if (frameHeader.isFrameCompressed()) buffer = decompressFrame(buffer);
 
-        FrameBodyParser frameParser = FrameParserFactory.getParser(frameType);
-        return frameParser.parse(frameHeader.getIdentifier(), frameHeader, frame, tagHeader);
+        try {
+            frame.parseFrameData(buffer, frameHeader);
+        }
+        catch (DateTimeParseException | IllegalArgumentException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return frame;
     }
 
     public final ArrayList<AbstractFrame> parseFrames() {
 
-        FrameHeaderParser frameHeaderParser = new FrameHeaderParser(tagHeader);
+        FrameHeaderParser headerParser = new FrameHeaderParser(tagHeader);
         ArrayList<AbstractFrame> frames = new ArrayList<>();
 
         int position = framesOffset;
         while (position < frameData.length) {
 
-            FrameHeader frameHeader = frameHeaderParser.parseFrameHeader(frameData, position);
+            FrameHeader frameHeader = headerParser.parseFrameHeader(frameData, position);
             if (frameHeader == null) {
-                paddingOffset = frameHeaderParser.getPaddingOffset();
+                paddingOffset = headerParser.getPaddingOffset();
                 break;
             }
 

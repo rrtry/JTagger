@@ -1,5 +1,10 @@
 package com.jtagger.mp3.id3;
 
+import java.nio.charset.Charset;
+import java.util.Arrays;
+
+import static com.jtagger.mp3.id3.TextEncoding.getStringLength;
+
 public class UserDefinedTextInfoFrame extends TextFrame {
 
     private String description;
@@ -46,6 +51,31 @@ public class UserDefinedTextInfoFrame extends TextFrame {
                 .build(version);
 
         return frame;
+    }
+
+    @Override
+    public void parseFrameData(byte[] buffer, FrameHeader header) {
+
+        int position = 0;
+        int strLength;
+
+        byte encoding;
+        String description;
+        String text;
+
+        encoding    = buffer[position++];
+        strLength   = getStringLength(buffer, position, encoding);
+        description = TextEncoding.getString(buffer, position, strLength, encoding);
+        position += strLength;
+
+        text = TextEncoding.getString(
+                buffer, position, buffer.length - position, encoding
+        );
+
+        this.header = header;
+        setEncoding(encoding);
+        setDescription(description);
+        setText(text);
     }
 
     public class Builder extends TextFrame.Builder<Builder, UserDefinedTextInfoFrame> {

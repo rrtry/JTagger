@@ -5,16 +5,17 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class LRCParser {
 
-    public static HashMap<Integer, String> parseSynchronisedLyrics(File fileObj) throws IOException {
+    public static TreeMap<Integer, String> parseSynchronisedLyrics(File fileObj) throws IOException {
 
         BufferedReader reader = new BufferedReader(new FileReader(fileObj));
-        HashMap<Integer, String> syncedLyrics = new HashMap<>();
+        TreeMap<Integer, String> syncedLyrics = new TreeMap<>();
         String line;
 
         while ((line = reader.readLine()) != null) {

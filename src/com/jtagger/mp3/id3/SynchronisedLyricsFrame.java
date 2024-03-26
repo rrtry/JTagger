@@ -2,12 +2,16 @@ package com.jtagger.mp3.id3;
 
 import com.jtagger.utils.IntegerUtils;
 
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.jtagger.mp3.id3.CommentFrame.isISOLanguage;
+import static com.jtagger.mp3.id3.TextEncoding.ENCODING_UTF_16;
+import static com.jtagger.mp3.id3.TextEncoding.ENCODING_UTF_16_BE;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
-public class SynchronisedLyricsFrame extends AbstractFrame<HashMap<Integer, String>> {
+public class SynchronisedLyricsFrame extends AbstractFrame<TreeMap<Integer, String>> {
 
     public static final byte TIMESTAMP_FORMAT_MILLIS = 0x2;
     public static final byte TIMESTAMP_FORMAT_FRAMES = 0x1;
@@ -30,33 +34,7 @@ public class SynchronisedLyricsFrame extends AbstractFrame<HashMap<Integer, Stri
     private String description = "Synchronised lyrics";
 
     private byte[] synchLyrics;
-    private HashMap<Integer, String> lyricsMap;
-
-    private void assembleSynchLyrics() {
-
-        int length = 0;
-
-        for (Integer timestamp : lyricsMap.keySet()) {
-            byte[] lineBytes = TextEncoding.getStringBytes(lyricsMap.get(timestamp), encoding);
-            length += lineBytes.length;
-            length += 4;
-        }
-
-        int index   = 0;
-        synchLyrics = new byte[length];
-
-        SortedSet<Integer> keys = new TreeSet<>(lyricsMap.keySet());
-        for (Integer timestamp : keys) {
-
-            String line = lyricsMap.get(timestamp);
-
-            byte[] lineBytes      = TextEncoding.getStringBytes(line, encoding);
-            byte[] timestampBytes = IntegerUtils.fromUInt32BE(timestamp);
-
-            System.arraycopy(lineBytes, 0, synchLyrics, index, lineBytes.length); index += lineBytes.length;
-            System.arraycopy(timestampBytes, 0, synchLyrics, index, 4);     index += timestampBytes.length;
-        }
-    }
+    private TreeMap<Integer, String> lyricsMap;
 
     @Override
     public String getKey() {
@@ -72,7 +50,7 @@ public class SynchronisedLyricsFrame extends AbstractFrame<HashMap<Integer, Stri
         final byte contentTypeOffset = 5;
         final byte descriptionOffset = 6;
 
-        byte[] languageBuffer    = language.getBytes(StandardCharsets.ISO_8859_1);
+        byte[] languageBuffer    = language.getBytes(ISO_8859_1);
         byte[] descriptionBuffer = TextEncoding.getStringBytes(description, encoding);
 
         assembleSynchLyrics();
@@ -150,7 +128,7 @@ public class SynchronisedLyricsFrame extends AbstractFrame<HashMap<Integer, Stri
         return frame.new Builder();
     }
 
-    public static SynchronisedLyricsFrame createInstance(HashMap<Integer, String> syncLyrics,
+    public static SynchronisedLyricsFrame createInstance(TreeMap<Integer, String> syncLyrics,
                                                          String language,
                                                          byte version)
     {
@@ -162,13 +140,89 @@ public class SynchronisedLyricsFrame extends AbstractFrame<HashMap<Integer, Stri
     }
 
     @Override
-    public HashMap<Integer, String> getFrameData() {
+    public TreeMap<Integer, String> getFrameData() {
         return lyricsMap;
     }
 
     @Override
-    public void setFrameData(HashMap<Integer, String> data) {
+    public void setFrameData(TreeMap<Integer, String> data) {
         this.lyricsMap = data;
+    }
+
+    private void assembleSynchLyrics() {
+
+        int length = 0;
+        for (Integer timestamp : lyricsMap.keySet()) {
+            byte[] syllableBytes = TextEncoding.getStringBytes(lyricsMap.get(timestamp), encoding);
+            length += syllableBytes.length;
+            length += 4;
+        }
+
+        int index   = 0;
+        synchLyrics = new byte[length];
+
+        for (Integer timestamp : lyricsMap.keySet()) {
+
+            String syllable       = lyricsMap.get(timestamp);
+            byte[] syllableBytes  = TextEncoding.getStringBytes(syllable, encoding);
+            byte[] timestampBytes = IntegerUtils.fromUInt32BE(timestamp);
+
+            System.arraycopy(syllableBytes, 0, synchLyrics, index, syllableBytes.length);
+            index += syllableBytes.length;
+
+            System.arraycopy(timestampBytes, 0, synchLyrics, index, 4);
+            index += timestampBytes.length;
+        }
+    }
+
+    private void parseSynchronisedLyrics(byte[] buffer, int position) {
+
+        int strLength;
+        int timestamp;
+        String syllable;
+
+        lyricsMap = new TreeMap<>();
+        while (position < buffer.length) {
+
+            strLength = TextEncoding.getStringLength(buffer, position, encoding);
+            syllable  = TextEncoding.getString(buffer, position, strLength, encoding);
+            position += strLength;
+
+            timestamp = IntegerUtils.toUInt32BE(Arrays.copyOfRange(buffer, position, position += 4));
+            lyricsMap.put(timestamp, syllable);
+        }
+    }
+
+    @Override
+    public void parseFrameData(byte[] buffer, FrameHeader header) {
+
+        String language;
+        String description;
+
+        byte encoding;
+        byte format;
+        byte type;
+
+        int position = 0;
+        int strLength;
+
+        encoding = buffer[position++];
+        language = new String(Arrays.copyOfRange(buffer, position, position += 3), ISO_8859_1);
+        format   = buffer[position++];
+        type     = buffer[position++];
+
+        strLength   = TextEncoding.getStringLength(buffer, position, encoding);
+        description = TextEncoding.getString(buffer, position, strLength, encoding);
+        position += strLength;
+
+        setEncoding(encoding);
+        setLanguage(language);
+        setDescription(description);
+        setContentType(type);
+        setTimestampFormat(format);
+        parseSynchronisedLyrics(buffer, position);
+
+        this.header = header;
     }
 
     public class Builder {
@@ -181,7 +235,7 @@ public class SynchronisedLyricsFrame extends AbstractFrame<HashMap<Integer, Stri
             return this;
         }
 
-        public SynchronisedLyricsFrame.Builder setLyrics(HashMap<Integer, String> lyrics) {
+        public SynchronisedLyricsFrame.Builder setLyrics(TreeMap<Integer, String> lyrics) {
             SynchronisedLyricsFrame.this.setFrameData(lyrics);
             return this;
         }

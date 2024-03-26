@@ -66,7 +66,7 @@ public class FrameHeaderParser {
                     .build(version);
 
             if (header.isFrameEncrypted()) {
-                throw new IllegalStateException();
+                return null;
             }
             return header;
 

@@ -33,6 +33,11 @@ public class UnknownFrame extends AbstractFrame<List<Byte>> {
     }
 
     @Override
+    void parseFrameData(byte[] buffer, FrameHeader header) {
+
+    }
+
+    @Override
     public byte[] getBytes() {
         return frameBytes;
     }

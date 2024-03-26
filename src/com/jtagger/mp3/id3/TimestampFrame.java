@@ -3,6 +3,7 @@ package com.jtagger.mp3.id3;
 import java.sql.Time;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
@@ -42,6 +43,11 @@ public class TimestampFrame extends TextFrame {
 
     {
         setEncoding(TextEncoding.ENCODING_LATIN_1);
+    }
+
+    public static boolean isValidFrameId(String id) {
+        return V23_IDENTIFIERS.contains(id) ||
+               V24_IDENTIFIERS.contains(id);
     }
 
     private int getField(ChronoField field) {
@@ -148,7 +154,7 @@ public class TimestampFrame extends TextFrame {
         }
 
         if (index == -1) {
-            throw new IllegalArgumentException("Invalid timestamp string: " + text);
+            throw new DateTimeParseException("Invalid timestamp string: " + text, "", 0);
         }
 
         String format = VALID_PATTERNS[index];
@@ -248,7 +254,7 @@ public class TimestampFrame extends TextFrame {
             if ((frameHeader.getVersion() == ID3V2_3 && !V23_IDENTIFIERS.contains(frameHeader.getIdentifier())) ||
                 (frameHeader.getVersion() == ID3V2_4 && !V24_IDENTIFIERS.contains(frameHeader.getIdentifier())))
             {
-                throw new IllegalArgumentException("TimestampFrame: Invalid identifier " + frameHeader.getIdentifier());
+                throw new IllegalArgumentException("Invalid identifier " + frameHeader.getIdentifier());
             }
             header = frameHeader;
             return this;
@@ -256,7 +262,8 @@ public class TimestampFrame extends TextFrame {
 
         @Override
         public Builder setEncoding(byte encoding) {
-            throw new UnsupportedOperationException();
+            TimestampFrame.this.setEncoding(TextEncoding.ENCODING_LATIN_1); // override to allow only LATIN_1
+            return this;
         }
 
         public Builder setTime(LocalTime time) {

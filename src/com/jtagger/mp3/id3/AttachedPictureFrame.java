@@ -31,17 +31,14 @@ package com.jtagger.mp3.id3;
                   $13  Band/artist logotype
                   $14  Publisher/Studio logotype
  */
-
-import com.jtagger.AbstractTag;
 import com.jtagger.AttachedPicture;
+
 import java.io.*;
 import java.net.URL;
-import java.util.Objects;
+import java.util.Arrays;
+import static com.jtagger.mp3.id3.TextEncoding.*;
 
 public class AttachedPictureFrame extends AbstractFrame<AttachedPicture> {
-
-    public static final int DESCRIPTION_MAX_LENGTH = 64;
-    public static final int MIME_TYPE_MAX_LENGTH   = 10;
 
     private AttachedPicture picture = new AttachedPicture();
     private byte encoding;
@@ -111,10 +108,6 @@ public class AttachedPictureFrame extends AbstractFrame<AttachedPicture> {
         return picture.getMimeType();
     }
 
-    public boolean isPictureURL() {
-        return picture.isPictureURL();
-    }
-
     public void setMimeType(String mimeType) {
         picture.setMimeType(mimeType);
     }
@@ -134,19 +127,15 @@ public class AttachedPictureFrame extends AbstractFrame<AttachedPicture> {
         picture.setPictureType(pictureType);
     }
 
-    public void setPictureURL(URL url) {
-        picture.isPictureURL();
-    }
-
     public void setPictureData(byte[] pictureData) {
         picture.setPictureData(pictureData);
     }
 
-    public void setPictureData(File file) {
+    public void setPictureData(File file) throws IOException {
         picture.setPictureData(file);
     }
 
-    public void setPictureData(URL url) {
+    public void setPictureData(URL url) throws IOException {
         picture.setPictureData(url);
     }
 
@@ -172,6 +161,36 @@ public class AttachedPictureFrame extends AbstractFrame<AttachedPicture> {
     @Override
     public void setFrameData(AttachedPicture picture) {
         this.picture = picture;
+    }
+
+    @Override
+    public void parseFrameData(byte[] buffer, FrameHeader header) {
+
+        int position = 0;
+        int strLength;
+
+        byte encoding;
+        byte pictureType;
+
+        String mimeType;
+        String description;
+
+        encoding  = buffer[position++];
+        strLength = getStringLength(buffer, position, ENCODING_LATIN_1);
+        mimeType  = getString(buffer, position, strLength, ENCODING_LATIN_1);
+        position += strLength;
+
+        pictureType = buffer[position++];
+        strLength   = getStringLength(buffer, position, encoding);
+        description = getString(buffer, position, strLength, encoding);
+        position += strLength;
+
+        this.header = header;
+        setMimeType(mimeType);
+        setDescription(description);
+        setPictureData(Arrays.copyOfRange(buffer, position, buffer.length));
+        setPictureType(pictureType);
+        setEncoding(encoding);
     }
 
     public class Builder {
@@ -209,12 +228,12 @@ public class AttachedPictureFrame extends AbstractFrame<AttachedPicture> {
             return this;
         }
 
-        public Builder setPictureData(URL url) {
+        public Builder setPictureData(URL url) throws IOException {
             AttachedPictureFrame.this.setPictureData(url);
             return this;
         }
 
-        public Builder setPictureData(File file) {
+        public Builder setPictureData(File file) throws IOException {
             AttachedPictureFrame.this.setPictureData(file);
             return this;
         }

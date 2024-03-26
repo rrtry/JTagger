@@ -2,7 +2,7 @@ package com.jtagger.flac;
 
 import com.jtagger.AbstractTagEditor;
 import com.jtagger.AbstractTag;
-import com.jtagger.utils.FileIO;
+import com.jtagger.utils.BytesIO;
 import com.jtagger.utils.IntegerUtils;
 
 import java.io.IOException;
@@ -35,7 +35,7 @@ public class FlacTagEditor extends AbstractTagEditor<FLAC> {
     public void commit() throws IOException {
 
         byte[] tagBuffer = tag.getBytes();
-        int maxPad  = FileIO.getPadding((int) file.length());
+        int maxPad  = BytesIO.getPadding((int) file.length());
         int padding = parser.getOriginalSize() - tagBuffer.length - 4;
 
         file.seek(4);
@@ -46,17 +46,17 @@ public class FlacTagEditor extends AbstractTagEditor<FLAC> {
             file.write(new byte[padding]);
             return;
         } else {
-            padding = FileIO.PADDING_MIN - 4;
+            padding = BytesIO.PADDING_MIN - 4;
         }
 
         int delta = tagBuffer.length - parser.getOriginalSize();
         int from  = parser.getStreamOffset();
         int to    = from + delta + padding;
 
-        FileIO.moveBlock(
+        BytesIO.moveBlock(
                 file, from, to, delta, (int) file.length() - from
         );
-        FileIO.writeBlock(file, tagBuffer, 4);
+        BytesIO.writeBlock(file, tagBuffer, 4);
         file.write(BLOCK_TYPE_PADDING | 0x80);
         file.write(IntegerUtils.fromUInt24BE(padding));
         file.write(new byte[padding]);

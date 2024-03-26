@@ -9,15 +9,54 @@ import static com.jtagger.mp3.id3.ID3V2Tag.ID3V2_4;
 
 public class TextEncoding {
 
-    public static byte[] BIG_BOM    = new byte[] { (byte) 0xFE, (byte) 0xFF };
-    public static byte[] LITTLE_BOM = new byte[] { (byte) 0xFF, (byte) 0xFE };
+    public static byte[] BOM_BE = new byte[] { (byte) 0xFE, (byte) 0xFF };
+    public static byte[] BOM_LE = new byte[] { (byte) 0xFF, (byte) 0xFE };
 
     public static final byte ENCODING_LATIN_1   = 0x00;
     public static final byte ENCODING_UTF_16    = 0x01;
     public static final byte ENCODING_UTF_16_BE = 0x02;
     public static final byte ENCODING_UTF_8     = 0x03;
 
-    public static final int UTF_16_BOM_LENGTH = 2;
+    public static String getString(byte[] buffer, int from, int length, byte encoding) {
+        return new String(
+                Arrays.copyOfRange(
+                        buffer,
+                        from,
+                        from + length - (encoding == ENCODING_UTF_16 || encoding == ENCODING_UTF_16_BE ? 2 : 1)),
+                TextEncoding.getCharset(encoding)
+        );
+    }
+
+    public static int getStringLength(byte[] bytes, int offset, byte encoding) {
+
+        boolean isUTF16 = encoding == ENCODING_UTF_16 || encoding == ENCODING_UTF_16_BE;
+        boolean hasBOM  = hasByteOrderMark(bytes, offset);
+
+        int chLen  = isUTF16 ? 2 : 1;
+        int length = hasBOM ? 2 : 0;
+
+        int index = offset + length;
+        while (index < bytes.length) {
+
+            if (isUTF16) {
+                if ((index + 1) < bytes.length) {
+                    if (bytes[index] == 0x0 && bytes[index + 1] == 0x0) {
+                        length += 2;
+                        break;
+                    }
+                } else {
+                    length++;
+                    break;
+                }
+            } else if (bytes[index] == 0x0) {
+                length++;
+                break;
+            }
+            length += chLen;
+            index += chLen;
+        }
+        return length;
+    }
 
     public static byte getEncodingForVersion(byte version) {
         if (version == ID3V2_3) return ENCODING_UTF_16;
@@ -26,28 +65,10 @@ public class TextEncoding {
     }
 
     public static byte[] getStringBytes(String text, byte encoding) {
-        byte[] bytes;
-        switch (encoding) {
-            case ENCODING_UTF_16:    bytes = appendNullTerminator(prependByteOrderMark(text), ENCODING_UTF_16); break;
-            case ENCODING_UTF_8:     bytes = appendNullTerminator(text.getBytes(StandardCharsets.UTF_8), ENCODING_UTF_8); break;
-            case ENCODING_UTF_16_BE: bytes = appendNullTerminator(text.getBytes(StandardCharsets.UTF_16BE), ENCODING_UTF_16_BE); break;
-            case ENCODING_LATIN_1:   bytes = appendNullTerminator(text.getBytes(StandardCharsets.ISO_8859_1), ENCODING_LATIN_1); break;
-            default: throw new IllegalArgumentException("Invalid encoding: " + encoding);
-        }
-        return bytes;
+        return appendNull(text.getBytes(getCharset(encoding)), encoding);
     }
 
-    public static byte[] prependByteOrderMark(String s) {
-
-        byte[] withoutBOM = s.getBytes(StandardCharsets.UTF_16BE);
-        byte[] withBOM    = new byte[withoutBOM.length + 2];
-
-        System.arraycopy(BIG_BOM, 0, withBOM, 0, BIG_BOM.length);
-        System.arraycopy(withoutBOM, 0, withBOM, 2, withoutBOM.length);
-        return withBOM;
-    }
-
-    public static byte[] appendNullTerminator(byte[] bytes, byte encoding) {
+    public static byte[] appendNull(byte[] bytes, byte encoding) {
         return Arrays.copyOf(
                 bytes,
                 bytes.length + (encoding == ENCODING_UTF_16 || encoding == ENCODING_UTF_16_BE ? 2 : 1)
@@ -55,9 +76,9 @@ public class TextEncoding {
     }
 
     public static boolean hasByteOrderMark(byte[] data, int from) {
-        byte[] bom = Arrays.copyOfRange(data, from, from + UTF_16_BOM_LENGTH);
-        return Arrays.equals(bom, BIG_BOM) ||
-                Arrays.equals(bom, LITTLE_BOM);
+        byte[] bom = Arrays.copyOfRange(data, from, from + 2);
+        return Arrays.equals(bom, BOM_BE) ||
+                Arrays.equals(bom, BOM_LE);
     }
 
     public static boolean isValidEncodingByte(byte encoding) {
@@ -65,11 +86,6 @@ public class TextEncoding {
                 encoding == ENCODING_UTF_16    ||
                 encoding == ENCODING_UTF_16_BE ||
                 encoding == ENCODING_UTF_8;
-    }
-
-    public static boolean isUTF16(Charset charset) {
-        return charset.equals(StandardCharsets.UTF_16) ||
-                charset.equals(StandardCharsets.UTF_16BE);
     }
 
     public static Charset getCharset(byte b) {
