@@ -10,8 +10,8 @@ public class ID3V1TagEditor extends AbstractTagEditor<ID3V1Tag> {
     @Override
     protected final void parseTag() throws IOException {
         ID3V1TagParser parser = new ID3V1TagParser();
-        this.tag          = parser.parseTag(file);
-        this.isTagPresent = tag != null;
+        tag = parser.parseTag(file);
+        hasTag = tag != null;
     }
 
     @Override
@@ -22,19 +22,19 @@ public class ID3V1TagEditor extends AbstractTagEditor<ID3V1Tag> {
                     .build(id3V1Tag.getVersion());
             return;
         }
-        throw new RuntimeException();
+        ID3V1Tag id3v1 = new ID3V1Tag();
+        convertTag(tag, id3v1);
+        id3v1.assemble();
+        this.tag = id3v1;
     }
 
     @Override
     public void commit() throws IOException {
-        if (tag == null && !isTagPresent) {
+        if (tag == null && !hasTag) {
             return;
         }
         if (tag != null) {
-
-            if (isTagPresent) file.seek(file.length() - 128);
-            else file.seek(file.length());
-
+            file.seek(hasTag ? file.length() - 128 : file.length());
             file.write(getTag().getBytes());
             return;
         }

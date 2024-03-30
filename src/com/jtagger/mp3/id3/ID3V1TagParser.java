@@ -8,6 +8,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import static com.jtagger.mp3.id3.ID3V1Tag.*;
+import static com.jtagger.mp3.id3.TextEncoding.ENCODING_LATIN_1;
+import static com.jtagger.mp3.id3.TextEncoding.getString;
+import static java.lang.Byte.toUnsignedInt;
 
 public class ID3V1TagParser implements TagParser<ID3V1Tag> {
 
@@ -32,12 +35,12 @@ public class ID3V1TagParser implements TagParser<ID3V1Tag> {
                 commentLength = 28;
             }
 
-            String title   = new String(Arrays.copyOfRange(buffer, TITLE_OFFSET, TITLE_OFFSET + 30));
-            String artist  = new String(Arrays.copyOfRange(buffer, ARTIST_OFFSET, ARTIST_OFFSET + 30));
-            String album   = new String(Arrays.copyOfRange(buffer, ALBUM_OFFSET, ALBUM_OFFSET + 30));
-            String year    = new String(Arrays.copyOfRange(buffer, YEAR_OFFSET, YEAR_OFFSET + 4));
-            String comment = new String(Arrays.copyOfRange(buffer, COMMENT_OFFSET, COMMENT_OFFSET + commentLength));
-            int genre      = Byte.toUnsignedInt(buffer[GENRE_OFFSET]);
+            String title   = getString(buffer, TITLE_OFFSET,  30, ENCODING_LATIN_1);
+            String artist  = getString(buffer, ARTIST_OFFSET, 30, ENCODING_LATIN_1);
+            String album   = getString(buffer, ALBUM_OFFSET,  30, ENCODING_LATIN_1);
+            String year    = getString(buffer, YEAR_OFFSET,    4, ENCODING_LATIN_1);
+            String comment = getString(buffer, COMMENT_OFFSET, commentLength, ENCODING_LATIN_1);
+            int genre      = toUnsignedInt(buffer[GENRE_OFFSET]);
 
             ID3V1Tag.Builder builder = ID3V1Tag.newBuilder()
                     .setVersion(version)
@@ -49,7 +52,7 @@ public class ID3V1TagParser implements TagParser<ID3V1Tag> {
                     .setComment(comment);
 
             if (version == ID3V1_1) {
-                builder = builder.setAlbumTrack(Byte.toUnsignedInt(buffer[TRACK_NUMBER]));
+                builder = builder.setAlbumTrack(toUnsignedInt(buffer[TRACK_NUMBER]));
             }
             return builder.build(version);
 

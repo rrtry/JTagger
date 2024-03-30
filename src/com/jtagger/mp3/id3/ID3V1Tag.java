@@ -4,6 +4,9 @@ import com.jtagger.AbstractTag;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+import static com.jtagger.mp3.id3.TextEncoding.isNumeric;
+import static java.lang.Byte.toUnsignedInt;
+
 public class ID3V1Tag extends ID3Tag {
 
     public static final String ID     = "TAG";
@@ -412,11 +415,11 @@ public class ID3V1Tag extends ID3Tag {
     };
 
     private byte[] tagBytes;
-    private String title   = " ".repeat(30);
-    private String artist  = " ".repeat(30);
-    private String album   = " ".repeat(30);
-    private String year    = " ".repeat(4);
-    private String comment = " ".repeat(30);
+    private String title   = "";
+    private String artist  = "";
+    private String album   = "";
+    private String year    = "";
+    private String comment = "";
 
     private byte genre       = (byte) UNKNOWN;
     private byte trackNumber = 0;
@@ -424,46 +427,87 @@ public class ID3V1Tag extends ID3Tag {
 
     @Override
     protected <T> void setFieldValue(String fieldId, T value) {
-
         String fieldValue = (String) value;
-        if (fieldId.equals(AbstractTag.TITLE))        setTitle(fieldValue);
-        if (fieldId.equals(AbstractTag.ARTIST))       setArtist(fieldValue);
-        if (fieldId.equals(AbstractTag.ALBUM))        setAlbum(fieldValue);
-        if (fieldId.equals(AbstractTag.YEAR))         setYear(fieldValue);
-        if (fieldId.equals(AbstractTag.COMMENT))      setComment(fieldValue);
-        if (fieldId.equals(AbstractTag.GENRE))        setGenre(Integer.parseInt(fieldValue));
-        if (fieldId.equals(AbstractTag.TRACK_NUMBER)) setAlbumTrack(Integer.parseInt(fieldValue));
+        switch (fieldId) {
+            case AbstractTag.TITLE:
+                setTitle(fieldValue);
+                break;
+            case AbstractTag.ARTIST:
+                setArtist(fieldValue);
+                break;
+            case AbstractTag.ALBUM:
+                setAlbum(fieldValue);
+                break;
+            case AbstractTag.YEAR:
+                setYear(fieldValue);
+                break;
+            case AbstractTag.COMMENT:
+                setComment(fieldValue);
+                break;
+            case AbstractTag.GENRE:
+                setGenre(fieldValue);
+                break;
+            case AbstractTag.TRACK_NUMBER:
+                setAlbumTrack(Integer.parseInt(fieldValue));
+                break;
+        }
     }
 
     @Override
     @SuppressWarnings("unchecked")
     protected <T> T getFieldValue(String fieldId) {
-        if (fieldId.equals(AbstractTag.TITLE))        return (T) title;
-        if (fieldId.equals(AbstractTag.ARTIST))       return (T) artist;
-        if (fieldId.equals(AbstractTag.ALBUM))        return (T) album;
-        if (fieldId.equals(AbstractTag.YEAR))         return (T) String.valueOf(year);
-        if (fieldId.equals(AbstractTag.COMMENT))      return (T) comment;
-        if (fieldId.equals(AbstractTag.GENRE))        return (T) String.valueOf(genre);
-        if (fieldId.equals(AbstractTag.TRACK_NUMBER)) return (T) String.valueOf(trackNumber);
-        return null;
+        switch (fieldId) {
+            case AbstractTag.TITLE:
+                return (T) title;
+            case AbstractTag.ARTIST:
+                return (T) artist;
+            case AbstractTag.ALBUM:
+                return (T) album;
+            case AbstractTag.YEAR:
+                return (T) year;
+            case AbstractTag.COMMENT:
+                return (T) comment;
+            case AbstractTag.GENRE:
+                return (T) String.valueOf(genre);
+            case AbstractTag.TRACK_NUMBER:
+                return (T) String.valueOf(trackNumber);
+            default:
+                return null;
+        }
     }
 
     @Override
     public void removeField(String fieldId) {
-        if (fieldId.equals(AbstractTag.TITLE))        title   = " ".repeat(30);
-        if (fieldId.equals(AbstractTag.ARTIST))       artist  = " ".repeat(30);
-        if (fieldId.equals(AbstractTag.ALBUM))        album   = " ".repeat(30);
-        if (fieldId.equals(AbstractTag.YEAR))         year    = " ".repeat(4);
-        if (fieldId.equals(AbstractTag.COMMENT))      comment = " ".repeat(30);
-        if (fieldId.equals(AbstractTag.GENRE))        setGenre(UNKNOWN);
-        if (fieldId.equals(AbstractTag.TRACK_NUMBER)) setAlbumTrack(0);
+        switch (fieldId) {
+            case AbstractTag.TITLE:
+                title = "";
+                break;
+            case AbstractTag.ARTIST:
+                artist = "";
+                break;
+            case AbstractTag.ALBUM:
+                album = "";
+                break;
+            case AbstractTag.YEAR:
+                year = "";
+                break;
+            case AbstractTag.COMMENT:
+                comment = "";
+                break;
+            case AbstractTag.GENRE:
+                genre = (byte) UNKNOWN;
+                break;
+            case AbstractTag.TRACK_NUMBER:
+                trackNumber = 0;
+                break;
+        }
     }
 
     @Override
     public String toString() {
         return String.format(
-                "title: %s\nartist: %s\nalbum: %s\nyear: %s\ncomment: %s\ntrack:%d\nversion: %d",
-                getTitle(), getArtist(), getAlbum(), getYear(), getComment(), getTrackNumber(), getVersion()
+                "title: %s\nartist: %s\nalbum: %s\nyear: %s\ncomment: %s\ntrack:%d\ngenre:%d\nversion: %d",
+                getTitle(), getArtist(), getAlbum(), getYear(), getComment(), getTrackNumber(), getGenre(), getVersion()
         );
     }
 
@@ -501,53 +545,49 @@ public class ID3V1Tag extends ID3Tag {
     }
 
     public int getGenre() {
-        return Byte.toUnsignedInt(genre);
+        return toUnsignedInt(genre);
     }
 
     public int getTrackNumber() {
-        return Byte.toUnsignedInt(trackNumber);
+        return toUnsignedInt(trackNumber);
     }
 
     public void setTitle(String title) {
-        if (title.length() > 30) {
-            this.title = title.substring(0, 30);
-            return;
-        }
-        this.title = title + " ".repeat(30 - title.length());
+        this.title = title;
     }
 
     public void setArtist(String artist) {
-        if (artist.length() > 30) {
-            this.artist = artist.substring(0, 30);
-            return;
-        }
-        this.artist = artist + " ".repeat(30 - artist.length());
+        this.artist = artist;
     }
 
     public void setAlbum(String album) {
-        if (album.length() > 30) {
-            this.album = album.substring(0, 30);
-            return;
-        }
-        this.album = album + " ".repeat(30 - album.length());
+        this.album = album;
     }
 
     public void setYear(String year) {
-        if (year.length() > 4) {
-            this.year = year.substring(0, 4);
-            return;
-        }
-        this.year = year + " ".repeat(4 - year.length());
+        this.year = year;
     }
 
     public void setComment(String comment) {
-        if (comment.length() > 30) comment = comment.substring(0, 30);
-        this.comment = comment + " ".repeat(30 - comment.length());
+        this.comment = comment;
+    }
+
+    public void setGenre(String genre) {
+        if (genre.isBlank()) return;
+        if (isNumeric(genre)) {
+            int id3Genre = Integer.parseInt(genre);
+            setGenre(id3Genre < 0 || id3Genre > 255 ? UNKNOWN : id3Genre);
+            return;
+        }
+        int genreIndex = Arrays.asList(GENRES).indexOf(genre);
+        if (genreIndex != -1) {
+            setGenre(genreIndex);
+        }
     }
 
     public void setGenre(int genre) {
-        if (genre > 0 && genre < 256) {
-            this.genre = (byte) genre;
+        if (genre >= 0 && genre < 256) {
+            this.genre = (byte) Math.min(genre, UNKNOWN);
             return;
         }
         throw new IllegalArgumentException("Invalid genre: " + genre);
@@ -561,29 +601,28 @@ public class ID3V1Tag extends ID3Tag {
         throw new IllegalArgumentException("Invalid track number: " + trackNumber);
     }
 
+    private static byte[] padBuffer(byte[] buffer, int size) {
+        return buffer.length == size ? buffer : Arrays.copyOf(buffer, size);
+    }
+
     @Override
     public byte[] assemble(byte version) {
 
         if (version != ID3V1 && version != ID3V1_1) {
             throw new IllegalArgumentException("Invalid version number: " + version);
         }
-        if (version == ID3V1_1 && comment.length() > 28) {
-            comment = comment.substring(0, 28);
-        }
 
         this.version = version;
         byte[] tag   = new byte[TAG_SIZE];
 
         byte[] tagIdBytes   = ID.getBytes(StandardCharsets.ISO_8859_1);
-        byte[] titleBytes   = title.getBytes(StandardCharsets.ISO_8859_1);
-        byte[] artistBytes  = artist.getBytes(StandardCharsets.ISO_8859_1);
-        byte[] albumBytes   = album.getBytes(StandardCharsets.ISO_8859_1);
-        byte[] yearBytes    = year.getBytes(StandardCharsets.ISO_8859_1);
-        byte[] commentBytes = comment.getBytes(StandardCharsets.ISO_8859_1);
-
-        if (version == ID3V1_1) {
-            commentBytes = Arrays.copyOf(commentBytes, commentBytes.length + 1);
-        }
+        byte[] titleBytes   = padBuffer(title.getBytes(StandardCharsets.ISO_8859_1),  30);
+        byte[] artistBytes  = padBuffer(artist.getBytes(StandardCharsets.ISO_8859_1), 30);
+        byte[] albumBytes   = padBuffer(album.getBytes(StandardCharsets.ISO_8859_1),  30);
+        byte[] yearBytes    = padBuffer(year.getBytes(StandardCharsets.ISO_8859_1),    4);
+        byte[] commentBytes = padBuffer(
+                comment.getBytes(StandardCharsets.ISO_8859_1), version == ID3V1_1 ? 28 : 30
+        );
 
         System.arraycopy(tagIdBytes,   0, tag, ID_OFFSET,      tagIdBytes.length);
         System.arraycopy(titleBytes,   0, tag, TITLE_OFFSET,   titleBytes.length);
@@ -591,6 +630,7 @@ public class ID3V1Tag extends ID3Tag {
         System.arraycopy(albumBytes,   0, tag, ALBUM_OFFSET,   albumBytes.length);
         System.arraycopy(yearBytes,    0, tag, YEAR_OFFSET,    yearBytes.length);
         System.arraycopy(commentBytes, 0, tag, COMMENT_OFFSET, commentBytes.length);
+        System.out.println(COMMENT_OFFSET + commentBytes.length);
 
         if (version == ID3V1_1) {
             tag[TRACK_NUMBER] = trackNumber;

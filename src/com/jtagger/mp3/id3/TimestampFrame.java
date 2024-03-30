@@ -254,7 +254,8 @@ public class TimestampFrame extends TextFrame {
             if ((frameHeader.getVersion() == ID3V2_3 && !V23_IDENTIFIERS.contains(frameHeader.getIdentifier())) ||
                 (frameHeader.getVersion() == ID3V2_4 && !V24_IDENTIFIERS.contains(frameHeader.getIdentifier())))
             {
-                throw new IllegalArgumentException("Invalid identifier " + frameHeader.getIdentifier());
+                throw new IllegalArgumentException("Invalid identifier " +
+                        frameHeader.getIdentifier() + ", version: " + frameHeader.getVersion());
             }
             header = frameHeader;
             return this;

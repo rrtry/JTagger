@@ -10,8 +10,7 @@ public class VBRIHeaderParser {
 
     public VBRIHeader parse(MpegFrame frame) {
 
-        int offset = 0;
-
+        int offset    = 0;
         byte[] header = Arrays.copyOfRange(frame.getFrameBody(), 32, 32 + 18);
         byte[] magic  = Arrays.copyOfRange(header, offset, 4); offset += 4;
 
@@ -20,20 +19,11 @@ public class VBRIHeaderParser {
             return null;
         }
 
-        short version = toUInt16BE(Arrays.copyOfRange(header, offset, 2));
-        offset += 2;
-
-        float delay = intBitsToFloat(toUInt16BE(Arrays.copyOfRange(header, offset, 2)));
-        offset += 2;
-
-        short quality = toUInt16BE(Arrays.copyOfRange(header, offset, 2));
-        offset += 2;
-
-        int totalBytes = toUInt32BE(Arrays.copyOfRange(header, offset, 4));
-        offset += 4;
-
-        int totalFrames = toUInt32BE(Arrays.copyOfRange(header, offset, 4));
-        offset += 4;
+        short version   = toUInt16BE(Arrays.copyOfRange(header, offset, offset += 2));
+        float delay     = intBitsToFloat(toUInt16BE(Arrays.copyOfRange(header, offset, offset += 2)));
+        short quality   = toUInt16BE(Arrays.copyOfRange(header, offset, offset += 2));
+        int totalBytes  = toUInt32BE(Arrays.copyOfRange(header, offset, offset += 4));
+        int totalFrames = toUInt32BE(Arrays.copyOfRange(header, offset, offset += 4));
 
         return new VBRIHeader(
                 version,

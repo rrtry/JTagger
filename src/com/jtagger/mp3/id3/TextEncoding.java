@@ -17,14 +17,27 @@ public class TextEncoding {
     public static final byte ENCODING_UTF_16_BE = 0x02;
     public static final byte ENCODING_UTF_8     = 0x03;
 
+    public static boolean isNumeric(String s) {
+        if (s.isBlank()) {
+            return false;
+        }
+        for (int i = 0; i < s.length(); i++) {
+            char ch = s.charAt(i);
+            if (ch < '0' || ch > '9') {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public static String getString(byte[] buffer, int from, int length, byte encoding) {
         return new String(
                 Arrays.copyOfRange(
                         buffer,
                         from,
-                        from + length - (encoding == ENCODING_UTF_16 || encoding == ENCODING_UTF_16_BE ? 2 : 1)),
+                        from + length),
                 TextEncoding.getCharset(encoding)
-        );
+        ).replace("\0", "");
     }
 
     public static int getStringLength(byte[] bytes, int offset, byte encoding) {

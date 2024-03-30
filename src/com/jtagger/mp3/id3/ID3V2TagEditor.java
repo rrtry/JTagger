@@ -26,7 +26,7 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
 
         originalSize = 0;
         hasID3v1     = false;
-        isTagPresent = false;
+        hasTag = false;
 
         headerParser = new TagHeaderParser();
         frameParser  = new FrameParser();
@@ -35,21 +35,25 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
         if ((tag = tagParser.parseTag(file)) != null) {
 
             TagHeader header = tag.getTagHeader();
-            isTagPresent = true;
+            hasTag       = true;
             originalSize = header.getTagSize();
             hasFooter    = header.hasFooter();
 
             if (frameParser.getPaddingOffset() != 0 && hasFooter) {
                 throw new IllegalStateException("Tag cannot have both padding and footer");
             }
-            return;
         }
 
         ID3V1TagParser parser = new ID3V1TagParser();
         ID3V1Tag id3V1Tag = parser.parseTag(file);
-        if (id3V1Tag != null) {
-            hasID3v1 = true;
-            tag = ID3V2Tag.fromID3V1Tag(id3V1Tag, ID3V2Tag.ID3V2_3);
+
+        hasID3v1 = id3V1Tag != null;
+        if (hasID3v1) {
+            if (tag != null) {
+                tag.mergeWithID3V1(id3V1Tag);
+            } else {
+                tag = ID3V2Tag.fromID3V1Tag(id3V1Tag, ID3V2Tag.ID3V2_3);
+            }
         }
     }
 
@@ -80,7 +84,7 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
         if (tag != null) {
 
             byte[] tagBuffer = tag.getBytes();
-            if (isTagPresent && !hasFooter) {
+            if (hasTag && !hasFooter) {
 
                 int tagData = tagBuffer.length - HEADER_LENGTH;
                 int maxPad  = BytesIO.getPadding((int) file.length());
@@ -100,10 +104,10 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
             }
 
             int headers = hasFooter ? HEADER_LENGTH * 2 : HEADER_LENGTH;
-            int length  = isTagPresent ? tagBuffer.length - HEADER_LENGTH + padding : tagBuffer.length + padding;
+            int length  = hasTag ? tagBuffer.length - HEADER_LENGTH + padding : tagBuffer.length + padding;
 
             int diff = length - (originalSize + (hasFooter ? HEADER_LENGTH : 0));
-            int from = isTagPresent ? originalSize + headers : 0;
+            int from = hasTag ? originalSize + headers : 0;
             int to   = from + diff;
 
             BytesIO.moveBlock(file, from, to, diff, (int) file.length() - from);
@@ -115,7 +119,7 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
                     SIZE_OFFSET
             );
         }
-        else if (isTagPresent) {
+        else if (hasTag) {
             int totalSize = originalSize + HEADER_LENGTH * (hasFooter ? 2 : 1);
             BytesIO.moveBlock(
                     file,

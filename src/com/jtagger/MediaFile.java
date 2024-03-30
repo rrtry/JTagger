@@ -32,8 +32,9 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements A
     @SuppressWarnings("unchecked")
     public void scan(File fileObj, String accessMode) throws IOException {
 
-        if (tagEditor != null) close();
-        if (!fileObj.isFile()) return;
+        if (tagEditor != null) {
+            close();
+        }
 
         RandomAccessFile file = new RandomAccessFile(fileObj.getAbsolutePath(), accessMode);
         String mimeType = contentTypeDetector.getFileContentType(file);
@@ -44,35 +45,50 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements A
         }
 
         tagEditor = getEditor(mimeType);
-        if (tagEditor == null) return;
         tagEditor.load(file, mimeType);
 
         if (streamInfo == null) {
             streamInfoParser = getParser(mimeType);
-            streamInfo       = streamInfoParser.parseStreamInfo(file);
+            streamInfo = streamInfoParser.parseStreamInfo(file);
         }
     }
 
     @SuppressWarnings("rawtypes")
     protected AbstractTagEditor getEditor(String mimeType) {
-        if (mimeType.equals(MPEG_MIME_TYPE))       return new ID3V2TagEditor();
-        if (mimeType.equals(FLAC_MIME_TYPE))       return new FlacTagEditor();
-        if (mimeType.equals(OGG_VORBIS_MIME_TYPE)) return new OggVorbisTagEditor();
-        if (mimeType.equals(OGG_OPUS_MIME_TYPE))   return new OggOpusTagEditor();
-        if (mimeType.equals(OGG_FLAC_MIME_TYPE))   return new OggFlacTagEditor();
-        if (mimeType.equals(M4A_MIME_TYPE))        return new MP4Editor();
-        return null;
+        switch (mimeType) {
+            case MPEG_MIME_TYPE:
+                return new ID3V2TagEditor();
+            case FLAC_MIME_TYPE:
+                return new FlacTagEditor();
+            case OGG_VORBIS_MIME_TYPE:
+                return new OggVorbisTagEditor();
+            case OGG_OPUS_MIME_TYPE:
+                return new OggOpusTagEditor();
+            case OGG_FLAC_MIME_TYPE:
+                return new OggFlacTagEditor();
+            case M4A_MIME_TYPE:
+                return new MP4Editor();
+            default:
+                return null;
+        }
     }
 
     @SuppressWarnings("rawtypes")
     protected StreamInfoParser getParser(String mimeType) {
-        if (mimeType.equals(MPEG_MIME_TYPE))       return new MpegStreamInfoParser((ID3V2Tag) getTag());
-        if (mimeType.equals(FLAC_MIME_TYPE))       return ((FlacTagEditor) tagEditor).getParser();
-        if (mimeType.equals(M4A_MIME_TYPE))        return ((MP4Editor) tagEditor).getParser();
-        if (mimeType.equals(OGG_VORBIS_MIME_TYPE)) return (StreamInfoParser) ((OggTagEditor) tagEditor).getParser();
-        if (mimeType.equals(OGG_OPUS_MIME_TYPE))   return (StreamInfoParser) ((OggTagEditor) tagEditor).getParser();
-        if (mimeType.equals(OGG_FLAC_MIME_TYPE))   return (StreamInfoParser) ((OggTagEditor) tagEditor).getParser();
-        return null;
+        switch (mimeType) {
+            case MPEG_MIME_TYPE:
+                return new MpegStreamInfoParser((ID3V2Tag) getTag());
+            case FLAC_MIME_TYPE:
+                return ((FlacTagEditor) tagEditor).getParser();
+            case M4A_MIME_TYPE:
+                return ((MP4Editor) tagEditor).getParser();
+            case OGG_VORBIS_MIME_TYPE:
+            case OGG_OPUS_MIME_TYPE:
+            case OGG_FLAC_MIME_TYPE:
+                return (StreamInfoParser) ((OggTagEditor) tagEditor).getParser();
+            default:
+                return null;
+        }
     }
 
     public void setTag(T tag) {

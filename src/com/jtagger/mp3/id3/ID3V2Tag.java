@@ -9,6 +9,7 @@ import java.time.format.DateTimeParseException;
 import java.util.*;
 
 import static com.jtagger.mp3.id3.AbstractFrame.*;
+import static com.jtagger.mp3.id3.ID3V1Tag.ID3V1_1;
 import static com.jtagger.mp3.id3.TimestampFrame.DATE_FORMAT_PATTERN;
 import static com.jtagger.mp3.id3.TagHeaderParser.HEADER_LENGTH;
 import static com.jtagger.mp3.id3.TextEncoding.ENCODING_LATIN_1;
@@ -199,7 +200,7 @@ public class ID3V2Tag extends ID3Tag {
     }
 
     private void setTYER(String year) {
-        setFrame(TimestampFrame.createInstance(AbstractFrame.YEAR, ID3V2_4, year));
+        setFrame(TimestampFrame.createInstance(AbstractFrame.YEAR, ID3V2_3, year));
     }
 
     private void setTDRC(String year) {
@@ -346,6 +347,27 @@ public class ID3V2Tag extends ID3Tag {
         return frameId.equals(AbstractFrame.COMMENT) || frameId.equals(AbstractFrame.PICTURE);
     }
 
+    public void mergeWithID3V1(ID3V1Tag id3v1) {
+
+        String[] fields = new String[] {
+                AbstractTag.TITLE, AbstractTag.ARTIST, AbstractTag.ALBUM,
+                AbstractTag.YEAR, AbstractTag.COMMENT, AbstractTag.TRACK_NUMBER
+        };
+
+        String value;
+        int length = id3v1.getVersion() == ID3V1_1 ? 6 : 5;
+
+        for (int i = 0; i < length; i++) {
+            String field = fields[i];
+            if (getFrameFromFieldName(field) != null) {
+                value = id3v1.getFieldValue(field);
+                if (!value.isBlank()) {
+                    setFieldValue(field, value);
+                }
+            }
+        }
+    }
+
     private static void convertToID3V23Tag(ID3V2Tag tag) {
 
         TimestampFrame timestampFrame   = tag.getFrame(AbstractFrame.RECORDING_TIME);
@@ -473,7 +495,7 @@ public class ID3V2Tag extends ID3Tag {
                 .setAlbum(id3v1Tag.getAlbum())
                 .setArtist(id3v1Tag.getArtist());
 
-        if (id3v1Tag.getVersion() == ID3V1Tag.ID3V1_1) {
+        if (id3v1Tag.getVersion() == ID3V1_1) {
             builder = builder.setAlbumTrack(String.valueOf(id3v1Tag.getTrackNumber()));
         }
         return builder.build(version);

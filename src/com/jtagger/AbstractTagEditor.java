@@ -7,7 +7,7 @@ public abstract class AbstractTagEditor<T extends AbstractTag> {
 
     protected RandomAccessFile file;
     protected T tag;
-    protected boolean isTagPresent = false;
+    protected boolean hasTag = false;
 
     protected String mimeType;
 
