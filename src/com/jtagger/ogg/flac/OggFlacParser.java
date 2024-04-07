@@ -32,7 +32,7 @@ public class OggFlacParser extends OggParser implements StreamInfoParser<StreamI
 
         for (int i = 0; i < headerPackets; i++) {
 
-            byte[] packet = packets.get(i + 1).getPacketDataTruncated();
+            byte[] packet = packets.get(i + 1).getData();
             int index     = 0;
 
             byte blockHeader = packet[index++];
@@ -60,7 +60,7 @@ public class OggFlacParser extends OggParser implements StreamInfoParser<StreamI
         if (streamInfoBlock != null) return streamInfoBlock;
         parsePackets(parsePages(file));
 
-        byte[] mappingPacket = packets.get(0).getPacketDataTruncated();
+        byte[] mappingPacket = packets.get(0).getData();
         int index = 0;
 
         if (mappingPacket[index++] != 0x7F) {
@@ -97,7 +97,7 @@ public class OggFlacParser extends OggParser implements StreamInfoParser<StreamI
 
         int streamLength = 0;
         for (int i = packets.size() - 1; i > headerPackets - 1; i--) {
-            streamLength += packets.get(i).getPacketDataTruncated().length;
+            streamLength += packets.get(i).getData().length;
         }
 
         streamInfoBlock.setTotalSamples((int) pages.get(pages.size() - 1).getHeader().getGranulePosition());

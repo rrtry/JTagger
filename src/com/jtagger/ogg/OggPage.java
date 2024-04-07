@@ -3,6 +3,7 @@ package com.jtagger.ogg;
 import com.jtagger.Component;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static com.jtagger.utils.IntegerUtils.fromUInt32LE;
 
@@ -88,6 +89,12 @@ public class OggPage implements Component {
         this.header = new OggPageHeader();
     }
 
+    public OggPage(int serial, int sequenceNumber) {
+        this();
+        header.setSerialNumber(serial);
+        header.setSequenceNumber(sequenceNumber);
+    }
+
     public OggPage(OggPageHeader header, byte[] data) {
         this.index    = data.length;
         this.header   = header;
@@ -118,15 +125,13 @@ public class OggPage implements Component {
         );
     }
 
-    void addPageData(byte[] data) {
-        System.arraycopy(data, 0, pageData, index, data.length);
-        index += data.length;
+    private void write(byte[] buffer) {
+        System.arraycopy(buffer, 0, pageData, index, buffer.length);
+        index += buffer.length;
     }
 
     public static int computePageChecksum(byte[] bytes) {
-
         long checksum = 0;
-
         for (byte b : bytes) {
             byte index = (byte) ((checksum ^ (b << 24)) >> 24);
             checksum = ((checksum << 8) ^ (CRC_LOOKUP[Byte.toUnsignedInt(index)]));
@@ -134,97 +139,92 @@ public class OggPage implements Component {
         return (int) checksum;
     }
 
-    public static ArrayList<OggPage> paginatePackets(
-            ArrayList<OggPacket> packets,
+    public static ArrayList<OggPage> fromPackets(
+            List<OggPacket> packets,
             final int serial,
             final int sequenceNumber)
     {
-
         int pageSequence = sequenceNumber;
         ArrayList<OggPage> pages = new ArrayList<>();
+        OggPage page = new OggPage(serial, pageSequence++);
 
-        OggPage page = new OggPage();
-        page.getHeader().setSerialNumber(serial);
-        page.getHeader().setSequenceNumber(pageSequence++);
-
+        boolean addPage = false;
         for (OggPacket packet : packets) {
 
-            byte[] packetData   = packet.getPacketDataTruncated();
-            int packetBytesRead = 0;
-            int packetSize      = packet.getPacketDataTruncated().length;
+            byte[] packetBuffer = packet.getData();
+            byte[] buffer = packetBuffer;
 
-            if (!page.getHeader().hasAvailableSegments()) {
+            int length  = packetBuffer.length;
+            int written = 0;
+            addPage = false;
 
-                page = new OggPage();
-                page.getHeader().setSerialNumber(serial);
-                page.getHeader().setSequenceNumber(pageSequence++);
-                page.getHeader().setFreshPage(true);
-            }
+            while (written < length) {
 
-            while (packetBytesRead < packetSize) {
+                int fullSegments = buffer.length / SEGMENT_MAX_SIZE;
+                int remaining = buffer.length % SEGMENT_MAX_SIZE;
 
-                final int chunkBytesRead        = page.addPacket(packetData);
-                final int remaining             = packetData.length - chunkBytesRead;
-                final boolean isChunkFullyRead  = remaining == 0;
+                int[] result = page.writePacket(
+                        buffer,
+                        fullSegments,
+                        remaining
+                );
 
-                packetBytesRead += chunkBytesRead;
+                int size     = result[0];
+                int segments = result[1];
+                written += size;
 
-                if (!isChunkFullyRead) {
-
-                    packetData = Arrays.copyOfRange(packet.getPacketDataTruncated(), packetBytesRead, packetSize);
-                    if (!pages.contains(page)) pages.add(page);
-
-                    page = new OggPage();
-                    page.getHeader().setSerialNumber(serial);
-                    page.getHeader().setSequenceNumber(pageSequence++);
-                    page.getHeader().setFreshPage(false);
+                boolean newPage = !page.getHeader().hasAvailableSegments();
+                if (newPage) {
+                    pages.add(page);
+                    page = new OggPage(serial, pageSequence++);
+                    page.getHeader().setFreshPage(segments - (fullSegments + 1) == 0);
                 }
-            }
-
-            if (packetSize % 255 == 0) {
-                if (page.getHeader().hasAvailableSegments()) {
-                    page.getHeader().addSegment(0);
+                if (written == length) {
+                    if (remaining == 0 &&
+                        segments - (fullSegments + 1) == -1)
+                    {
+                        page.getHeader().addSegment(0);
+                    }
+                    if (!newPage) {
+                        addPage = true;
+                    }
                 } else {
-
-                    if (!pages.contains(page)) pages.add(page);
-
-                    page = new OggPage();
-                    page.getHeader().setSerialNumber(serial);
-                    page.getHeader().setFreshPage(false);
-                    page.getHeader().setSequenceNumber(pageSequence++);
-                    page.getHeader().addSegment(0);
+                    buffer = Arrays.copyOfRange(
+                            packetBuffer, written, packetBuffer.length
+                    );
                 }
             }
-            if (!pages.contains(page)) {
-                pages.add(page);
-            }
+        }
+        if (addPage && page.getHeader().getPageSegments() != 0) {
+            pages.add(page);
         }
         return pages;
     }
 
-    public int addPacket(byte[] packet) {
+    public int[] writePacket(
+            byte[] packet,
+            int fullSegments,
+            int remaining)
+    {
+        int totalSize = 0;
+        int segments  = 0;
 
-        int bytesRead = packet.length;
-
-        for (int i = 0; i < packet.length; i += SEGMENT_MAX_SIZE) {
-
-            int remaining   = packet.length - i;
-            int lacingValue = Math.min(remaining, SEGMENT_MAX_SIZE);
-
-            byte[] segment = Arrays.copyOfRange(packet, i, i + lacingValue);
-
-            if (header.addSegment(lacingValue)) {
-                addPageData(segment);
-                continue;
+        for (int i = 0; i < fullSegments; i++) {
+            if (header.addSegment(SEGMENT_MAX_SIZE)) {
+                totalSize += SEGMENT_MAX_SIZE;
+                segments++;
             }
-            bytesRead = i;
-            break;
         }
-        return bytesRead;
-    }
-
-    public void setPageData(byte[] pageData) {
-        this.pageData = pageData;
+        if (header.addSegment(remaining)) {
+            totalSize += remaining;
+            segments++;
+        }
+        write(totalSize < packet.length ?
+                Arrays.copyOf(packet, totalSize) : packet);
+        return new int[] {
+                totalSize,
+                segments
+        };
     }
 
     public void setHeader(OggPageHeader header) {
@@ -235,12 +235,10 @@ public class OggPage implements Component {
         return header;
     }
 
-    public byte[] getPageData() {
-        return pageData;
-    }
-
-    public byte[] getPageDataTruncated() {
-        return Arrays.copyOf(pageData, index);
+    public byte[] getData() {
+        return index < pageData.length ?
+                Arrays.copyOf(pageData, index) :
+                pageData;
     }
 
     @Override
@@ -250,18 +248,18 @@ public class OggPage implements Component {
         header.assemble();
 
         byte[] headerBytes = header.getBytes();
-        byte[] pageData    = getPageDataTruncated();
+        byte[] pageData    = getData();
 
-        bytes = new byte[headerBytes.length + getPageDataTruncated().length];
+        bytes = new byte[headerBytes.length + getData().length];
 
         System.arraycopy(headerBytes, 0, bytes, 0, headerBytes.length);
         System.arraycopy(pageData, 0, bytes, headerBytes.length, pageData.length);
 
         final int checksumOffset = 22;
-        final int crc32          = computePageChecksum(bytes);
+        final int checksumValue  = computePageChecksum(bytes);
 
-        getHeader().setChecksum(crc32);
-        System.arraycopy(fromUInt32LE(crc32), 0, bytes, checksumOffset, Integer.BYTES);
+        header.setChecksum(checksumValue);
+        System.arraycopy(fromUInt32LE(checksumValue), 0, bytes, checksumOffset, Integer.BYTES);
         return bytes;
     }
 

@@ -14,7 +14,7 @@ public class OggFlacTagEditor extends OggTagEditor {
 
     @Override
     public void commit() throws IOException {
-        byte[] page = pages.get(0).getPageData();
+        byte[] page = pages.get(0).getData();
         System.arraycopy(fromUInt16BE(1), 0, page, HEADER_PACKETS_OFFSET, Short.BYTES);
         page[FLAC_BLOCK_HEADER_OFFSET] &= ~0x80;
         super.commit();

@@ -6,6 +6,7 @@ import com.jtagger.ogg.flac.OggFlacParser;
 import com.jtagger.ogg.opus.OggOpusParser;
 import com.jtagger.ogg.vorbis.OggVorbisParser;
 import com.jtagger.ogg.vorbis.VorbisComments;
+import com.jtagger.utils.BytesIO;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,10 +45,8 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
 
     @Override
     protected void parseTag() throws IOException {
-
-        this.parser = getOggParser(mimeType);
-        this.tag    = parser.parseTag(file);
-
+        this.parser  = getOggParser(mimeType);
+        this.tag     = parser.parseTag(file);
         this.pages   = parser.parsePages(file);
         this.packets = parser.parsePackets(pages);
     }
@@ -55,33 +54,56 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
     @Override
     public void commit() throws IOException {
 
-        final long originalFileSize = file.length();
-        final int PCMPageIndex      = parser.getPCMPageIndex();
-        final int serialNumber      = parser.getSerialNumber();
-        final int startingSeqNum    = 1;
+        ArrayList<OggPage> pages = new ArrayList<>();
+        pages.add(this.pages.get(0));
+        pages.addAll(OggPage.fromPackets(
+                getHeaderPackets(),
+                parser.getSerialNumber(),
+                1
+        ));
 
-        ArrayList<OggPage> paginatedPackets;
-        ArrayList<OggPage> oggPages  = new ArrayList<>();
+        int size = 0;
+        for (OggPage page : pages) {
+            size += page.assemble().length;
+        }
 
-        paginatedPackets = OggPage.paginatePackets(getHeaderPackets(), serialNumber, startingSeqNum);
+        if (pages.size() != parser.headerPages()) {
 
-        oggPages.add(pages.get(0));
-        oggPages.addAll(paginatedPackets);
-        oggPages.addAll(pages.subList(PCMPageIndex, pages.size()));
+            int diff = pages.size() - parser.headerPages();
+            file.seek(parser.getStreamOffset());
 
+            long position;
+            long fLength = file.length();
+
+            while (file.getFilePointer() < fLength) {
+
+                position = file.getFilePointer();
+                OggPage page = parser.parsePage(file, false);
+                OggPageHeader header = page.getHeader();
+                header.setSequenceNumber(header.getPageSequenceNumber() + diff);
+
+                file.seek(position);
+                file.write(page.assemble());
+            }
+        }
+        int diff = size - parser.getStreamOffset();
+        if (diff != 0) {
+
+            int from = parser.getStreamOffset();
+            int to   = from + diff;
+
+            BytesIO.moveBlock(
+                    file,
+                    from,
+                    to,
+                    diff,
+                    (int) file.length() - from
+            );
+        }
         file.seek(0);
-
-        int totalSize = 0;
-        for (int i = 0; i < oggPages.size(); i++) {
-
-            OggPage page = oggPages.get(i);
-            page.getHeader().setSequenceNumber(i);
-            page.assemble();
-
-            totalSize += page.getBytes().length;
+        for (OggPage page : pages) {
             file.write(page.getBytes());
         }
-        if (totalSize < originalFileSize) file.setLength(totalSize);
     }
 
     @Override

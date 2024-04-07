@@ -60,7 +60,9 @@ public class OggPageHeader implements Component {
     }
 
     public byte[] getSegmentTable() {
-        return Arrays.copyOf(segmentTable, pageSegments);
+        return pageSegments < segmentTable.length ?
+                Arrays.copyOf(segmentTable, pageSegments) :
+                segmentTable;
     }
 
     public void setFreshPage(boolean isFreshPage) {

@@ -16,33 +16,26 @@ public class OggPacket {
         this.packetData = packetData;
     }
 
-    void appendPacketData(byte[] appendedData) {
+    void write(byte[] buffer) {
 
-        if (appendedData.length <= packetData.length - index) {
-            System.arraycopy(appendedData, 0, packetData, index, appendedData.length);
-            index += appendedData.length;
+        if (buffer.length <= packetData.length - index) {
+            System.arraycopy(buffer, 0, packetData, index, buffer.length);
+            index += buffer.length;
             return;
         }
 
-        packetData = Arrays.copyOf(packetData, index + appendedData.length);
-        System.arraycopy(appendedData, 0, packetData, index, appendedData.length);
-        index += appendedData.length;
+        packetData = Arrays.copyOf(packetData, index + buffer.length);
+        System.arraycopy(buffer, 0, packetData, index, buffer.length);
+        index += buffer.length;
     }
 
-    public void setPacketData(byte[] packetData) {
-        this.index      = packetData.length;
-        this.packetData = packetData;
-    }
-
-    public byte[] getPacketData() {
-        return packetData;
-    }
-
-    public byte[] getPacketDataTruncated() {
-        return Arrays.copyOf(packetData, index);
+    public byte[] getData() {
+        return index < packetData.length ?
+                Arrays.copyOf(packetData, index) :
+                packetData;
     }
 
     public int getSize() {
-        return getPacketDataTruncated().length;
+        return getData().length;
     }
 }

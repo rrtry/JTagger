@@ -44,7 +44,7 @@ public class OggVorbisParser extends OggParser implements StreamInfoParser<Vorbi
         if (packets.size() < 2) return null;
         OggPacket oggPacket = packets.get(1);
 
-        byte[] packet = oggPacket.getPacketDataTruncated();
+        byte[] packet = oggPacket.getData();
         byte headerValid = verifyHeader(packet, VorbisHeader.HEADER_TYPE_COMMENT);
 
         if (headerValid != 0x0) {
@@ -67,7 +67,7 @@ public class OggVorbisParser extends OggParser implements StreamInfoParser<Vorbi
 
         byte offset = 0;
 
-        byte[] packet    = oggPacket.getPacketDataTruncated();
+        byte[] packet    = oggPacket.getData();
         byte headerValid = verifyHeader(packet, VorbisHeader.HEADER_TYPE_IDENTIFICATION);
 
         if (headerValid != 0x0) {
