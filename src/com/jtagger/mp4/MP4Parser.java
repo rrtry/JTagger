@@ -430,10 +430,16 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
 
                     case "meta":
                         file.skipBytes(4);
+                        isContainer = true;
+                        break;
+
                     case "ilst":
-                        ilstStart = (int) atomStart;
-                        ilstEnd   = (int) atomEnd;
-                        ilstSize  = atomSize;
+                        ilstStart   = (int) atomStart;
+                        ilstEnd     = (int) atomEnd;
+                        ilstSize    = atomSize;
+                        isContainer = true;
+                        break;
+
                     case "moof":
                     case "moov":
                     case "traf":
