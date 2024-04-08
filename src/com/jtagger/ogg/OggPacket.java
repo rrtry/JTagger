@@ -16,17 +16,17 @@ public class OggPacket {
         this.packetData = packetData;
     }
 
-    void write(byte[] buffer) {
+    void write(byte[] buffer, int offset, int length) {
 
-        if (buffer.length <= packetData.length - index) {
-            System.arraycopy(buffer, 0, packetData, index, buffer.length);
-            index += buffer.length;
+        if (length <= packetData.length - index) {
+            System.arraycopy(buffer, offset, packetData, index, length);
+            index += length;
             return;
         }
 
-        packetData = Arrays.copyOf(packetData, index + buffer.length);
-        System.arraycopy(buffer, 0, packetData, index, buffer.length);
-        index += buffer.length;
+        packetData = Arrays.copyOf(packetData, index + length);
+        System.arraycopy(buffer, offset, packetData, index, length);
+        index += length;
     }
 
     public byte[] getData() {

@@ -152,19 +152,19 @@ public class OggPage implements Component {
         for (OggPacket packet : packets) {
 
             byte[] packetBuffer = packet.getData();
-            byte[] buffer = packetBuffer;
-
             int length  = packetBuffer.length;
             int written = 0;
             addPage = false;
 
             while (written < length) {
 
-                int fullSegments = buffer.length / SEGMENT_MAX_SIZE;
-                int remaining = buffer.length % SEGMENT_MAX_SIZE;
+                int left = length - written;
+                int fullSegments = left / SEGMENT_MAX_SIZE;
+                int remaining = left % SEGMENT_MAX_SIZE;
 
                 int[] result = page.writePacket(
-                        buffer,
+                        packetBuffer,
+                        written,
                         fullSegments,
                         remaining
                 );
@@ -188,10 +188,6 @@ public class OggPage implements Component {
                     if (!newPage) {
                         addPage = true;
                     }
-                } else {
-                    buffer = Arrays.copyOfRange(
-                            packetBuffer, written, packetBuffer.length
-                    );
                 }
             }
         }
@@ -203,26 +199,27 @@ public class OggPage implements Component {
 
     public int[] writePacket(
             byte[] packet,
+            int offset,
             int fullSegments,
             int remaining)
     {
-        int totalSize = 0;
-        int segments  = 0;
+        int length   = 0;
+        int segments = 0;
 
         for (int i = 0; i < fullSegments; i++) {
             if (header.addSegment(SEGMENT_MAX_SIZE)) {
-                totalSize += SEGMENT_MAX_SIZE;
+                length += SEGMENT_MAX_SIZE;
                 segments++;
             }
         }
         if (header.addSegment(remaining)) {
-            totalSize += remaining;
+            length += remaining;
             segments++;
         }
-        write(totalSize < packet.length ?
-                Arrays.copyOf(packet, totalSize) : packet);
+        System.arraycopy(packet, offset, pageData, index, length);
+        index += length;
         return new int[] {
-                totalSize,
+                length,
                 segments
         };
     }

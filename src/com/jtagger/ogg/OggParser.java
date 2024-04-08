@@ -156,9 +156,7 @@ abstract public class OggParser implements TagParser<VorbisComments> {
 
                 if (segment < SEGMENT_MAX_SIZE) {
                     if (segment != 0) {
-                        packet.write(Arrays.copyOfRange(
-                                pageData, offset, offset + length
-                        ));
+                        packet.write(pageData, offset, length);
                     }
                     packets.add(packet);
                     offset = length;
@@ -166,9 +164,7 @@ abstract public class OggParser implements TagParser<VorbisComments> {
                     packet = new OggPacket();
                 }
                 else if (i == (segmentTable.length - 1)) {
-                    packet.write(Arrays.copyOfRange(
-                            pageData, offset, offset + length
-                    ));
+                    packet.write(pageData, offset, length);
                 }
             }
         }
