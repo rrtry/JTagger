@@ -271,31 +271,43 @@ public class MP4 extends AbstractTag implements StreamInfo {
         boolean isIntAtom     = INT_ATOMS.contains(atomType);
         boolean isIntPairAtom = INT_PAIR_ATOMS.contains(atomType);
 
-        if (isIntPairAtom) {
+        try {
+            if (isIntPairAtom) {
 
-            String[] ints     = string.split("/");
-            short trackNum    = ints.length == 2 ? Short.parseShort(ints[0]) : Short.parseShort(string);
-            short totalTracks = ints.length == 2 ? Short.parseShort(ints[1]) : 0;
+                String[] ints = string.split("/");
+                int position = 0;
+                int count    = 0;
 
-            TrackNumberAtom trackNumberAtom = addAtom ? new TrackNumberAtom(atomType) : (TrackNumberAtom) itunesAtom;
-            trackNumberAtom.setAtomData(new TrackNumber(trackNum, totalTracks));
-            itunesAtom = trackNumberAtom;
-        }
-        else if (isByteAtom || isIntAtom) {
-            NumberAtom numberAtom = addAtom ? new NumberAtom(atomType) : (NumberAtom) itunesAtom;
-            numberAtom.setAtomData(isByteAtom ? Byte.parseByte(string) : Integer.parseInt(string));
-            numberAtom.setNumberLength((byte) (isByteAtom ? Byte.BYTES : Integer.BYTES));
-            itunesAtom = numberAtom;
-        }
-        else {
-            TextAtom textAtom = addAtom ? new TextAtom(atomType) : (TextAtom) itunesAtom;
-            textAtom.setAtomData(string);
-            itunesAtom = textAtom;
-        }
+                if (ints.length == 2) {
+                    position = Integer.parseInt(ints[0]);
+                    count    = Integer.parseInt(ints[1]);
+                }
+                else if (ints.length == 1) {
+                    position = Integer.parseInt(ints[0]);
+                }
 
-        itunesAtom.assemble();
-        if (addAtom) {
-            ilstAtom.appendChild(itunesAtom);
+                TrackNumberAtom trackNumberAtom = addAtom ? new TrackNumberAtom(atomType) : (TrackNumberAtom) itunesAtom;
+                trackNumberAtom.setAtomData(new TrackNumber(position, count));
+                itunesAtom = trackNumberAtom;
+            }
+            else if (isByteAtom || isIntAtom) {
+                NumberAtom numberAtom = addAtom ? new NumberAtom(atomType) : (NumberAtom) itunesAtom;
+                numberAtom.setAtomData(isByteAtom ? Byte.parseByte(string) : Integer.parseInt(string));
+                numberAtom.setNumberLength((byte) (isByteAtom ? Byte.BYTES : Integer.BYTES));
+                itunesAtom = numberAtom;
+            }
+            else {
+                TextAtom textAtom = addAtom ? new TextAtom(atomType) : (TextAtom) itunesAtom;
+                textAtom.setAtomData(string);
+                itunesAtom = textAtom;
+            }
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            itunesAtom = null;
+        }
+        if (itunesAtom != null) {
+            itunesAtom.assemble();
+            if (addAtom) ilstAtom.appendChild(itunesAtom);
         }
     }
 
