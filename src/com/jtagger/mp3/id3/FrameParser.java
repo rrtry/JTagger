@@ -1,5 +1,7 @@
 package com.jtagger.mp3.id3;
 
+import com.jtagger.AbstractTag;
+
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,12 +53,14 @@ class FrameParser {
         if (TimestampFrame.isValidFrameId(frameId)) {
             frame = new TimestampFrame();
         }
+        else if (frameId.equals(AbstractFrame.GENRE)) {
+            frame = new GenreFrame();
+        }
         else if (frameId.charAt(0) == 'T') {
             frame = new TextFrame();
         }
         else {
             switch (frameId) {
-
                 case AbstractFrame.PICTURE:
                     frame = new AttachedPictureFrame();
                     break;

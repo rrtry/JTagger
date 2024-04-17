@@ -17,6 +17,12 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
     private boolean hasID3v1;
     private boolean hasFooter;
 
+    private void stripID3V1() throws IOException {
+        if (hasID3v1) {
+            file.setLength(file.length() - 128);
+        }
+    }
+
     @Override
     protected final void parseTag() throws IOException {
 
@@ -26,7 +32,7 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
 
         originalSize = 0;
         hasID3v1     = false;
-        hasTag = false;
+        hasTag       = false;
 
         headerParser = new TagHeaderParser();
         frameParser  = new FrameParser();
@@ -46,8 +52,8 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
 
         ID3V1TagParser parser = new ID3V1TagParser();
         ID3V1Tag id3V1Tag = parser.parseTag(file);
-
         hasID3v1 = id3V1Tag != null;
+
         if (hasID3v1) {
             if (tag != null) {
                 tag.mergeWithID3V1(id3V1Tag);
@@ -97,6 +103,7 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
                             file, fromUInt32BE(toSynchSafeInteger(tagData + padding)),
                             SIZE_OFFSET
                     );
+                    stripID3V1();
                     return;
                 } else {
                     padding = BytesIO.PADDING_MIN;
@@ -131,8 +138,6 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
         } else {
             return;
         }
-        if (hasID3v1) {
-            file.setLength(file.length() - 128);
-        }
+        stripID3V1();
     }
 }

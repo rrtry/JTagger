@@ -15,7 +15,7 @@ public abstract class AbstractTagEditor<T extends AbstractTag> {
     abstract public void commit() throws IOException;
     abstract public void setTag(AbstractTag tag);
 
-    protected final void convertTag(AbstractTag from, T to) {
+    protected void convertTag(AbstractTag from, T to) {
 
         AttachedPicture picture = from.getPictureField();
         if (picture != null) to.setPictureField(picture);
@@ -33,7 +33,7 @@ public abstract class AbstractTagEditor<T extends AbstractTag> {
         }
     }
 
-    void load(RandomAccessFile file, String mimeType) throws IOException {
+    public void load(RandomAccessFile file, String mimeType) throws IOException {
 
         if (this.file != null) release();
         this.mimeType = mimeType;

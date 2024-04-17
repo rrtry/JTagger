@@ -4,6 +4,7 @@ import com.jtagger.AbstractTagEditor;
 import com.jtagger.AbstractTag;
 
 import java.io.IOException;
+import static com.jtagger.mp3.id3.ID3V1Tag.ID3V1_1;
 
 public class ID3V1TagEditor extends AbstractTagEditor<ID3V1Tag> {
 
@@ -24,7 +25,7 @@ public class ID3V1TagEditor extends AbstractTagEditor<ID3V1Tag> {
         }
         ID3V1Tag id3v1 = new ID3V1Tag();
         convertTag(tag, id3v1);
-        id3v1.assemble();
+        id3v1.assemble(ID3V1_1);
         this.tag = id3v1;
     }
 

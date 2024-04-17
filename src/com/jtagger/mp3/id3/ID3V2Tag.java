@@ -262,14 +262,13 @@ public class ID3V2Tag extends ID3Tag {
     }
 
     public void setGenre(int genre) {
-        if (genre >= 0 && genre <= ID3V1Tag.UNKNOWN) {
-            String genreString = ID3V1Tag.GENRES[genre];
-            setTextFrame(AbstractFrame.GENRE, genreString, ENCODING_LATIN_1);
+        if (genre >= 0 && genre < ID3V1Tag.UNKNOWN) {
+            setFrame(GenreFrame.newBuilder()
+                    .setHeader(FrameHeader.createFrameHeader(AbstractFrame.GENRE, getVersion()))
+                    .setEncoding(TextEncoding.getEncodingForVersion(getVersion()))
+                    .addGenre(genre)
+                    .build(getVersion()));
         }
-    }
-
-    public void setGenre(String genre) {
-        setTextFrame(AbstractFrame.GENRE, genre, TextEncoding.getEncodingForVersion(getVersion()));
     }
 
     public void setYear(String year) {
@@ -359,7 +358,7 @@ public class ID3V2Tag extends ID3Tag {
 
         for (int i = 0; i < length; i++) {
             String field = fields[i];
-            if (getFrameFromFieldName(field) != null) {
+            if (getFrameFromFieldName(field) == null) {
                 value = id3v1.getFieldValue(field);
                 if (!value.isBlank()) {
                     setFieldValue(field, value);
@@ -516,7 +515,9 @@ public class ID3V2Tag extends ID3Tag {
     protected <T> T getFieldValue(String field) {
         AbstractFrame<T> frame = getFrameFromFieldName(field);
         if (frame == null) return null;
-        return frame.getFrameData();
+        return field.equals(AbstractTag.ID3_GENRE) ?
+                (T) ((TextFrame) frame).getText() :
+                frame.getFrameData();
     }
 
     @Override
@@ -561,6 +562,7 @@ public class ID3V2Tag extends ID3Tag {
                         .setHeader(FrameHeader.createFrameHeader(frameId, getVersion()))
                         .setLanguage("XXX")
                         .setDescription("DEFAULT")
+                        .setText((String) value)
                         .build(getVersion());
                 break;
 
@@ -603,11 +605,6 @@ public class ID3V2Tag extends ID3Tag {
         }
 
         public Builder setGenre(int genre) {
-            ID3V2Tag.this.setGenre(genre);
-            return this;
-        }
-
-        public Builder setGenre(String genre) {
             ID3V2Tag.this.setGenre(genre);
             return this;
         }
