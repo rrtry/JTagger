@@ -33,7 +33,7 @@ public abstract class AbstractTagEditor<T extends AbstractTag> {
         }
     }
 
-    public void load(RandomAccessFile file, String mimeType) throws IOException {
+    void load(RandomAccessFile file, String mimeType) throws IOException {
 
         if (this.file != null) release();
         this.mimeType = mimeType;

@@ -91,7 +91,7 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements A
         }
     }
 
-    public void setTag(T tag) {
+    public void setTag(AbstractTag tag) {
         tagEditor.setTag(tag);
     }
 
