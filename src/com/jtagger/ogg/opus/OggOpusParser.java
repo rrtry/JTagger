@@ -30,13 +30,7 @@ public class OggOpusParser extends OggParser implements StreamInfoParser<OpusIde
     }
 
     private int getBitrate(StreamInfo streamInfo) {
-
-        int length = 0;
-        for (int i = 2; i < packets.size(); i++) {
-            length += packets.get(i).getSize();
-        }
-
-        return (int) Math.ceil((length * 8f) / (getDuration(streamInfo) * 1000f));
+        return (int) Math.ceil((getStreamLength() * 8f) / (getDuration(streamInfo) * 1000f));
     }
 
     @Override
@@ -76,7 +70,6 @@ public class OggOpusParser extends OggParser implements StreamInfoParser<OpusIde
 
             opusHeader.setBitrate(getBitrate(opusHeader));
             opusHeader.setDuration(getDuration(opusHeader));
-
             return opusHeader;
         }
 
@@ -88,10 +81,8 @@ public class OggOpusParser extends OggParser implements StreamInfoParser<OpusIde
                 channelCount, channelMappingFamily, streamCount, coupledCount,
                 preSkip, outputGain, sampleRate, channelMapping, header
         );
-
         opusHeader.setDuration(getDuration(opusHeader));
         opusHeader.setBitrate(getBitrate(opusHeader));
-
         return opusHeader;
     }
 

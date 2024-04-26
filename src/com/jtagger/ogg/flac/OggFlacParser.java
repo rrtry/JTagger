@@ -94,14 +94,8 @@ public class OggFlacParser extends OggParser implements StreamInfoParser<StreamI
 
         StreamInfoBlockParser parser = new StreamInfoBlockParser();
         streamInfoBlock = parser.parse(Arrays.copyOfRange(mappingPacket, index, index + blockLength));
-
-        int streamLength = 0;
-        for (int i = packets.size() - 1; i > headerPackets - 1; i--) {
-            streamLength += packets.get(i).getData().length;
-        }
-
-        streamInfoBlock.setTotalSamples((int) pages.get(pages.size() - 1).getHeader().getGranulePosition());
-        streamInfoBlock.setBitrate(getBitrate(streamInfoBlock, streamLength));
+        streamInfoBlock.setTotalSamples(getTotalSamples());
+        streamInfoBlock.setBitrate(getBitrate(streamInfoBlock, getStreamLength()));
         return streamInfoBlock;
     }
 }

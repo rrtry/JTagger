@@ -17,40 +17,40 @@ abstract public class OggParser implements TagParser<VorbisComments> {
     protected ArrayList<OggPage> pages;
     protected ArrayList<OggPacket> packets;
 
-    private int PCMPageIndex = 3;
+    private int streamLength = 0;
     private int streamOffset = 0;
     private int headerPages  = 0;
+    private int granulePos   = 0;
+
+    private boolean isLastPage = false;
+
+    public int getStreamLength() {
+        return streamLength;
+    }
+
+    public int getTotalSamples() {
+        return granulePos;
+    }
+
+    public int getStreamOffset() {
+        return streamOffset;
+    }
 
     int headerPages() {
         return headerPages;
-    }
-
-    int getStreamOffset() {
-        return streamOffset;
     }
 
     int getSerialNumber() {
         return pages.get(0).getHeader().getSerialNumber();
     }
 
-    int getPCMPageIndex() {
-        return PCMPageIndex;
-    }
-
     protected int getDuration(StreamInfo streamInfo) {
-
-        OggPage lastPage = pages.get(pages.size() - 1);
-        final long totalSamples = lastPage.getHeader().getGranulePosition();
-        final int sampleRate    = streamInfo.getSampleRate();
-
-        return (int) (totalSamples / sampleRate);
+        return getTotalSamples() / streamInfo.getSampleRate();
     }
 
     public OggPage parsePage(RandomAccessFile file, boolean meta) throws IOException {
 
-        int position = (int) file.getFilePointer();
-        int offset   = 0;
-
+        int offset = 0;
         byte[] headerMagic;
         byte[] pageHeader  = new byte[OggPageHeader.OGG_HEADER_SIZE];
         file.read(pageHeader, 0, pageHeader.length);
@@ -73,12 +73,9 @@ abstract public class OggParser implements TagParser<VorbisComments> {
         int pageSegments     = Byte.toUnsignedInt(pageHeader[offset++]);
         int pageDataSize     = 0;
 
-        if (meta && granulePosition > 0) {
-            file.seek(position);
-            return null;
-        }
+        this.granulePos = (int) granulePosition;
+        this.isLastPage = isLastPage;
 
-        byte[] pageData;
         byte[] segmentTable = new byte[pageSegments];
         file.read(segmentTable, 0, pageSegments);
 
@@ -86,21 +83,26 @@ abstract public class OggParser implements TagParser<VorbisComments> {
             pageDataSize += Byte.toUnsignedInt(b);
         }
 
-        pageData = new byte[pageDataSize];
-        file.read(pageData, 0, pageData.length);
+        if (meta && granulePos <= 0 ||
+            !meta && granulePos > 0)
+        {
+            byte[] pageData = new byte[pageDataSize];
+            file.read(pageData, 0, pageData.length);
 
-        OggPageHeader oggPageHeader = new OggPageHeader();
-        oggPageHeader.setFreshPage(isFreshPage);
-        oggPageHeader.setFirstPage(isFirstPage);
-        oggPageHeader.setLastPage(isLastPage);
-        oggPageHeader.setGranulePosition(granulePosition);
-        oggPageHeader.setSerialNumber(serialNumber);
-        oggPageHeader.setSequenceNumber(pageSequence);
-        oggPageHeader.setChecksum(checksum);
-        oggPageHeader.setPageSegments(pageSegments);
-        oggPageHeader.setSegmentTable(segmentTable);
-
-        return new OggPage(oggPageHeader, pageData);
+            OggPageHeader oggPageHeader = new OggPageHeader();
+            oggPageHeader.setFreshPage(isFreshPage);
+            oggPageHeader.setFirstPage(isFirstPage);
+            oggPageHeader.setLastPage(isLastPage);
+            oggPageHeader.setGranulePosition(granulePosition);
+            oggPageHeader.setSerialNumber(serialNumber);
+            oggPageHeader.setSequenceNumber(pageSequence);
+            oggPageHeader.setChecksum(checksum);
+            oggPageHeader.setPageSegments(pageSegments);
+            oggPageHeader.setSegmentTable(segmentTable);
+            return new OggPage(oggPageHeader, pageData);
+        }
+        file.skipBytes(pageDataSize);
+        return null;
     }
 
     public ArrayList<OggPage> parsePages(RandomAccessFile file) {
@@ -111,17 +113,21 @@ abstract public class OggParser implements TagParser<VorbisComments> {
 
             file.seek(0);
             OggPage page;
+
+            long position;
             long fLength = file.length();
 
-            while (file.getFilePointer() < fLength) {
+            while (file.getFilePointer() < fLength && !isLastPage) {
+
+                position = file.getFilePointer();
                 page = parsePage(file, true);
+
                 if (page == null) {
-                    streamOffset = (int) file.getFilePointer();
-                    break;
+                    streamOffset = streamOffset == 0 ? (int) position : streamOffset;
+                    streamLength = (int) (file.length() - streamOffset);
                 }
-                pages.add(page);
-                if (page.getHeader().isLastPage()) {
-                    break;
+                else {
+                    pages.add(page);
                 }
             }
 
