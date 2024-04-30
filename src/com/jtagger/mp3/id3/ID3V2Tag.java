@@ -549,6 +549,12 @@ public class ID3V2Tag extends ID3Tag {
         //"TDEN", "TDOR", "TDRC", "TDRL", "TDTG" id3v2.3
         switch (frameId) {
 
+            case "TCON":
+                frame = (AbstractFrame<T>) GenreFrame.newBuilder()
+                        .setHeader(FrameHeader.createFrameHeader(frameId, getVersion()))
+                        .setText((String) value)
+                        .build(getVersion());
+                break;
             case "APIC":
                 removeFrameById(frameId);
                 frame = (AbstractFrame<T>) AttachedPictureFrame.newBuilder()

@@ -34,9 +34,9 @@ public class GenreFrame extends TextFrame {
     }
 
     @Override
-    public void parseFrameData(byte[] buffer, FrameHeader header) {
-        super.parseFrameData(buffer, header);
-        types = parseTCON(super.getText());
+    public void setText(String text) {
+        types = parseTCON(text);
+        super.setText(text);
     }
 
     @Override
