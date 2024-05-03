@@ -129,15 +129,19 @@ public class TimestampFrame extends TextFrame {
     @Override
     public void setText(String text) {
 
+        if (text.length() < 4) {
+            throw new IllegalArgumentException("Timestamp cannot be less than 4 characters");
+        }
+
         switch (getIdentifier()) {
             case TIME:
-                setTime(LocalTime.parse(text, DateTimeFormatter.ofPattern("HHmm")));
+                setTime(LocalTime.parse(text.substring(0, 4), DateTimeFormatter.ofPattern("HHmm")));
                 return;
             case DATE:
-                setMonthDay(MonthDay.parse(text, DateTimeFormatter.ofPattern("ddMM")));
+                setMonthDay(MonthDay.parse(text.substring(0, 4), DateTimeFormatter.ofPattern("ddMM")));
                 return;
             case YEAR:
-                setYear(Year.parse(text));
+                setYear(Year.parse(text.substring(0, 4)));
                 return;
         }
 
