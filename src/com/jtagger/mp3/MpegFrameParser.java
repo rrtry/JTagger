@@ -78,11 +78,11 @@ public class MpegFrameParser {
 
     private static boolean isSync(byte x, byte y) {
         return toUnsignedInt(x) == 0xFF &&
-               toUnsignedInt(y) >> 4 == 0xF;
+                (toUnsignedInt(y) >> 5) == 0x7;
     }
 
     private static boolean isSync(int x, int y) {
-        return x == 0xFF && y >> 4 == 0xF;
+        return x == 0xFF && (y >> 5) == 0x7;
     }
 
     public static int getSyncOffset(RandomAccessFile file, ID3V2Tag id3V2Tag) {

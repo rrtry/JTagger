@@ -96,7 +96,7 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
                 int maxPad  = BytesIO.getPadding((int) file.length());
                 padding = originalSize - tagData;
 
-                if (padding > 0 && padding <= maxPad) {
+                if (padding >= 0 && padding <= maxPad) {
                     BytesIO.writeBlock(file, tagBuffer, 0);
                     file.write(new byte[padding]);
                     BytesIO.writeBlock(
