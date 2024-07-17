@@ -327,7 +327,7 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
             throw new InvalidAtomException(String.format("Atom %s: invalid size: %d", type, size));
         }
         if (!dataAtomType.equals("data")) {
-            throw new InvalidAtomException("Unexpected atom: " + dataAtomType);
+            return null; // return null because this could be regular atom
         }
 
         ItunesAtom itunesAtom = null;
@@ -407,12 +407,17 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
             atomEnd   = atomStart + atomSize;
 
             MP4Atom atom = new MP4Atom(atomType, atomSize);
-            if (parentAtom.getType().equals("ilst") &&
-                !atom.getType().equals("----") &&
-                !atom.getType().equals("free"))
-            {
+            boolean meta = parentAtom.getType().equals("ilst") &&
+                           !atom.getType().equals("----") &&
+                           !atom.getType().equals("free");
+
+            if (meta) {
                 atom = parseItunesAtom(readAtom(file, atom, header, atomSize));
-            } else {
+            }
+            if (atom == null || !meta) {
+                if (atom == null) {
+                    atom = new MP4Atom(atomType, atomSize);
+                }
                 switch (atomType) {
 
                     case "----":
