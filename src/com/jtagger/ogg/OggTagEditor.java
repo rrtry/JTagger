@@ -21,8 +21,7 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
     protected ArrayList<OggPage> pages;
     protected ArrayList<OggPacket> packets;
 
-    abstract protected CommentHeader getCommentHeader();
-    abstract protected ArrayList<OggPacket> getHeaderPackets();
+    abstract protected void setHeaderPackets();
 
     private static OggParser getOggParser(String mimeType) {
         if (mimeType.equals(OGG_OPUS_MIME_TYPE))   return new OggOpusParser();
@@ -54,22 +53,23 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
     @Override
     public void commit() throws IOException {
 
-        ArrayList<OggPage> pages = new ArrayList<>();
-        pages.add(this.pages.get(0));
-        pages.addAll(OggPage.fromPackets(
-                getHeaderPackets(),
+        setHeaderPackets();
+        ArrayList<OggPage> newPages = new ArrayList<>();
+        newPages.add(pages.get(0));
+        newPages.addAll(OggPage.fromPackets(
+                packets,
                 parser.getSerialNumber(),
                 1
         ));
 
         int size = 0;
-        for (OggPage page : pages) {
+        for (OggPage page : newPages) {
             size += page.assemble().length;
         }
 
-        if (pages.size() != parser.headerPages()) {
+        if (newPages.size() != parser.headerPages()) {
 
-            int diff = pages.size() - parser.headerPages();
+            int diff = newPages.size() - parser.headerPages();
             file.seek(parser.getStreamOffset());
 
             long position;
@@ -101,7 +101,7 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
             );
         }
         file.seek(0);
-        for (OggPage page : pages) {
+        for (OggPage page : newPages) {
             file.write(page.getBytes());
         }
     }

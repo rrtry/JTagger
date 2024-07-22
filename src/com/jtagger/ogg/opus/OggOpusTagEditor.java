@@ -8,21 +8,10 @@ import java.util.ArrayList;
 public class OggOpusTagEditor extends OggTagEditor {
 
     @Override
-    protected CommentHeader getCommentHeader() {
-
+    protected void setHeaderPackets() {
         OpusCommentHeader commentHeader = new OpusCommentHeader();
         commentHeader.setVorbisComments(tag);
         commentHeader.assemble();
-
-        return commentHeader;
-    }
-
-    @Override
-    protected ArrayList<OggPacket> getHeaderPackets() {
-
-        ArrayList<OggPacket> oggPackets = new ArrayList<>();
-        oggPackets.add(new OggPacket(getCommentHeader().getBytes()));
-
-        return oggPackets;
+        packets.set(1, new OggPacket(commentHeader.getBytes()));
     }
 }

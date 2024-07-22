@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class VorbisComments extends AbstractTag {
 
-    public static final String VENDOR_STRING = "reference libFLAC 1.3.1 20141125";
+    public static final String VENDOR_STRING = "JTagger-V1.3.6";
     public static final String PICTURE       = "METADATA_BLOCK_PICTURE";
 
     private String vendorString = VENDOR_STRING;
@@ -74,8 +74,8 @@ public class VorbisComments extends AbstractTag {
     @Override
     public byte[] assemble(byte version) {
 
-        byte[] vendorStringLength = IntegerUtils.fromUInt32LE(VENDOR_STRING.length());
-        byte[] vendorStringBytes  = VENDOR_STRING.getBytes(StandardCharsets.UTF_8);
+        byte[] vendorStringLength = IntegerUtils.fromUInt32LE(vendorString.length());
+        byte[] vendorStringBytes  = vendorString.getBytes(StandardCharsets.UTF_8);
         byte[] numOfComments     = IntegerUtils.fromUInt32LE(commentsMap.keySet().size());
 
         int index = 4 + vendorStringBytes.length + 4;

@@ -8,6 +8,15 @@ import java.util.ArrayList;
 public class OggVorbisTagEditor extends OggTagEditor {
 
     @Override
+    protected void setHeaderPackets() {
+        VorbisCommentHeader commentHeader = new VorbisCommentHeader();
+        commentHeader.setVorbisComments(tag);
+        commentHeader.assemble();
+        packets.set(1, new OggPacket(commentHeader.getBytes()));
+    }
+
+    /*
+    @Override
     protected CommentHeader getCommentHeader() {
 
         VorbisCommentHeader commentHeader = new VorbisCommentHeader();
@@ -28,5 +37,5 @@ public class OggVorbisTagEditor extends OggTagEditor {
         oggPackets.add(setupHeaderPacket);
 
         return oggPackets;
-    }
+    } */
 }

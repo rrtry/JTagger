@@ -149,8 +149,10 @@ public class OggPage implements Component {
         OggPage page = new OggPage(serial, pageSequence++);
 
         boolean addPage = false;
-        for (OggPacket packet : packets) {
+        OggPacket packet;
+        for (int i = sequenceNumber; i < packets.size(); i++) {
 
+            packet = packets.get(i);
             byte[] packetBuffer = packet.getData();
             int length  = packetBuffer.length;
             int written = 0;
@@ -181,7 +183,7 @@ public class OggPage implements Component {
                 }
                 if (written == length) {
                     if (remaining == 0 &&
-                        segments - (fullSegments + 1) == -1)
+                            segments - (fullSegments + 1) == -1)
                     {
                         page.getHeader().addSegment(0);
                     }
@@ -230,6 +232,10 @@ public class OggPage implements Component {
 
     public OggPageHeader getHeader() {
         return header;
+    }
+
+    public byte[] getBuffer() {
+        return pageData;
     }
 
     public byte[] getData() {
