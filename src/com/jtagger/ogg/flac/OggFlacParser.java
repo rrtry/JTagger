@@ -47,8 +47,7 @@ public class OggFlacParser extends OggParser implements StreamInfoParser<StreamI
                 VorbisCommentBlockParser parser = new VorbisCommentBlockParser();
                 vorbis = parser.parse(Arrays.copyOfRange(packet, index, index + blockLength))
                         .getVorbisComments();
-                break; /* Break here 'cause ffprobe does not recognize artwork embedded in FLAC's native METADATA_BLOCK_PICTURE, so the only block we need is VORBIS_COMMENT */
-                      /* Artwork embedding is implemented according to OGG format specification */
+                break;
             }
         }
         return vorbis;

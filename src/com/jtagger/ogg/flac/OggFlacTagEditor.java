@@ -35,24 +35,4 @@ public class OggFlacTagEditor extends OggTagEditor {
         System.arraycopy(fromUInt16BE(packets.size() - 1), 0, page, HEADER_PACKETS_OFFSET, Short.BYTES);
         page[FLAC_BLOCK_HEADER_OFFSET] &= ~0x80;
     }
-
-    /*
-    @Override
-    protected CommentHeader getCommentHeader() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    protected ArrayList<OggPacket> getHeaderPackets() {
-
-        ArrayList<OggPacket> packets    = new ArrayList<>();
-        VorbisCommentBlock commentBlock = new VorbisCommentBlock();
-
-        commentBlock.setVorbisComments(tag);
-        commentBlock.setBlockLast(true);
-        commentBlock.assemble();
-
-        packets.add(new OggPacket(commentBlock.getBytes()));
-        return packets;
-    } */
 }
