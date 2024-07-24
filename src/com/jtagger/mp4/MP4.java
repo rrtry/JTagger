@@ -3,8 +3,11 @@ package com.jtagger.mp4;
 import com.jtagger.AbstractTag;
 import com.jtagger.AttachedPicture;
 import com.jtagger.StreamInfo;
+import com.jtagger.mp3.id3.GenreFrame;
 
 import java.util.*;
+
+import static com.jtagger.mp3.id3.ID3V1Tag.UNKNOWN;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class MP4 extends AbstractTag implements StreamInfo {
@@ -291,9 +294,25 @@ public class MP4 extends AbstractTag implements StreamInfo {
                 itunesAtom = trackNumberAtom;
             }
             else if (isByteAtom || isIntAtom) {
+
+                Number i = null;
+                if (atomType.equals(ID3_GENRE)) {
+                    ArrayList<String> types = GenreFrame.parseTCON(string);
+                    for (String type : types) {
+                        if (!type.equals(GenreFrame.COVER) && !type.equals(GenreFrame.REMIX)) {
+                            short genre = Short.parseShort(type);
+                            if (genre >= 0 && genre < UNKNOWN) {
+                                i = genre;
+                                break;
+                            } else {
+                                return;
+                            }
+                        }
+                    }
+                }
                 NumberAtom numberAtom = addAtom ? new NumberAtom(atomType) : (NumberAtom) itunesAtom;
-                numberAtom.setAtomData(isByteAtom ? Byte.parseByte(string) : Integer.parseInt(string));
-                numberAtom.setNumberLength((byte) (isByteAtom ? Byte.BYTES : Integer.BYTES));
+                numberAtom.setAtomData(i == null ? Short.parseShort(string) : i);
+                numberAtom.setNumberLength(isByteAtom ? Byte.BYTES : Short.BYTES);
                 itunesAtom = numberAtom;
             }
             else {
