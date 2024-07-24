@@ -124,10 +124,8 @@ abstract public class OggParser implements TagParser<VorbisComments> {
 
                 if (page == null) {
                     streamOffset = streamOffset == 0 ? (int) position : streamOffset;
-                    streamLength = (int) (file.length() - streamOffset);
-                    break;
-                }
-                else {
+                    streamLength = streamLength == 0 ? (int) (file.length() - streamOffset) : streamLength;
+                } else {
                     pages.add(page);
                 }
             }
