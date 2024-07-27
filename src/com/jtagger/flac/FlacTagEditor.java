@@ -34,6 +34,7 @@ public class FlacTagEditor extends AbstractTagEditor<FLAC> {
     @Override
     public void commit() throws IOException {
 
+        super.commit();
         byte[] tagBuffer = tag.getBytes();
         int maxPad  = BytesIO.getPadding((int) file.length());
         int padding = parser.getOriginalSize() - tagBuffer.length - 4;
@@ -66,15 +67,12 @@ public class FlacTagEditor extends AbstractTagEditor<FLAC> {
     public void setTag(AbstractTag tag) {
 
         if (tag instanceof FLAC) {
-            tag.assemble();
             this.tag = (FLAC) tag;
             return;
         }
 
         FLAC flacTag = new FLAC();
         flacTag.addBlock(sInfo);
-
         convertTag(tag, this.tag);
-        this.tag.assemble();
     }
 }

@@ -1,5 +1,7 @@
 package com.jtagger;
 
+import com.jtagger.mp3.id3.ID3Tag;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
@@ -12,8 +14,17 @@ public abstract class AbstractTagEditor<T extends AbstractTag> {
     protected String mimeType;
 
     abstract protected void parseTag() throws IOException;
-    abstract public void commit() throws IOException;
     abstract public void setTag(AbstractTag tag);
+
+    public void commit() throws IOException {
+        if (tag != null) {
+            if (tag instanceof ID3Tag) {
+                tag.assemble(((ID3Tag) tag).getVersion());
+            } else {
+                tag.assemble();
+            }
+        }
+    }
 
     protected void convertTag(AbstractTag from, T to) {
 

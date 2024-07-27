@@ -53,6 +53,7 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
     @Override
     public void commit() throws IOException {
 
+        super.commit();
         setHeaderPackets();
         ArrayList<OggPage> newPages = new ArrayList<>();
         newPages.add(pages.get(0));
@@ -118,16 +119,13 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
         if (tag instanceof VorbisComments) {
             this.tag = (VorbisComments) tag;
             this.tag.setFramingBit(mimeType.equals(OGG_VORBIS_MIME_TYPE));
-            this.tag.assemble();
             return;
         }
 
         VorbisComments vorbisComments = new VorbisComments(
                 mimeType.equals(OGG_VORBIS_MIME_TYPE)
         );
-
         convertTag(tag, vorbisComments);
-        vorbisComments.assemble();
         this.tag = vorbisComments;
     }
 }

@@ -478,7 +478,7 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
     }
 
     @Override
-    public MP4 parseTag(RandomAccessFile file) {
+    public MP4 parseTag(RandomAccessFile file) throws IOException {
         try {
 
             boolean hasMoovAtom = false;
@@ -537,9 +537,8 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
             }
             mp4 = new MP4(atoms);
             return mp4;
-        } catch (IOException | InvalidAtomException e) {
-            System.err.println("MP4Parser error: " + e.getMessage());
-            return null;
+        } catch (InvalidAtomException e) {
+            throw new IllegalStateException("MP4Parser error: " + e.getMessage());
         }
     }
 

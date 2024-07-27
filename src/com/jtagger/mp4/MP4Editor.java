@@ -21,7 +21,7 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
     }
 
     @Override
-    protected void parseTag() {
+    protected void parseTag() throws IOException {
         parser = new MP4Parser();
         tag = parser.parseTag(file);
     }
@@ -171,6 +171,7 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
         if (ilstEnd == fileLength) {
             updateParents(ilstParent, sizeDiff);
             BytesIO.writeBlock(file, tag.getBytes(), ilstStart);
+            file.setLength(fileLength + sizeDiff);
             return;
         }
 
@@ -224,6 +225,7 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
     @Override
     public void commit() throws IOException {
 
+        super.commit();
         if (tag == null) {
             throw new IllegalStateException("Corrupted mp4 file");
         }
@@ -246,18 +248,13 @@ public class MP4Editor extends AbstractTagEditor<MP4> {
     @Override
     public void setTag(AbstractTag newTag) {
 
-        if (tag == null) {
-            throw new IllegalStateException("Corrupted mp4 file");
-        }
         if (newTag instanceof MP4) {
             MP4 mp4 = (MP4) newTag;
             tag.setMetadataAtoms(mp4.getMetadataAtoms());
-            tag.assemble();
             return;
         }
 
         tag.removeMetadataAtoms();
         convertTag(newTag, tag);
-        tag.assemble();
     }
 }

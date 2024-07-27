@@ -18,19 +18,17 @@ public class ID3V1TagEditor extends AbstractTagEditor<ID3V1Tag> {
     @Override
     public void setTag(AbstractTag tag) {
         if (tag instanceof ID3V1Tag) {
-            ID3V1Tag id3V1Tag = (ID3V1Tag) tag;
-            this.tag = ID3V1Tag.newBuilder(id3V1Tag)
-                    .build(id3V1Tag.getVersion());
+            this.tag = (ID3V1Tag) tag;
             return;
         }
         ID3V1Tag id3v1 = new ID3V1Tag();
         convertTag(tag, id3v1);
-        id3v1.assemble(ID3V1_1);
         this.tag = id3v1;
     }
 
     @Override
     public void commit() throws IOException {
+        super.commit();
         if (tag == null && !hasTag) {
             return;
         }

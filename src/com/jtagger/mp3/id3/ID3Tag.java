@@ -3,6 +3,6 @@ import com.jtagger.AbstractTag;
 
 public abstract class ID3Tag extends AbstractTag {
 
-    abstract byte getVersion();
-    abstract void setVersion(byte version);
+    abstract public byte getVersion();
+    abstract public void setVersion(byte version);
 }

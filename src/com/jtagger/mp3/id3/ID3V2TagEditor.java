@@ -67,25 +67,19 @@ public class ID3V2TagEditor extends AbstractTagEditor<ID3V2Tag> {
     public void setTag(AbstractTag tag) {
 
         if (tag instanceof ID3V2Tag) {
-
-            ID3V2Tag id3V2Tag = (ID3V2Tag) tag;
-            id3V2Tag.assemble(id3V2Tag.getVersion());
-            this.tag = id3V2Tag;
-
+            this.tag = (ID3V2Tag) tag;
             return;
         }
 
         ID3V2Tag id3V2Tag = new ID3V2Tag();
         id3V2Tag.setTagHeader(new TagHeader());
-
         convertTag(tag, id3V2Tag);
-        id3V2Tag.assemble(id3V2Tag.getVersion());
-
         this.tag = id3V2Tag;
     }
 
     @Override
     public void commit() throws IOException {
+        super.commit();
         int padding = BytesIO.PADDING_MIN;
         if (tag != null) {
 
