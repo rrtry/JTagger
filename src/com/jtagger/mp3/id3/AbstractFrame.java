@@ -25,6 +25,8 @@ public abstract class AbstractFrame<T> implements Component {
     public static final String YEAR                  = "TYER";
 
     /* ID3v2.4 */
+    public static final String CHAPTER                = "CHAP"; // Chapter
+    public static final String TABLE_OF_CONTENTS      = "CTOC"; // Table of contents
     public static final String AUDIO_ENCRYPTION       = "AENC"; // Audio encryption
     public static final String PICTURE                = "APIC"; // Attached picture
     public static final String SEEK_POINT_INDEX       = "ASPI"; // Audio seek point index

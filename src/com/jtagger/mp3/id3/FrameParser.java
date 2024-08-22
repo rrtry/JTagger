@@ -1,13 +1,10 @@
 package com.jtagger.mp3.id3;
 
-import com.jtagger.AbstractTag;
-
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import static com.jtagger.mp3.id3.AbstractFrame.decompressFrame;
-import static com.jtagger.mp3.id3.TagHeaderParser.HEADER_LENGTH;
 import static com.jtagger.mp3.id3.UnsynchronisationUtils.fromUnsynch;
 
 @SuppressWarnings("rawtypes")
@@ -61,6 +58,12 @@ class FrameParser {
         }
         else {
             switch (frameId) {
+                case AbstractFrame.TABLE_OF_CONTENTS:
+                    frame = new TableOfContentsFrame();
+                    break;
+                case AbstractFrame.CHAPTER:
+                    frame = new ChapterFrame();
+                    break;
                 case AbstractFrame.PICTURE:
                     frame = new AttachedPictureFrame();
                     break;
@@ -78,7 +81,6 @@ class FrameParser {
                     break;
             }
         }
-
         byte[] buffer = copyFrame(
                 position + frameHeader.getFrameDataOffset(),
                 frameHeader.getFrameSize()

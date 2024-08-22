@@ -2,7 +2,6 @@
 import com.jtagger.mp3.MpegFile;
 import com.jtagger.mp3.id3.*;
 import com.jtagger.utils.ImageReader;
-import com.jtagger.utils.IntegerUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -24,6 +23,75 @@ import static com.jtagger.mp3.id3.SynchronisedLyricsFrame.CONTENT_TYPE_TRANSCRIP
 import static com.jtagger.mp3.id3.TextEncoding.*;
 
 public class JTaggerTests {
+
+    @Test
+    public void testCTOCFrame() {
+
+        List<String> childIds = List.of("CH1", "CH2", "CH3", "CH4", "CH5");
+        LinkedHashMap<String, AbstractFrame> frameMap = new LinkedHashMap<>();
+
+        frameMap.put(
+                "TIT2",
+                TextFrame.createInstance("TIT2", "Part 1", ENCODING_LATIN_1, ID3V2_4)
+        );
+        frameMap.put(
+                "TIT3",
+                TextFrame.createInstance("TIT3", "Part description", ENCODING_LATIN_1, ID3V2_4)
+        );
+
+        FrameHeader header = FrameHeader.createFrameHeader("CTOC", ID3V2_4);
+        TableOfContentsFrame ctoc1 = TableOfContentsFrame.newBuilder()
+                .setHeader(header)
+                .setElementId("TOC1")
+                .setChildIds(childIds)
+                .setFrameMap(frameMap)
+                .setFlags(0x1)
+                .build(ID3V2_4);
+
+        TableOfContentsFrame ctoc2 = new TableOfContentsFrame();
+        ctoc2.parseFrameData(ctoc1.getBytes(), header);
+
+        Assertions.assertEquals(ctoc1.getElementId(), ctoc2.getElementId());
+        Assertions.assertEquals(ctoc1.getChildIds(),  ctoc2.getChildIds());
+        Assertions.assertEquals(ctoc1.getFrameMap(),  ctoc2.getFrameMap());
+        Assertions.assertEquals(ctoc1.getFlags(),     ctoc2.getFlags());
+    }
+
+    @Test
+    public void testChapterFrame() {
+
+        LinkedHashMap<String, AbstractFrame> frameMap = new LinkedHashMap<>();
+        frameMap.put(
+                "TIT2",
+                TextFrame.createInstance("TIT2", "Chapter 1", ENCODING_LATIN_1, ID3V2_4)
+        );
+        frameMap.put(
+                "TIT3",
+                TextFrame.createInstance("TIT3", "Chapter description", ENCODING_LATIN_1, ID3V2_4)
+        );
+
+        FrameHeader header = FrameHeader.createFrameHeader("CHAP", ID3V2_4);
+        ChapterFrame ch1 = ChapterFrame.newBuilder()
+                .setHeader(header)
+                .setElementId("CH1")
+                .setStartTime(1000)
+                .setEndTime(Integer.MAX_VALUE)
+                .setStartOffset(2000)
+                .setEndOffset(0xFFFFFFFFL)
+                .setFrames(frameMap)
+                .build(ID3V2_4);
+
+        byte[] buffer = ch1.getBytes();
+        ChapterFrame ch2 = new ChapterFrame();
+        ch2.parseFrameData(buffer, header);
+
+        Assertions.assertEquals(ch1.getElementId(),   ch2.getElementId());
+        Assertions.assertEquals(ch1.getStartTime(),   ch2.getStartTime());
+        Assertions.assertEquals(ch1.getEndTime(),     ch2.getEndTime());
+        Assertions.assertEquals(ch1.getStartOffset(), ch2.getStartOffset());
+        Assertions.assertEquals(ch1.getEndOffset(),   ch2.getEndOffset());
+        Assertions.assertEquals(ch1.getFrameData(),   ch2.getFrameData());
+    }
 
     @Test
     public void testInvalidTimestampFrame() {

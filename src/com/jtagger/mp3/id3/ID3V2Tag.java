@@ -296,26 +296,9 @@ public class ID3V2Tag extends ID3Tag {
         tagHeader.setHasExtendedHeader(false);
         tagHeader.setHasFooter(false);
 
-        int tagSize  = getFrameDataSize(version);
-        int position = HEADER_LENGTH;
-
+        int tagSize = getFrameDataSize(version);
         byte[] tag = new byte[tagSize + HEADER_LENGTH];
-        for (AbstractFrame frame : getFrames()) {
-
-            if (frame.getHeader().getVersion() != version) {
-                throw new IllegalStateException(
-                        String.format("Frame %s must have same version number as the tag", frame.getHeader().getIdentifier())
-                );
-            }
-
-            byte[] frameHeader = frame.getHeader().getBytes();
-            byte[] frameData   = frame.getBytes();
-
-            System.arraycopy(frameHeader, 0, tag, position, frameHeader.length);
-            System.arraycopy(frameData, 0, tag, position + frameHeader.length, frameData.length);
-
-            position += frameHeader.length + frameData.length;
-        }
+        assembleFrames(getFrames(), version, tag, HEADER_LENGTH);
 
         this.tagBytes = tag;
         if (tagHeader.isUnsynch() && version == ID3V2_3) {
@@ -332,6 +315,28 @@ public class ID3V2Tag extends ID3Tag {
 
         System.arraycopy(tagHeader.getBytes(), 0, tag, 0, HEADER_LENGTH);
         return tag;
+    }
+
+    public static void assembleFrames(Collection<AbstractFrame> frames,
+                                      byte version,
+                                      byte[] buffer,
+                                      int position)
+    {
+        for (AbstractFrame frame : frames) {
+
+            if (frame.getHeader().getVersion() != version) {
+                throw new IllegalStateException(
+                        String.format("Frame %s must have same version number as the tag", frame.getHeader().getIdentifier())
+                );
+            }
+
+            byte[] frameHeader = frame.getHeader().getBytes();
+            byte[] frameData   = frame.getBytes();
+
+            System.arraycopy(frameHeader, 0, buffer, position, frameHeader.length);
+            System.arraycopy(frameData, 0, buffer, position + frameHeader.length, frameData.length);
+            position += frameHeader.length + frameData.length;
+        }
     }
 
     public static Builder newBuilder() {
