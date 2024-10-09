@@ -18,8 +18,8 @@ import static com.jtagger.mp3.id3.TimestampFrame.TIME_FORMAT_PATTERN;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ID3V2Tag extends ID3Tag {
 
-    private static final HashMap<String, String> FIELD_MAP_V23  = new HashMap<>();
-    private static final HashMap<String, String> FIELD_MAP_V24  = new HashMap<>();
+    public static final HashMap<String, String> FIELD_MAP_V23  = new HashMap<>();
+    public static final HashMap<String, String> FIELD_MAP_V24  = new HashMap<>();
     private final LinkedHashMap<String, AbstractFrame> frameMap = new LinkedHashMap<>();
 
     static {

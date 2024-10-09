@@ -66,7 +66,7 @@ public class MP4 extends AbstractTag implements StreamInfo {
     public static final String SONGWRITER        = "©swf";
     public static final String SOFTWARE          = "©swr";
 
-    private static final HashMap<String, String> FIELD_MAP = new HashMap<>();
+    public static final HashMap<String, String> FIELD_MAP = new HashMap<>();
 
     public static final List<String> DUPLICATES     = List.of("mdat", "moof");
     public static final List<String> INT_PAIR_ATOMS = Arrays.asList("trkn", "disk");
