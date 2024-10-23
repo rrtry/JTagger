@@ -85,6 +85,10 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
 
                 file.seek(position);
                 file.write(page.assemble());
+
+                if (header.isLastPage()) {
+                    break;
+                }
             }
         }
         int diff = size - parser.getStreamOffset();
