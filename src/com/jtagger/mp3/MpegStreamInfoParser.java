@@ -5,7 +5,7 @@ import com.jtagger.mp3.id3.ID3V1Tag;
 import com.jtagger.mp3.id3.ID3V2Tag;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import com.jtagger.FileWrapper;
 
 public class MpegStreamInfoParser implements StreamInfoParser<MpegStreamInfo> {
 
@@ -19,7 +19,7 @@ public class MpegStreamInfoParser implements StreamInfoParser<MpegStreamInfo> {
         this.tag = tag;
     }
 
-    private static boolean isID3V1Present(RandomAccessFile file) throws IOException {
+    private static boolean isID3V1Present(FileWrapper file) throws IOException {
 
         byte[] magic = new byte[3];
         file.seek(file.length() - 128);
@@ -29,7 +29,7 @@ public class MpegStreamInfoParser implements StreamInfoParser<MpegStreamInfo> {
     }
 
     @Override
-    public MpegStreamInfo parseStreamInfo(RandomAccessFile file) throws IOException {
+    public MpegStreamInfo parseStreamInfo(FileWrapper file) throws IOException {
 
         MpegFrameParser mpegFrameParser   = new MpegFrameParser(tag);
         XingHeaderParser xingHeaderParser = new XingHeaderParser();

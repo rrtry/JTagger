@@ -17,9 +17,9 @@ import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+import static com.jtagger.MediaFile.FileContentTypeDetector.*;
 import static com.jtagger.ogg.opus.OggOpusParser.OPUS_IDENTIFICATION_HEADER_MAGIC;
 import static com.jtagger.ogg.vorbis.VorbisHeader.VORBIS_HEADER_MAGIC;
-import static com.jtagger.MediaFile.FileContentTypeDetector.*;
 
 public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements AutoCloseable {
 
@@ -29,16 +29,13 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements A
 
     private final FileContentTypeDetector contentTypeDetector = new FileContentTypeDetector();
 
-    @SuppressWarnings("unchecked")
-    public void scan(File fileObj, String accessMode) throws IOException {
+    public void scan(FileWrapper file) throws IOException {
 
         if (tagEditor != null) {
             close();
         }
 
-        RandomAccessFile file = new RandomAccessFile(fileObj.getAbsolutePath(), accessMode);
         String mimeType = contentTypeDetector.getFileContentType(file);
-
         if (mimeType == null) {
             file.close();
             return;
@@ -51,6 +48,12 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements A
             streamInfoParser = getParser(mimeType);
             streamInfo = streamInfoParser.parseStreamInfo(file);
         }
+    }
+
+    public void scan(File fileObj, String accessMode) throws IOException {
+        RandomAccessFile file = new RandomAccessFile(fileObj.getAbsolutePath(), accessMode);
+        FileWrapper wrapper   = new RandomAccessFileImpl(file);
+        scan(wrapper);
     }
 
     @SuppressWarnings("rawtypes")
@@ -136,7 +139,7 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements A
         }
 
         @SuppressWarnings("unchecked")
-        public String getFileContentType(RandomAccessFile file) throws IOException {
+        public String getFileContentType(FileWrapper file) throws IOException {
 
             final String oggMagic    = "OggS";
             final String id3Magic    = "ID3";

@@ -4,7 +4,7 @@ import com.jtagger.mp3.id3.ID3V2Tag;
 import com.jtagger.mp3.id3.TagHeader;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import com.jtagger.FileWrapper;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -85,7 +85,7 @@ public class MpegFrameParser {
         return x == 0xFF && (y >> 5) == 0x7;
     }
 
-    public static int getSyncOffset(RandomAccessFile file, ID3V2Tag id3V2Tag) {
+    public static int getSyncOffset(FileWrapper file, ID3V2Tag id3V2Tag) {
         try {
 
             int startPosition = 0;
@@ -141,7 +141,7 @@ public class MpegFrameParser {
 
     // (12 * BitRate / SampleRate + Padding) * 4 - layer 1
     // 144 * BitRate / SampleRate + Padding - layer 2, 3
-    public void parseFrame(RandomAccessFile file) {
+    public void parseFrame(FileWrapper file) {
         try {
 
             int offset = getSyncOffset(file, id3V2Tag);
@@ -170,7 +170,7 @@ public class MpegFrameParser {
         }
     }
 
-    private MpegFrameHeader parseFrameHeader(RandomAccessFile file, int offset) {
+    private MpegFrameHeader parseFrameHeader(FileWrapper file, int offset) {
         try {
 
             int[] header = new int[4];
