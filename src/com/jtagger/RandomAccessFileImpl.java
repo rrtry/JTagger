@@ -32,51 +32,6 @@ class RandomAccessFileImpl implements FileWrapper {
     }
 
     @Override
-    public int read(byte[] b, int off, int len) throws IOException {
-        return file.read(b, off, len);
-    }
-
-    @Override
-    public void write(byte[] b, int off, int len) throws IOException {
-        file.write(b, off, len);
-    }
-
-    @Override
-    public byte readByte() throws IOException {
-        return file.readByte();
-    }
-
-    @Override
-    public long readLong() throws IOException {
-        return file.readLong();
-    }
-
-    @Override
-    public int readInt() throws IOException {
-        return file.readInt();
-    }
-
-    @Override
-    public int readUnsignedByte() throws IOException {
-        return file.readUnsignedByte();
-    }
-
-    @Override
-    public int skipBytes(int n) throws IOException {
-        return file.skipBytes(n);
-    }
-
-    @Override
-    public void seek(long pos) throws IOException {
-        file.seek(pos);
-    }
-
-    @Override
-    public void setLength(long newLength) throws IOException {
-        file.setLength(newLength);
-    }
-
-    @Override
     public void write(byte[] b) throws IOException {
         file.write(b);
     }
@@ -90,5 +45,25 @@ class RandomAccessFileImpl implements FileWrapper {
     public void close() throws IOException {
         file.close();
         file = null;
+    }
+
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+        return file.read(b, off, len);
+    }
+
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+        file.write(b, off, len);
+    }
+
+    @Override
+    public void seek(long pos) throws IOException {
+        file.seek(pos);
+    }
+
+    @Override
+    public void setLength(long newLength) throws IOException {
+        file.setLength(newLength);
     }
 }
