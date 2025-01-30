@@ -5,8 +5,6 @@ import com.jtagger.mp3.id3.TagHeader;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
 import static com.jtagger.mp3.MpegFrameHeader.*;
@@ -139,29 +137,27 @@ public class MpegFrameParser {
         }
     }
 
-    // (12 * BitRate / SampleRate + Padding) * 4 - layer 1
-    // 144 * BitRate / SampleRate + Padding - layer 2, 3
+    public static int getFrameSize(MpegFrameHeader header) {
+
+        final int bitrate    = header.getBitrate();
+        final int sampleRate = header.getSampleRate();
+        final int padding    = header.getPadding();
+        final int slot       = header.getLayer() == MPEG_LAYER_1 ? 4 : 1;
+
+        return (int) ((((header.getSamplesPerFrame() / 8f * bitrate * 1000f) / sampleRate) + padding) * slot);
+    }
+
     public void parseFrame(RandomAccessFile file) {
         try {
 
             int offset = getSyncOffset(file, id3V2Tag);
-
             MpegFrameHeader header = parseFrameHeader(file, offset);
             byte[] frameData;
 
             if (header == null) return;
-            int frameLength;
+            int frameSize = getFrameSize(header);
 
-            final byte layer     = header.getLayer();
-            final int bitRate    = header.getBitrate();
-            final int sampleRate = header.getSampleRate();
-            final int padding    = header.getPadding();
-
-            frameLength = (layer == MPEG_LAYER_1) ?
-                    (12 * bitRate * 1000 / sampleRate + padding) * 4 :
-                    (144 * bitRate * 1000 / sampleRate + padding);
-
-            frameData = new byte[frameLength];
+            frameData = new byte[frameSize];
             file.read(frameData, 0, frameData.length);
             mpegFrame = new MpegFrame(header, frameData);
 
