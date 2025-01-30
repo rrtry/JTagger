@@ -6,7 +6,7 @@ import com.jtagger.ogg.OggParser;
 import com.jtagger.ogg.vorbis.VorbisComments;
 
 import java.io.IOException;
-import com.jtagger.FileWrapper;
+import java.io.RandomAccessFile;
 import java.util.Arrays;
 
 import static com.jtagger.flac.AbstractMetadataBlock.BLOCK_TYPE_STREAMINFO;
@@ -25,7 +25,7 @@ public class OggFlacParser extends OggParser implements StreamInfoParser<StreamI
     private int headerPackets;
 
     @Override
-    public VorbisComments parseTag(FileWrapper file) throws IOException {
+    public VorbisComments parseTag(RandomAccessFile file) throws IOException {
 
         if (vorbis != null) return vorbis;
         parseStreamInfo(file);
@@ -54,7 +54,7 @@ public class OggFlacParser extends OggParser implements StreamInfoParser<StreamI
     }
 
     @Override
-    public StreamInfoBlock parseStreamInfo(FileWrapper file) {
+    public StreamInfoBlock parseStreamInfo(RandomAccessFile file) {
 
         if (streamInfoBlock != null) return streamInfoBlock;
         parsePackets(parsePages(file));

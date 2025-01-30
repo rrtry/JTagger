@@ -5,7 +5,7 @@ import com.jtagger.StreamInfoParser;
 import com.jtagger.TagParser;
 import com.jtagger.utils.IntegerUtils;
 import java.io.IOException;
-import com.jtagger.FileWrapper;
+import java.io.RandomAccessFile;
 
 import static com.jtagger.flac.FLAC.*;
 import static com.jtagger.flac.AbstractMetadataBlock.*;
@@ -51,7 +51,7 @@ public class FlacParser implements TagParser<FLAC>, StreamInfoParser<StreamInfoB
     }
 
     @Override
-    public StreamInfoBlock parseStreamInfo(FileWrapper file) throws IOException {
+    public StreamInfoBlock parseStreamInfo(RandomAccessFile file) throws IOException {
 
         if (flac == null) {
             parseTag(file);
@@ -71,7 +71,7 @@ public class FlacParser implements TagParser<FLAC>, StreamInfoParser<StreamInfoB
 
     @Override
     @SuppressWarnings("rawtypes")
-    public FLAC parseTag(FileWrapper file) throws IOException {
+    public FLAC parseTag(RandomAccessFile file) throws IOException {
 
         if (flac != null) return flac;
         flac = new FLAC();

@@ -4,7 +4,7 @@ import com.jtagger.InvalidTagException;
 import com.jtagger.TagParser;
 
 import java.io.IOException;
-import com.jtagger.FileWrapper;
+import java.io.RandomAccessFile;
 import java.util.Arrays;
 import java.util.ArrayList;
 
@@ -27,7 +27,7 @@ public class ID3V2TagParser implements TagParser<ID3V2Tag> {
 
     @Override
     @SuppressWarnings("rawtypes")
-    public ID3V2Tag parseTag(FileWrapper file) {
+    public ID3V2Tag parseTag(RandomAccessFile file) {
         try {
 
             byte[] tagHeader = new byte[HEADER_LENGTH];

@@ -1,10 +1,7 @@
 package com.jtagger.utils;
 
-import com.jtagger.FileWrapper;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.util.UUID;
 
 public class BytesIO {
 
@@ -31,7 +28,7 @@ public class BytesIO {
     }
 
     public static void writeBlock(
-            FileWrapper file,
+            RandomAccessFile file,
             byte[] buffer,
             int offset) throws IOException
     {
@@ -39,8 +36,65 @@ public class BytesIO {
         file.write(buffer);
     }
 
+    public static void copyBlock(
+            byte[] tempBuffer,
+            RandomAccessFile from,
+            RandomAccessFile to,
+            int count) throws IOException
+    {
+        int copied = 0;
+        int bufferSize;
+
+        while (copied < count) {
+            bufferSize = Math.min(tempBuffer.length, count - copied);
+            from.read(tempBuffer, 0, bufferSize);
+            to.write(tempBuffer, 0, bufferSize);
+            copied += bufferSize;
+        }
+    }
+
+    public static void overwrite(
+            RandomAccessFile file,
+            byte[] tagBuffer,
+            byte[] padding,
+            int oldTagEndPos,
+            int newTagStartPos,
+            int sizeDiff,
+            int count) throws IOException
+    {
+        File temp;
+        RandomAccessFile tempFile;
+
+        temp     = File.createTempFile(UUID.randomUUID().toString(), ".tmp");
+        tempFile = new RandomAccessFile(temp.getAbsolutePath(), "rw");
+
+        byte[] tempBuffer = new byte[BUFFER_SIZE];
+        long fLength = file.length();
+        int copyLen  = count;
+
+        file.seek(oldTagEndPos);
+        copyBlock(tempBuffer, file, tempFile, copyLen);
+        copyLen = (int) tempFile.length();
+
+        tempFile.seek(0);
+        file.seek(newTagStartPos);
+        file.write(tagBuffer);
+
+        if (padding != null) {
+            file.write(padding);
+        }
+
+        copyBlock(tempBuffer, tempFile, file, copyLen);
+        file.setLength(fLength + sizeDiff);
+        tempFile.close();
+
+        if (!temp.delete()) {
+            System.err.println("Main.overwrite: failed to delete temp file");
+        }
+    }
+
     public static void moveBlock(
-            FileWrapper file,
+            RandomAccessFile file,
             int from,
             int to,
             int sizeDiff,

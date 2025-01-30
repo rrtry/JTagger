@@ -24,7 +24,6 @@ public class XingHeader implements VBRHeader {
 
     private byte[] tableOfContents;
     private int qualityIndicator;
-    private LAMEHeader lameHeader;
 
     private XingHeader() {
 
@@ -54,14 +53,6 @@ public class XingHeader implements VBRHeader {
 
     public boolean isVBR() {
         return Arrays.equals(XING_VBR_MAGIC, magic);
-    }
-
-    public LAMEHeader getLAMEHeader() {
-        return lameHeader;
-    }
-
-    public void setLAMEHeader(LAMEHeader lameHeader) {
-        this.lameHeader = lameHeader;
     }
 
     public static Builder newBuilder() {
@@ -97,11 +88,6 @@ public class XingHeader implements VBRHeader {
 
         public Builder setQualityIndicator(int qualityIndicator) {
             XingHeader.this.qualityIndicator = qualityIndicator;
-            return this;
-        }
-
-        public Builder setLAMEHeader(LAMEHeader lameHeader) {
-            XingHeader.this.lameHeader = lameHeader;
             return this;
         }
 

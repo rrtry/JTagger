@@ -1,6 +1,6 @@
 package com.jtagger.mp3;
-
 import com.jtagger.StreamInfo;
+
 import static com.jtagger.mp3.MpegFrameHeader.CHANNEL_MODE_SINGLE_CHANNEL;
 
 public class MpegStreamInfo implements StreamInfo {
@@ -9,7 +9,6 @@ public class MpegStreamInfo implements StreamInfo {
     private VBRIHeader vbriHeader;
     private XingHeader xingHeader;
 
-    private int bitrate;
     private int duration;
 
     private MpegStreamInfo() {
@@ -35,7 +34,7 @@ public class MpegStreamInfo implements StreamInfo {
 
     @Override
     public void setBitrate(int bitrate) {
-        this.bitrate = bitrate;
+
     }
 
     @Override
@@ -45,12 +44,27 @@ public class MpegStreamInfo implements StreamInfo {
 
     @Override
     public byte getChannelCount() {
-        return (byte) (mpegHeader.getChannelMode() == CHANNEL_MODE_SINGLE_CHANNEL ? 1 : 2);
+        byte channelMode = mpegHeader.getChannelMode();
+        if (channelMode == CHANNEL_MODE_SINGLE_CHANNEL) return 1;
+        return 2;
     }
 
     @Override
     public int getBitrate() {
-        return bitrate;
+        if (isVBR()) {
+
+            VBRHeader header = getVBRHeader();
+
+            final int totalBytes        = header.getTotalBytes();
+            final int totalFrames       = header.getTotalFrames();
+
+            final int samplesPerFrame   = mpegHeader.getSamplesPerFrame();
+            final int sampleRate        = mpegHeader.getSampleRate();
+            final float singleFrameTime = (float) samplesPerFrame / sampleRate * 1000f;
+
+            return (int) ((totalBytes * 8) / (singleFrameTime * totalFrames));
+        }
+        return mpegHeader.getBitrate();
     }
 
     @Override
