@@ -3,11 +3,11 @@ package com.jtagger;
 import com.jtagger.mp3.id3.ID3Tag;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import com.jtagger.FileWrapper;
 
 public abstract class AbstractTagEditor<T extends AbstractTag> {
 
-    protected RandomAccessFile file;
+    protected FileWrapper file;
     protected T tag;
     protected boolean hasTag = false;
 
@@ -44,7 +44,7 @@ public abstract class AbstractTagEditor<T extends AbstractTag> {
         }
     }
 
-    void load(RandomAccessFile file, String mimeType) throws IOException {
+    void load(FileWrapper file, String mimeType) throws IOException {
 
         if (this.file != null) release();
         this.mimeType = mimeType;

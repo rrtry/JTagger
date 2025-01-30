@@ -1,9 +1,9 @@
 package com.jtagger;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import com.jtagger.FileWrapper;
 
 public interface TagParser <T extends AbstractTag> {
 
-    T parseTag(RandomAccessFile file) throws IOException;
+    T parseTag(FileWrapper file) throws IOException;
 }

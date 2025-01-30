@@ -5,7 +5,7 @@ import com.jtagger.TagParser;
 import com.jtagger.utils.IntegerUtils;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import com.jtagger.FileWrapper;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -366,7 +366,7 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
     }
 
     private byte[] readAtom(
-            RandomAccessFile file,
+            FileWrapper file,
             MP4Atom atom,
             byte[] header,
             int atomSize) throws IOException
@@ -378,7 +378,7 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
         return atomData;
     }
 
-    private void parseAtom(RandomAccessFile file, MP4Atom parentAtom) throws InvalidAtomException, IOException {
+    private void parseAtom(FileWrapper file, MP4Atom parentAtom) throws InvalidAtomException, IOException {
 
         byte[] header = new byte[8];
         int atomSize;
@@ -478,7 +478,7 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
     }
 
     @Override
-    public MP4 parseTag(RandomAccessFile file) throws IOException {
+    public MP4 parseTag(FileWrapper file) throws IOException {
         try {
 
             boolean hasMoovAtom = false;
@@ -543,7 +543,7 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
     }
 
     @Override
-    public MP4 parseStreamInfo(RandomAccessFile file) {
+    public MP4 parseStreamInfo(FileWrapper file) {
         return mp4;
     }
 }

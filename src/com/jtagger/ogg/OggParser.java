@@ -6,7 +6,7 @@ import com.jtagger.ogg.vorbis.VorbisComments;
 import com.jtagger.utils.IntegerUtils;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import com.jtagger.FileWrapper;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -48,7 +48,7 @@ abstract public class OggParser implements TagParser<VorbisComments> {
         return getTotalSamples() / streamInfo.getSampleRate();
     }
 
-    public OggPage parsePage(RandomAccessFile file, boolean meta) throws IOException {
+    public OggPage parsePage(FileWrapper file, boolean meta) throws IOException {
 
         int offset = 0;
         byte[] headerMagic;
@@ -105,7 +105,7 @@ abstract public class OggParser implements TagParser<VorbisComments> {
         return null;
     }
 
-    public ArrayList<OggPage> parsePages(RandomAccessFile file) {
+    public ArrayList<OggPage> parsePages(FileWrapper file) {
         try {
 
             if (pages != null) return pages;

@@ -3,7 +3,7 @@ package com.jtagger.mp3.id3;
 import com.jtagger.TagParser;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import com.jtagger.FileWrapper;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -14,7 +14,7 @@ import static java.lang.Byte.toUnsignedInt;
 
 public class ID3V1TagParser implements TagParser<ID3V1Tag> {
 
-    public ID3V1Tag parseTag(RandomAccessFile file) {
+    public ID3V1Tag parseTag(FileWrapper file) {
         try {
 
             byte[] buffer = new byte[128];

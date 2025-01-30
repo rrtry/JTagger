@@ -5,7 +5,7 @@ import com.jtagger.ogg.OggPacket;
 import com.jtagger.ogg.OggParser;
 import com.jtagger.utils.IntegerUtils;
 
-import java.io.RandomAccessFile;
+import com.jtagger.FileWrapper;
 import java.util.Arrays;
 
 public class OggVorbisParser extends OggParser implements StreamInfoParser<VorbisIdentificationHeader> {
@@ -24,12 +24,12 @@ public class OggVorbisParser extends OggParser implements StreamInfoParser<Vorbi
     }
 
     @Override
-    public VorbisComments parseTag(RandomAccessFile file) {
+    public VorbisComments parseTag(FileWrapper file) {
         return parseVorbisCommentHeader(file).getVorbisComments();
     }
 
     @Override
-    public VorbisIdentificationHeader parseStreamInfo(RandomAccessFile file) {
+    public VorbisIdentificationHeader parseStreamInfo(FileWrapper file) {
 
         VorbisIdentificationHeader header = parseVorbisIdentificationHeader(file);
         header.setDuration(getDuration(header));
@@ -37,7 +37,7 @@ public class OggVorbisParser extends OggParser implements StreamInfoParser<Vorbi
         return header;
     }
 
-    private VorbisCommentHeader parseVorbisCommentHeader(RandomAccessFile file) {
+    private VorbisCommentHeader parseVorbisCommentHeader(FileWrapper file) {
 
         parsePackets(parsePages(file));
 
@@ -60,7 +60,7 @@ public class OggVorbisParser extends OggParser implements StreamInfoParser<Vorbi
         return commentHeader;
     }
 
-    private VorbisIdentificationHeader parseVorbisIdentificationHeader(RandomAccessFile file) {
+    private VorbisIdentificationHeader parseVorbisIdentificationHeader(FileWrapper file) {
 
         parsePackets(parsePages(file));
         OggPacket oggPacket = packets.get(0);

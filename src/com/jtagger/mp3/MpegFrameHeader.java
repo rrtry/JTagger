@@ -38,7 +38,7 @@ public class MpegFrameHeader {
     private final boolean isIntensityStereo;
     private final boolean isMidSideStereo;
 
-    private final int bitrate;
+    private int bitrate;
     private final int sampleRate;
     private final int samplesPerFrame;
 
@@ -79,6 +79,10 @@ public class MpegFrameHeader {
         this.bitrate           = bitrate;
         this.sampleRate        = sampleRate;
         this.samplesPerFrame   = samplesPerFrame;
+    }
+
+    void setBitrate(int bitrate) {
+        this.bitrate = bitrate;
     }
 
     public byte getPadding() {

@@ -6,7 +6,7 @@ import com.jtagger.ogg.*;
 import com.jtagger.ogg.vorbis.VorbisComments;
 import com.jtagger.ogg.vorbis.VorbisCommentsParser;
 
-import java.io.RandomAccessFile;
+import com.jtagger.FileWrapper;
 import java.util.Arrays;
 
 import static com.jtagger.utils.IntegerUtils.toUInt16LE;
@@ -34,7 +34,7 @@ public class OggOpusParser extends OggParser implements StreamInfoParser<OpusIde
     }
 
     @Override
-    public OpusIdentificationHeader parseStreamInfo(RandomAccessFile file) {
+    public OpusIdentificationHeader parseStreamInfo(FileWrapper file) {
 
         parsePackets(parsePages(file));
 
@@ -87,7 +87,7 @@ public class OggOpusParser extends OggParser implements StreamInfoParser<OpusIde
     }
 
     @Override
-    public VorbisComments parseTag(RandomAccessFile file) {
+    public VorbisComments parseTag(FileWrapper file) {
 
         parsePackets(parsePages(file));
 
