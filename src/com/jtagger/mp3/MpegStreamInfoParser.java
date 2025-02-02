@@ -137,10 +137,9 @@ public class MpegStreamInfoParser implements StreamInfoParser<MpegStreamInfo> {
 
         int offset    = 0;
         byte[] header = Arrays.copyOfRange(frame.getFrameBody(), 32, 32 + 18);
-        byte[] magic  = Arrays.copyOfRange(header, offset, 4); offset += 4;
+        byte[] magic  = Arrays.copyOfRange(header, offset, offset += 4);
 
         if (!Arrays.equals(magic, VBRIHeader.VBRI_MAGIC)) {
-            System.err.println("VBRIHeader signature mismatch");
             return null;
         }
 
@@ -159,11 +158,26 @@ public class MpegStreamInfoParser implements StreamInfoParser<MpegStreamInfo> {
         );
     }
 
+    private static int getBitrate(
+            int audioBytes,
+            int sampleRate,
+            int samples)
+    {
+        return (int) Math.rint((float) audioBytes * 8f * sampleRate / (float) samples);
+    }
+
+    private static int getDuration(
+            int samples,
+            int sampleRate)
+    {
+        return (int) Math.rint((float) samples / sampleRate);
+    }
+
     @Override
     public MpegStreamInfo parseStreamInfo(RandomAccessFile file) throws IOException {
 
-        MpegFrameParser mpegFrameParser = new MpegFrameParser(tag);
-        mpegFrameParser.parseFrame(file);
+        MpegFrameParser mpegFrameParser = new MpegFrameParser();
+        int syncPosition = mpegFrameParser.parseFrame(file, tag);
 
         MpegFrame mpegFrame = mpegFrameParser.getMpegFrame();
         if (mpegFrame == null) return null;
@@ -182,18 +196,18 @@ public class MpegStreamInfoParser implements StreamInfoParser<MpegStreamInfo> {
         if (vbriHeader != null) builder = builder.setVBRIHeader(vbriHeader);
 
         MpegStreamInfo mpegStreamInfo = builder.build();
-        int bitrate  = mpegHeader.getBitrate() * 1000;
-        int duration = (int) (file.length() * 8f / bitrate);
+        int bitrate = mpegHeader.getBitrate() * 1000;
+        float duration = ((float) file.length() - syncPosition) * 8f / bitrate;
+
+        int samplesFrame = mpegHeader.getSamplesPerFrame();
+        int sampleRate   = mpegHeader.getSampleRate();
 
         if (xingHeader != null) {
 
-            int samplesFrame = mpegHeader.getSamplesPerFrame();
-            int sampleRate   = mpegHeader.getSampleRate();
-            int frameSize    = getFrameSize(mpegHeader);
-            int samples      = samplesFrame * xingHeader.getTotalFrames();
-            int audioBytes   = xingHeader.getTotalBytes() - frameSize;
+            int samples    = samplesFrame * xingHeader.getTotalFrames();
+            int audioBytes = xingHeader.getTotalBytes() - getFrameSize(mpegHeader);
 
-            bitrate = (int) Math.rint(audioBytes * 8f * sampleRate / samples);
+            bitrate = getBitrate(audioBytes, sampleRate, xingHeader.getTotalFrames() * samplesFrame);
             LAMEHeader lame = xingHeader.getLAMEHeader();
 
             if (lame != null) {
@@ -201,14 +215,14 @@ public class MpegStreamInfoParser implements StreamInfoParser<MpegStreamInfo> {
                 samples -= lame.getEncoderDelays()[1];
                 samples = Math.max(0, samples);
             }
-            duration = (int) Math.rint((float) samples / sampleRate);
+            duration = getDuration(samples, sampleRate);
         }
         else if (vbriHeader != null) {
-            duration = (int) Math.rint((float) vbriHeader.getTotalFrames() * getFrameSize(mpegHeader) / mpegHeader.getSampleRate());
-            bitrate  = (int) Math.rint(vbriHeader.getTotalBytes() * 8f / duration);
+            bitrate  = getBitrate(vbriHeader.getTotalBytes() - syncPosition + 4, sampleRate, vbriHeader.getTotalFrames() * samplesFrame);
+            duration = getDuration(vbriHeader.getTotalFrames() * samplesFrame, sampleRate);
         }
         mpegStreamInfo.setBitrate(bitrate);
-        mpegStreamInfo.setDuration(duration);
+        mpegStreamInfo.setDuration((int) duration);
         return mpegStreamInfo;
     }
 }
