@@ -2,7 +2,9 @@ package com.jtagger.mp3;
 
 import com.jtagger.mp3.id3.ID3V2Tag;
 import com.jtagger.mp3.id3.TagHeader;
+import com.jtagger.utils.IntegerUtils;
 
+import java.io.File;
 import java.io.IOException;
 import com.jtagger.FileWrapper;
 
@@ -56,15 +58,10 @@ public class MpegFrameParser {
         };
     }
 
-    private ID3V2Tag id3V2Tag;
     private MpegFrame mpegFrame;
 
     public MpegFrameParser() {
         /* empty constructor */
-    }
-
-    public MpegFrameParser(ID3V2Tag tag) {
-        this.id3V2Tag = tag;
     }
 
     public MpegFrame getMpegFrame() {
@@ -75,67 +72,68 @@ public class MpegFrameParser {
         return index >= 0 && index < array.length ? array[index] : null;
     }
 
-    private static boolean isSync(byte x, byte y) {
-        return toUnsignedInt(x) == 0xFF &&
-                (toUnsignedInt(y) >> 5) == 0x7;
-    }
-
     private static boolean isSync(int x, int y) {
         return x == 0xFF && (y >> 5) == 0x7;
     }
 
-    public static int getSyncOffset(FileWrapper file, ID3V2Tag id3V2Tag) {
+    private static boolean isHeaderValid(int header) {
+        if ((header & 0xffe00000) != 0xffe00000)
+            return false;
+        if ((header & (3 << 19)) == 1 << 19)
+            return false;
+        if ((header & (3 << 17)) == 0)
+            return false;
+        if ((header & (0xf << 12)) == 0xf << 12)
+            return false;
+        if ((header & (3 << 10)) == 3 << 10)
+            return false;
+        return true;
+    }
+
+    private static int[] findSync(FileWrapper file, int from) {
         try {
 
-            int startPosition = 0;
-            if (id3V2Tag != null) {
+            file.seek(from);
+            long startPos = file.getFilePointer();
+            long endPos   = startPos + 64 * 1024;
 
-                TagHeader header = id3V2Tag.getTagHeader();
-                startPosition += header.getTagSize() + 10;
+            byte[] buffer = new byte[4];
+            boolean found = false;
+            int header    = -1;
 
-                if (header.hasFooter()) {
-                    startPosition += 10;
-                }
-            }
+            while (file.getFilePointer() < endPos) {
 
-            byte[] buffer = new byte[1024];
-            file.seek(startPosition);
+                if (file.read(buffer, 0, buffer.length) < 4) break;
+                header = IntegerUtils.toUInt32BE(buffer);
 
-            byte previousByte   = 0;
-            long previousOffset = 0;
-
-            outer:
-            while (true) {
-
-                long position = file.getFilePointer();
-                int read      = file.read(buffer);
-
-                if (read == -1) {
+                if (isHeaderValid(header)) {
+                    found = true;
                     break;
                 }
-                if (isSync(previousByte, buffer[0])) {
-                    startPosition = (int) previousOffset;
-                    break;
-                }
-
-                previousByte   = buffer[buffer.length - 1];
-                previousOffset = file.getFilePointer();
-
-                for (int i = 0; i < buffer.length - 1; i++) {
-                    if (isSync(buffer[i], buffer[i + 1]))
-                    {
-                        startPosition = (int) (position + i);
-                        break outer;
-                    }
-                }
+                file.seek(file.getFilePointer() - 3);
             }
-
-            return startPosition;
-
+            if (found) {
+                return new int[] {
+                        (header >>> 24) & 0xFF,
+                        (header >>> 16) & 0xFF,
+                        (header >>> 8)  & 0xFF,
+                        header & 0xFF
+                };
+            }
+            return null;
         } catch (IOException e) {
             e.printStackTrace();
-            return -1;
+            return null;
         }
+    }
+
+    public static int[] findSync(FileWrapper file, ID3V2Tag id3V2Tag) {
+        int id3v2Size = 0;
+        if (id3V2Tag != null) {
+            TagHeader header = id3V2Tag.getTagHeader();
+            id3v2Size += header.getTagSize() + 10 + (header.hasFooter() ? 10 : 0);
+        }
+        return findSync(file, id3v2Size);
     }
 
     public static int getFrameSize(MpegFrameHeader header) {
@@ -148,132 +146,131 @@ public class MpegFrameParser {
         return (int) ((((header.getSamplesPerFrame() / 8f * bitrate * 1000f) / sampleRate) + padding) * slot);
     }
 
-    public void parseFrame(FileWrapper file) {
+    public int parseFrame(FileWrapper file, ID3V2Tag id3V2Tag) {
         try {
 
-            int offset = getSyncOffset(file, id3V2Tag);
-            MpegFrameHeader header = parseFrameHeader(file, offset);
-            byte[] frameData;
+            int[] headerBuff = findSync(file, id3V2Tag);
+            int syncPosition = (int) file.getFilePointer();
+            if (headerBuff == null) return -1;
 
-            if (header == null) return;
-            int frameSize = getFrameSize(header);
+            MpegFrameHeader header = parseFrameHeader(headerBuff);
+            if (header == null) return -1;
+
+            byte[] frameData;
+            int frameSize = getFrameSize(header) - 4;
+            frameSize = Math.max(0, frameSize);
+
+            if (frameSize == 0) {
+                return -1;
+            }
 
             frameData = new byte[frameSize];
             file.read(frameData, 0, frameData.length);
             mpegFrame = new MpegFrame(header, frameData);
 
-        } catch (IOException ignored) {
+            if (findSync(file, (int) file.getFilePointer()) != null) {
+                return syncPosition;
+            }
+            return -1;
 
+        } catch (IOException ignored) {
+            return -1;
         }
     }
 
-    private MpegFrameHeader parseFrameHeader(FileWrapper file, int offset) {
-        try {
+    private MpegFrameHeader parseFrameHeader(int[] header) {
 
-            int[] header = new int[4];
-
-            file.seek(offset);
-            header[0] = file.readUnsignedByte();
-            header[1] = file.readUnsignedByte();
-            header[2] = file.readUnsignedByte();
-            header[3] = file.readUnsignedByte();
-
-            if (!isSync(header[0], header[1])) {
-                return null;
-            }
-
-            byte index = 0;
-
-            byte bitrateIndex = (byte) (header[2] >> 4);
-            byte emphasis     = (byte) (header[3] << 6);
-            byte channelMode  = (byte) (header[3] >> 6);
-
-            byte version        = (byte) ((header[1] >> 3) & 0x3);
-            byte layer          = (byte) ((header[1] >> 1) & 0x3);
-            byte sampleRateBits = (byte) ((header[2] >> 2) & 0x3);
-            byte modeExtension  = (byte) ((header[3] >> 4) & 0x3);
-
-            boolean isProtected   = (header[1] & 0x1) == 0;
-            boolean isPadded      = ((header[2] >> 1) & 0x1)  != 0;
-            boolean isCopyrighted = ((header[3] >> 3) & 0x1)  != 0;
-            boolean isOriginal    = ((header[3] >> 2) & 0x1)  != 0;
-
-            boolean isIntensityStereo = false;
-            boolean isMidSideStereo   = false;
-
-            if (channelMode == CHANNEL_MODE_JOIN_STEREO) {
-
-                int[] modeExtValues = getValues(modeExtension, MODE_EXTENSION);
-                if (modeExtValues == null) return null;
-
-                isIntensityStereo = modeExtValues[0] == 1;
-                isMidSideStereo   = modeExtValues[1] == 1;
-            }
-            if (version == MPEG_VERSION_1) {
-
-                if (layer == MPEG_LAYER_1) index = 0;
-                if (layer == MPEG_LAYER_2) index = 1;
-                if (layer == MPEG_LAYER_3) index = 2;
-
-            } else if (version == MPEG_VERSION_2 || version == MPEG_VERSION_2_5) {
-
-                if (layer == MPEG_LAYER_1) index = 3;
-                if (layer == MPEG_LAYER_2 || layer == MPEG_LAYER_3) index = 4;
-
-            } else {
-                return null; // invalid version
-            }
-
-            int[] bitrateValues         = getValues(bitrateIndex, BITRATE);
-            int[] sampleRateValues      = getValues(sampleRateBits, SAMPLE_RATE);
-            int[] samplesPerFrameValues = getValues(layer, SAMPLES_PER_FRAME);
-
-            if (bitrateValues == null) return null;
-            if (sampleRateValues == null) return null;
-            if (samplesPerFrameValues == null) return null;
-
-            int bitrate         = bitrateValues[index];
-            int sampleRate      = sampleRateValues[version];
-            int samplesPerFrame = samplesPerFrameValues[version];
-
-            if (bitrate == -1) {
-                return null; // bad value;
-            }
-            if (layer == MPEG_LAYER_2) {
-
-                boolean isStereo           = channelMode == CHANNEL_MODE_STEREO;
-                boolean isDualChannel      = channelMode == CHANNEL_MODE_DUAL_CHANNEL;
-                boolean isSingleChannel    = channelMode == CHANNEL_MODE_SINGLE_CHANNEL;
-                boolean illegalChannelMode = isStereo || isIntensityStereo || isDualChannel;
-
-                List<Integer> restrictedValues = List.of(32, 48, 56, 80);
-                if (restrictedValues.contains(bitrate) && illegalChannelMode) return null;
-
-                restrictedValues   = List.of(224, 256, 320, 384);
-                illegalChannelMode = isSingleChannel;
-
-                if (restrictedValues.contains(bitrate) && illegalChannelMode) return null;
-            }
-
-            return new MpegFrameHeader(
-                    version,
-                    layer,
-                    channelMode,
-                    emphasis,
-                    isProtected,
-                    isCopyrighted,
-                    isOriginal,
-                    isPadded,
-                    isIntensityStereo,
-                    isMidSideStereo,
-                    bitrate,
-                    sampleRate,
-                    samplesPerFrame
-            );
-
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (!isSync(header[0], header[1])) {
             return null;
         }
+
+        byte index = 0;
+
+        byte bitrateIndex = (byte) (header[2] >> 4);
+        byte emphasis     = (byte) (header[3] << 6);
+        byte channelMode  = (byte) (header[3] >> 6);
+
+        byte version        = (byte) ((header[1] >> 3) & 0x3);
+        byte layer          = (byte) ((header[1] >> 1) & 0x3);
+        byte sampleRateBits = (byte) ((header[2] >> 2) & 0x3);
+        byte modeExtension  = (byte) ((header[3] >> 4) & 0x3);
+
+        boolean isProtected   = (header[1] & 0x1) == 0;
+        boolean isPadded      = ((header[2] >> 1) & 0x1)  != 0;
+        boolean isCopyrighted = ((header[3] >> 3) & 0x1)  != 0;
+        boolean isOriginal    = ((header[3] >> 2) & 0x1)  != 0;
+
+        boolean isIntensityStereo = false;
+        boolean isMidSideStereo   = false;
+
+        if (channelMode == CHANNEL_MODE_JOIN_STEREO) {
+
+            int[] modeExtValues = getValues(modeExtension, MODE_EXTENSION);
+            if (modeExtValues == null) return null;
+
+            isIntensityStereo = modeExtValues[0] == 1;
+            isMidSideStereo   = modeExtValues[1] == 1;
+        }
+        if (version == MPEG_VERSION_1) {
+
+            if (layer == MPEG_LAYER_1) index = 0;
+            if (layer == MPEG_LAYER_2) index = 1;
+            if (layer == MPEG_LAYER_3) index = 2;
+
+        } else if (version == MPEG_VERSION_2 || version == MPEG_VERSION_2_5) {
+
+            if (layer == MPEG_LAYER_1) index = 3;
+            if (layer == MPEG_LAYER_2 || layer == MPEG_LAYER_3) index = 4;
+
+        } else {
+            return null; // invalid version
+        }
+
+        int[] bitrateValues         = getValues(bitrateIndex, BITRATE);
+        int[] sampleRateValues      = getValues(sampleRateBits, SAMPLE_RATE);
+        int[] samplesPerFrameValues = getValues(layer, SAMPLES_PER_FRAME);
+
+        if (bitrateValues == null) return null;
+        if (sampleRateValues == null) return null;
+        if (samplesPerFrameValues == null) return null;
+
+        int bitrate         = bitrateValues[index];
+        int sampleRate      = sampleRateValues[version];
+        int samplesPerFrame = samplesPerFrameValues[version];
+
+        if (bitrate == -1) {
+            return null; // bad value;
+        }
+        if (layer == MPEG_LAYER_2) {
+
+            boolean isStereo           = channelMode == CHANNEL_MODE_STEREO;
+            boolean isDualChannel      = channelMode == CHANNEL_MODE_DUAL_CHANNEL;
+            boolean isSingleChannel    = channelMode == CHANNEL_MODE_SINGLE_CHANNEL;
+            boolean illegalChannelMode = isStereo || isIntensityStereo || isDualChannel;
+
+            List<Integer> restrictedValues = List.of(32, 48, 56, 80);
+            if (restrictedValues.contains(bitrate) && illegalChannelMode) return null;
+
+            restrictedValues   = List.of(224, 256, 320, 384);
+            illegalChannelMode = isSingleChannel;
+
+            if (restrictedValues.contains(bitrate) && illegalChannelMode) return null;
+        }
+
+        return new MpegFrameHeader(
+                version,
+                layer,
+                channelMode,
+                emphasis,
+                isProtected,
+                isCopyrighted,
+                isOriginal,
+                isPadded,
+                isIntensityStereo,
+                isMidSideStereo,
+                bitrate,
+                sampleRate,
+                samplesPerFrame
+        );
     }
 }
