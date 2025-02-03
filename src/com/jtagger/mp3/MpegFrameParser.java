@@ -158,17 +158,15 @@ public class MpegFrameParser {
             int frameSize = getFrameSize(header) - 4;
             frameSize = Math.max(0, frameSize);
 
-            if (frameSize == 0) {
+            if (frameSize == 0)
                 return -1;
-            }
 
             frameData = new byte[frameSize];
             file.read(frameData, 0, frameData.length);
             mpegFrame = new MpegFrame(header, frameData);
 
-            if (findSync(file, (int) file.getFilePointer()) != null) {
+            if (findSync(file, (int) file.getFilePointer()) != null)
                 return syncPosition;
-            }
             return -1;
 
         } catch (IOException ignored) {

@@ -178,17 +178,19 @@ public class MpegStreamInfoParser implements StreamInfoParser<MpegStreamInfo> {
 
         MpegFrameParser mpegFrameParser = new MpegFrameParser();
         int syncPosition = mpegFrameParser.parseFrame(file, tag);
+        if (syncPosition == -1)
+            return null;
 
         MpegFrame mpegFrame = mpegFrameParser.getMpegFrame();
-        if (mpegFrame == null) return null;
+        if (mpegFrame == null)
+            return null;
 
         MpegFrameHeader mpegHeader = mpegFrame.getMpegHeader();
         XingHeader xingHeader      = parseXingHeader(mpegFrame);
         VBRIHeader vbriHeader      = null;
 
-        if (xingHeader == null) {
+        if (xingHeader == null)
             vbriHeader = parseVBRIHeader(mpegFrame);
-        }
 
         MpegStreamInfo.Builder builder = MpegStreamInfo.newBuilder();
         builder = builder.setMpegHeader(mpegFrame.getMpegHeader());
