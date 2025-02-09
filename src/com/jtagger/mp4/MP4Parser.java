@@ -158,7 +158,7 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
         }
 
         esTag = Arrays.copyOfRange(atom, pointer, pointer += 3);
-        if (!Arrays.equals(esTag, esStart) && Arrays.equals(esTag, esEnd)) {
+        if (!Arrays.equals(esTag, esStart) && !Arrays.equals(esTag, esEnd)) {
             System.err.println("Missing ES tag");
             pointer -= 3;
         }
