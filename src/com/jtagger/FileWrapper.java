@@ -47,6 +47,20 @@ public interface FileWrapper {
         return ch;
     }
 
+    default void readFully(byte[] b) throws IOException {
+        readFully(b, 0, b.length);
+    }
+
+    default void readFully(byte[] b, int off, int len) throws IOException {
+        int n = 0;
+        do {
+            int count = this.read(b, off + n, len - n);
+            if (count < 0)
+                throw new EOFException();
+            n += count;
+        } while (n < len);
+    }
+
     default int skipBytes(int n) throws IOException {
 
         long pos;
