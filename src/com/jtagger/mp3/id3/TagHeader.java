@@ -38,6 +38,14 @@ public class TagHeader implements Component {
     public boolean isExperimental()    { return isExperimental; }
     public boolean hasFooter()         { return hasFooter; }
 
+    public void setTagSize(int size) {
+        if (size > 10) {
+            this.tagSize = size;
+            return;
+        }
+        throw new IllegalArgumentException("Tag size is too small");
+    }
+
     public void setFlags(byte flags) {
         if (getMajorVersion() == ID3V2_4 && (flags & 0xF) != 0) throw new IllegalArgumentException("Unknown flag was set");
         if (getMajorVersion() == ID3V2_3 && (flags & 0x1F) != 0) throw new IllegalArgumentException("Unknown flag was set");
@@ -126,7 +134,7 @@ public class TagHeader implements Component {
     public class Builder {
 
         public Builder setTagSize(int size) {
-            TagHeader.this.tagSize = size;
+            TagHeader.this.setTagSize(size);
             return this;
         }
 

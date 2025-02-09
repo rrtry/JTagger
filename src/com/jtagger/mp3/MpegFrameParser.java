@@ -103,7 +103,7 @@ public class MpegFrameParser {
 
             while (file.getFilePointer() < endPos) {
 
-                if (file.read(buffer, 0, buffer.length) < 4) break;
+                file.readFully(buffer);
                 header = IntegerUtils.toUInt32BE(buffer);
 
                 if (isHeaderValid(header)) {
@@ -164,7 +164,7 @@ public class MpegFrameParser {
                 return -1;
 
             frameData = new byte[frameSize];
-            file.read(frameData, 0, frameData.length);
+            file.readFully(frameData);
             mpegFrame = new MpegFrame(header, frameData);
 
             if (findSync(file, (int) file.getFilePointer()) != null)

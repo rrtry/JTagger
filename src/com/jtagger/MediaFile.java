@@ -148,7 +148,7 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements A
             final String[] mpegMagic = new String[] { "ÿû", "ÿó", "ÿò" };
 
             byte[] buffer = new byte[20];
-            file.read(buffer);
+            file.readFully(buffer);
             file.seek(0);
 
             final String signature = new String(buffer, StandardCharsets.ISO_8859_1);
@@ -167,7 +167,7 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements A
 
                 file.skipBytes(segments); // skip segments
                 byte[] headerMagic = new byte[OPUS_IDENTIFICATION_HEADER_MAGIC.length];
-                file.read(headerMagic);
+                file.readFully(headerMagic);
 
                 if (Arrays.equals(headerMagic, OPUS_IDENTIFICATION_HEADER_MAGIC)) {
                     file.seek(0); return FileContentTypeDetector.OGG_OPUS_MIME_TYPE;
@@ -175,7 +175,7 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements A
 
                 file.seek(file.getFilePointer() - headerMagic.length + 1); // +1 skips header type
                 headerMagic = new byte[VORBIS_HEADER_MAGIC.length];
-                file.read(headerMagic);
+                file.readFully(headerMagic);
 
                 if (Arrays.equals(headerMagic, VORBIS_HEADER_MAGIC)) {
                     file.seek(0); return FileContentTypeDetector.OGG_VORBIS_MIME_TYPE;
@@ -183,7 +183,7 @@ public class MediaFile<T extends AbstractTag, I extends StreamInfo> implements A
 
                 file.seek(file.getFilePointer() - headerMagic.length);
                 headerMagic = new byte[4];
-                file.read(headerMagic);
+                file.readFully(headerMagic);
 
                 if (Arrays.equals(headerMagic, new byte[] { 0x46, 0x4C, 0x41, 0x43 })) {
                     file.seek(0); return FileContentTypeDetector.OGG_FLAC_MIME_TYPE;

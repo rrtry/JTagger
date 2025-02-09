@@ -37,8 +37,12 @@ class FrameParser {
     }
 
     private byte[] copyFrame(int pos, int frameSize) {
-        int from = pos + FrameHeader.FRAME_HEADER_DATA_OFFSET;
-        int to = from + frameSize;
+
+        final int from = pos + FrameHeader.FRAME_HEADER_DATA_OFFSET;
+        final int to   = from + frameSize;
+
+        if (to > frameData.length)
+            return null;
         return Arrays.copyOfRange(frameData, from, to);
     }
 
@@ -81,13 +85,16 @@ class FrameParser {
                     break;
             }
         }
+
         byte[] buffer = copyFrame(
                 position + frameHeader.getFrameDataOffset(),
                 frameHeader.getFrameSize()
         );
-        if (frame == null) {
+
+        if (buffer == null)
+            return null;
+        if (frame == null)
             return new UnknownFrame(frameHeader, buffer);
-        }
 
         if (frameHeader.isFrameEncrypted())  return null;
         if (frameHeader.isFrameUnsynch())    buffer = fromUnsynch(buffer);
@@ -96,20 +103,23 @@ class FrameParser {
         try {
             frame.parseFrameData(buffer, frameHeader);
         }
-        catch (DateTimeParseException | IllegalArgumentException e) {
-            e.printStackTrace();
-            return null;
+        catch (DateTimeParseException |
+               IllegalArgumentException e)
+        {
+            return new UnknownFrame(frameHeader, buffer);
         }
         return frame;
     }
 
-    public final ArrayList<AbstractFrame> parseFrames() {
+    public final void parseFrames(ArrayList<AbstractFrame> frames) {
 
         FrameHeaderParser headerParser = new FrameHeaderParser(tagHeader);
-        ArrayList<AbstractFrame> frames = new ArrayList<>();
-
         int position = framesOffset;
+
         while (position < frameData.length) {
+
+            if (position + 10 >= frameData.length)
+                break;
 
             FrameHeader frameHeader = headerParser.parseFrameHeader(frameData, position);
             if (frameHeader == null) {
@@ -117,12 +127,12 @@ class FrameParser {
                 break;
             }
 
-            final int frameSize = frameHeader.getFrameSize();
-            AbstractFrame frame = parseFrame(position, frameHeader);
-            if (frame != null) frames.add(frame);
-
+            int frameSize = frameHeader.getFrameSize();
+            if (frameSize > 0) {
+                AbstractFrame frame = parseFrame(position, frameHeader);
+                if (frame != null) frames.add(frame);
+            }
             position += (frameSize + FrameHeader.FRAME_HEADER_LENGTH);
         }
-        return frames;
     }
 }

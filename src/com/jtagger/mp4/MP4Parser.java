@@ -373,7 +373,7 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
     {
         byte[] atomData = new byte[atomSize];
         System.arraycopy(header, 0, atomData, 0, header.length);
-        file.read(atomData, 8, atomData.length - 8);
+        file.readFully(atomData, 8, atomData.length - 8);
 
         return atomData;
     }
@@ -395,7 +395,7 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
             isContainer = false;
             skipAtom    = false;
 
-            file.read(header);
+            file.readFully(header);
             atomSize = IntegerUtils.toUInt32BE(Arrays.copyOfRange(header, 0, 4));
             atomType = new String(Arrays.copyOfRange(header, 4, 8), ISO_8859_1);
 
@@ -494,7 +494,7 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
 
             while (file.getFilePointer() < fileLength) {
 
-                file.read(header);
+                file.readFully(header);
                 atomSize = IntegerUtils.toUInt32BE(Arrays.copyOfRange(header, 0, 4));
                 atomType = new String(Arrays.copyOfRange(header, 4, 8), ISO_8859_1);
 

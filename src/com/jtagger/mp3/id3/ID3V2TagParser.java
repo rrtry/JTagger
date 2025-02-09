@@ -1,6 +1,5 @@
 package com.jtagger.mp3.id3;
 
-import com.jtagger.InvalidTagException;
 import com.jtagger.TagParser;
 
 import java.io.IOException;
@@ -31,13 +30,16 @@ public class ID3V2TagParser implements TagParser<ID3V2Tag> {
         try {
 
             byte[] tagHeader = new byte[HEADER_LENGTH];
-            file.read(tagHeader, 0, tagHeader.length);
+            file.readFully(tagHeader);
 
             tagHeaderParser.setHeaderData(tagHeader);
             TagHeader header = tagHeaderParser.parse();
 
+            if (header == null)
+                return null; // Invalid header, unsupported version or no tag present
+
             byte[] frameData = new byte[header.getTagSize()];
-            file.read(frameData, 0, header.getTagSize());
+            file.readFully(frameData);
 
             int frameDataOffset = 0;
             if (header.isUnsynch() && header.getMajorVersion() == ID3V2_3) {
@@ -60,13 +62,15 @@ public class ID3V2TagParser implements TagParser<ID3V2Tag> {
             frameParser.setFramesOffset(frameDataOffset);
             frameParser.setFrames(frameData);
 
-            ArrayList<AbstractFrame> frames = frameParser.parseFrames();
+            ArrayList<AbstractFrame> frames = new ArrayList<>();
+            frameParser.parseFrames(frames);
+
             return ID3V2Tag.newBuilder()
                     .setFrames(frames)
                     .setHeader(header)
                     .build();
 
-        } catch (IOException | InvalidTagException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
