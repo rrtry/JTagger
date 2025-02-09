@@ -59,18 +59,15 @@ public class FrameHeaderParser {
             byte[] flags  = parseFlags();
             byte version  = tagHeader.getMajorVersion();
 
-            FrameHeader header = FrameHeader.newBuilder(version)
+            return FrameHeader.newBuilder(version)
                     .setIdentifier(id, version)
                     .setFrameSize(frameSize)
                     .setFlags(flags)
                     .build(version);
 
-            if (header.isFrameEncrypted()) {
-                return null;
-            }
-            return header;
-
-        } catch (IllegalArgumentException | IllegalStateException e) {
+        } catch (IllegalArgumentException |
+                 IllegalStateException e)
+        {
             e.printStackTrace();
             return null;
         }

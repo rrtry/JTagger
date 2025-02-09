@@ -19,7 +19,7 @@ public class ID3V1TagParser implements TagParser<ID3V1Tag> {
 
             byte[] buffer = new byte[128];
             file.seek(file.length() - 128);
-            file.read(buffer, 0, buffer.length);
+            file.readFully(buffer);
 
             String id = new String(
                     Arrays.copyOfRange(buffer, 0, 3),

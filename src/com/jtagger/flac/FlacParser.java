@@ -77,7 +77,7 @@ public class FlacParser implements TagParser<FLAC>, StreamInfoParser<StreamInfoB
         flac = new FLAC();
 
         byte[] magicBytes = new byte[4];
-        file.read(magicBytes, 0, magicBytes.length);
+        file.readFully(magicBytes);
 
         String magic = new String(magicBytes);
         if (!magic.equals(MAGIC)) {
@@ -107,14 +107,14 @@ public class FlacParser implements TagParser<FLAC>, StreamInfoParser<StreamInfoB
                 throw new IllegalStateException("First block should be STREAMINFO");
             }
 
-            file.read(lengthBytes, 0, lengthBytes.length);
+            file.readFully(lengthBytes);
             blockLength = IntegerUtils.toUInt24BE(lengthBytes);
 
             originalSize += 4 + blockLength;
             if (blockType != BLOCK_TYPE_PADDING) {
 
-                blockData = new byte[blockLength];
-                file.read(blockData, 0, blockData.length);
+                blockData = new byte[blockLength]; // TODO: check blockLength before allocating memory
+                file.readFully(blockData);
                 BlockBodyParser parser = getBlockParser(blockType);
 
                 flac.addBlock(parser != null ? parser.parse(blockData) :

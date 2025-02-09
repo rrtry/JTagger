@@ -1,5 +1,6 @@
 package com.jtagger.mp3.id3;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -119,7 +120,10 @@ public class ChapterFrame extends AbstractFrame<LinkedHashMap<String, AbstractFr
         parser.setFrames(buffer);
         parser.setFramesOffset(offset);
 
-        for (AbstractFrame frame : parser.parseFrames()) {
+        ArrayList<AbstractFrame> frames = new ArrayList<>();
+        parser.parseFrames(frames);
+
+        for (AbstractFrame frame : frames) {
             frameMap.put(frame.getKey(), frame);
         }
     }

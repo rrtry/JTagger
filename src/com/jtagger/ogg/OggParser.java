@@ -53,7 +53,7 @@ abstract public class OggParser implements TagParser<VorbisComments> {
         int offset = 0;
         byte[] headerMagic;
         byte[] pageHeader  = new byte[OggPageHeader.OGG_HEADER_SIZE];
-        file.read(pageHeader, 0, pageHeader.length);
+        file.readFully(pageHeader);
 
         headerMagic = Arrays.copyOfRange(pageHeader, offset, offset + 4); offset += 4;
         if (!Arrays.equals(headerMagic, OggPageHeader.OGG_HEADER_MAGIC)) {
@@ -76,8 +76,8 @@ abstract public class OggParser implements TagParser<VorbisComments> {
         this.granulePos = (int) granulePosition;
         this.isLastPage = isLastPage;
 
-        byte[] segmentTable = new byte[pageSegments];
-        file.read(segmentTable, 0, pageSegments);
+        byte[] segmentTable = new byte[pageSegments]; // TODO: check pageSegments before allocating memory
+        file.readFully(segmentTable);
 
         for (byte b : segmentTable) {
             pageDataSize += Byte.toUnsignedInt(b);
@@ -86,8 +86,8 @@ abstract public class OggParser implements TagParser<VorbisComments> {
         if (meta && granulePos <= 0 ||
             !meta && granulePos > 0)
         {
-            byte[] pageData = new byte[pageDataSize];
-            file.read(pageData, 0, pageData.length);
+            byte[] pageData = new byte[pageDataSize]; // TODO: check pageDataSize before allocating memory
+            file.readFully(pageData);
 
             OggPageHeader oggPageHeader = new OggPageHeader();
             oggPageHeader.setFreshPage(isFreshPage);

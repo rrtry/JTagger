@@ -1,8 +1,5 @@
 package com.jtagger.mp3.id3;
 
-import com.jtagger.InvalidTagException;
-
-import java.io.IOException;
 import java.util.Arrays;
 
 import static com.jtagger.mp3.id3.ID3SynchSafeInteger.fromSynchSafeIntegerBytes;
@@ -29,21 +26,26 @@ public class TagHeaderParser {
         this.tagHeader = tagHeader;
     }
 
-    public TagHeader parse() throws IOException, InvalidTagException {
+    public TagHeader parse() {
 
-        if (!isTagValid()) throw new InvalidTagException("Tag is either invalid or not yet supported");
+        if (!isTagValid())
+            return null;
 
         final byte majorVersion = parseMajorVersion();
         final byte minorVersion = parseMinorVersion();
 
-        return TagHeader.newBuilder(majorVersion)
-                .setTagSize(parseTagSize())
-                .setUnsynch(isUsynchronisationApplied())
-                .setMinorVersion(minorVersion)
-                .setIsExperimental(isTagExperimental())
-                .setHasExtendedHeader(isFooterPresent())
-                .setHasExtendedHeader(isExtendedHeaderPresent())
-                .build(majorVersion);
+        try {
+            return TagHeader.newBuilder(majorVersion)
+                    .setTagSize(parseTagSize())
+                    .setUnsynch(isUsynchronisationApplied())
+                    .setMinorVersion(minorVersion)
+                    .setIsExperimental(isTagExperimental())
+                    .setHasExtendedHeader(isFooterPresent())
+                    .setHasExtendedHeader(isExtendedHeaderPresent())
+                    .build(majorVersion);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private boolean isTagValid() {
