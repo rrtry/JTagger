@@ -176,19 +176,23 @@ public class MP4 extends AbstractTag implements StreamInfo {
         return null;
     }
 
+    MP4Atom getAtom(String type) {
+        for (MP4Atom atom : atoms) {
+            if (atom.getType().equals(type))
+                return atom;
+        }
+        return null;
+    }
+
     MP4Atom getMoovAtom() {
 
-        if (moovAtom != null) {
+        if (moovAtom != null)
             return moovAtom;
-        }
 
-        for (MP4Atom atom : atoms) {
-            if (atom.getType().equals("moov")) {
-                moovAtom = atom;
-                return moovAtom;
-            }
-        }
-        throw new IllegalStateException("MP4: moov atom is missing");
+        moovAtom = getAtom("moov");
+        if (moovAtom == null)
+            throw new IllegalStateException("MP4: moov atom is missing");
+        return moovAtom;
     }
 
     MP4Atom getIlstAtom() {
@@ -381,14 +385,36 @@ public class MP4 extends AbstractTag implements StreamInfo {
 
     @Override
     public int getDuration() {
-        if (mdhdAtom == null) mdhdAtom = (MdhdAtom) findAtom("mdhd", getMoovAtom());
-        return mdhdAtom == null ? 0 : (int) (mdhdAtom.getDuration() / mdhdAtom.getTimescale());
+
+        if (mdhdAtom == null)
+            mdhdAtom = (MdhdAtom) findAtom("mdhd", getMoovAtom());
+
+        if (mdhdAtom != null) {
+
+            long duration = mdhdAtom.getDuration();
+            long scale    = mdhdAtom.getTimescale();
+
+            if (duration > 0 && scale > 0)
+                return (int) (duration / scale);
+        }
+        return 0;
     }
 
     @Override
     public int getBitrate() {
-        if (stsdAtom == null) stsdAtom = (StsdAtom) findAtom("stsd", getMoovAtom());
-        return stsdAtom == null ? 0 : stsdAtom.getAvgBitrate() / 1000;
+
+        if (stsdAtom == null)
+            stsdAtom = (StsdAtom) findAtom("stsd", getMoovAtom());
+
+        if (stsdAtom != null && stsdAtom.getAvgBitrate() > 0)
+            return stsdAtom.getAvgBitrate() / 1000;
+
+        MP4Atom mdat = getAtom("mdat");
+        int duration = getDuration();
+        if (mdat != null && duration > 0)
+            return (int) (mdat.getSize() * 8f / (duration * 1000f));
+
+        return 0;
     }
 
     @Override
