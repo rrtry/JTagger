@@ -8,12 +8,31 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static com.jtagger.mp4.ItunesAtom.*;
 import static com.jtagger.utils.IntegerUtils.*;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
+
+    private static final List<String> TOP_LEVEL_ATOMS = List.of(
+            "ftyp",
+            "pdin",
+            "moov",
+            "moof",
+            "mfra",
+            "free",
+            "skip",
+            "junk",
+            "wide",
+            "pnot",
+            "pict",
+            "meta",
+            "meco",
+            "uuid",
+            "mdat"
+    );
 
     private static final String AS_ENTRY_ALAC = "alac";
     private static final String AS_ENTRY_AC3  = "ac-3";
@@ -498,8 +517,9 @@ public class MP4Parser implements TagParser<MP4>, StreamInfoParser<MP4> {
                 atomSize = IntegerUtils.toUInt32BE(Arrays.copyOfRange(header, 0, 4));
                 atomType = new String(Arrays.copyOfRange(header, 4, 8), ISO_8859_1);
 
-                if (atomSize < 8) {
-                    throw new InvalidAtomException("Invalid atom size: " + atomSize);
+                if (atomSize < 8 || !TOP_LEVEL_ATOMS.contains(atomType)) {
+                    System.err.printf("MP4Parser: junk at: %d\n", file.getFilePointer());
+                    break;
                 }
 
                 atomStart = file.getFilePointer() - 8;
