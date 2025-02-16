@@ -7,6 +7,7 @@ import com.jtagger.utils.IntegerUtils;
 
 import java.io.IOException;
 import static com.jtagger.flac.AbstractMetadataBlock.*;
+import static com.jtagger.utils.BytesIO.PADDING_MIN;
 
 public class FlacTagEditor extends AbstractTagEditor<FLAC> {
 
@@ -36,28 +37,31 @@ public class FlacTagEditor extends AbstractTagEditor<FLAC> {
 
         super.commit();
         byte[] tagBuffer = tag.getBytes();
-        int maxPad  = BytesIO.getPadding((int) file.length());
-        int padding = parser.getOriginalSize() - tagBuffer.length - 4;
+
+        int origSize = parser.getStreamOffset() - 4; // subtract fLaC signature
+        int maxPad   = BytesIO.getPadding((int) file.length());
+        int padding  = origSize - tagBuffer.length;
 
         file.seek(4);
-        if (padding > 0 && padding <= maxPad) {
+        if ((padding - 4) >= PADDING_MIN && (padding - 4) <= maxPad) {
+            padding -= 4;
             file.write(tagBuffer);
             file.write(BLOCK_TYPE_PADDING | 0x80);
             file.write(IntegerUtils.fromUInt24BE(padding));
             file.write(new byte[padding]);
             return;
         } else {
-            padding = BytesIO.PADDING_MIN - 4;
+            padding = PADDING_MIN;
         }
 
-        int delta = tagBuffer.length - parser.getOriginalSize();
-        int from  = parser.getStreamOffset();
-        int to    = from + delta + padding;
+        int newSize = tagBuffer.length + padding + 4; // +4 block header size
+        int delta   = newSize - origSize;
+        int from    = parser.getStreamOffset();
+        int to      = from + delta;
 
-        BytesIO.moveBlock(
-                file, from, to, delta, (int) file.length() - from
-        );
+        BytesIO.moveBlock(file, from, to, delta, (int) file.length() - from);
         BytesIO.writeBlock(file, tagBuffer, 4);
+
         file.write(BLOCK_TYPE_PADDING | 0x80);
         file.write(IntegerUtils.fromUInt24BE(padding));
         file.write(new byte[padding]);

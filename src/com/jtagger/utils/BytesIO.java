@@ -39,6 +39,23 @@ public class BytesIO {
         file.write(buffer);
     }
 
+    public static void copyBlock(
+            byte[] tempBuffer,
+            FileWrapper from,
+            FileWrapper to,
+            int count) throws IOException
+    {
+        int copied = 0;
+        int bufferSize;
+
+        while (copied < count) {
+            bufferSize = Math.min(tempBuffer.length, count - copied);
+            from.read(tempBuffer, 0, bufferSize);
+            to.write(tempBuffer, 0, bufferSize);
+            copied += bufferSize;
+        }
+    }
+
     public static void moveBlock(
             FileWrapper file,
             int from,
