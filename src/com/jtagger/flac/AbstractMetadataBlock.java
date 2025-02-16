@@ -8,6 +8,7 @@ import java.util.List;
 
 public abstract class AbstractMetadataBlock implements Component {
 
+    public static final int BLOCK_MAX_SIZE = 16777215;
     public static final byte BLOCK_HEADER_LENGTH = 0x04;
     public static final byte BLOCK_HEADER_LENGTH_INDICATOR = 0x03;
 

@@ -53,46 +53,6 @@ public class BytesIO {
         }
     }
 
-    public static void overwrite(
-            RandomAccessFile file,
-            byte[] tagBuffer,
-            byte[] padding,
-            int oldTagEndPos,
-            int newTagStartPos,
-            int sizeDiff,
-            int count) throws IOException
-    {
-        File temp;
-        RandomAccessFile tempFile;
-
-        temp     = File.createTempFile(UUID.randomUUID().toString(), ".tmp");
-        tempFile = new RandomAccessFile(temp.getAbsolutePath(), "rw");
-
-        byte[] tempBuffer = new byte[BUFFER_SIZE];
-        long fLength = file.length();
-        int copyLen  = count;
-
-        file.seek(oldTagEndPos);
-        copyBlock(tempBuffer, file, tempFile, copyLen);
-        copyLen = (int) tempFile.length();
-
-        tempFile.seek(0);
-        file.seek(newTagStartPos);
-        file.write(tagBuffer);
-
-        if (padding != null) {
-            file.write(padding);
-        }
-
-        copyBlock(tempBuffer, tempFile, file, copyLen);
-        file.setLength(fLength + sizeDiff);
-        tempFile.close();
-
-        if (!temp.delete()) {
-            System.err.println("Main.overwrite: failed to delete temp file");
-        }
-    }
-
     public static void moveBlock(
             RandomAccessFile file,
             int from,

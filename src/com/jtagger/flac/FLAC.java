@@ -113,7 +113,7 @@ public class FLAC extends AbstractTag {
         removeBlock(BLOCK_TYPE_PICTURE);
     }
 
-    int getBlockDataSize() {
+    private int getBlockDataSize() {
         int size = 0;
         for (AbstractMetadataBlock block : metadataBlocks) {
             block.isLastBlock = false; // last block would be BLOCK_TYPE_PADDING
@@ -129,6 +129,30 @@ public class FLAC extends AbstractTag {
         return blockBuffer.length;
     }
 
+    /*
+        +=========+=======================================================+
+    | Value   | Metadata Block Type                                   |
+    +=========+=======================================================+
+    | 0       | Streaminfo                                            |
+    +---------+-------------------------------------------------------+
+    | 1       | Padding                                               |
+    +---------+-------------------------------------------------------+
+    | 2       | Application                                           |
+    +---------+-------------------------------------------------------+
+    | 3       | Seek table                                            |
+    +---------+-------------------------------------------------------+
+    | 4       | Vorbis comment                                        |
+    +---------+-------------------------------------------------------+
+    | 5       | Cuesheet                                              |
+    +---------+-------------------------------------------------------+
+    | 6       | Picture                                               |
+    +---------+-------------------------------------------------------+
+    | 7 - 126 | Reserved                                              |
+    +---------+-------------------------------------------------------+
+    | 127     | Forbidden (to avoid confusion with a frame sync code) |
+    +---------+-------------------------------------------------------+
+     */
+
     @Override
     public byte[] assemble(byte version) {
 
@@ -138,19 +162,17 @@ public class FLAC extends AbstractTag {
         bytes = new byte[size];
         AbstractMetadataBlock[] blocks = new AbstractMetadataBlock[] {
                 getBlock(BLOCK_TYPE_STREAMINFO),
+                getBlock(BLOCK_TYPE_APPLICATION),
+                getBlock(BLOCK_TYPE_SEEKTABLE),
                 getBlock(BLOCK_TYPE_VORBIS_COMMENT),
+                getBlock(BLOCK_TYPE_CUESHEET),
                 getBlock(BLOCK_TYPE_PICTURE)
         };
 
+        // TODO: discard large blocks
         for (AbstractMetadataBlock block : blocks) {
-            if (block != null) {
+            if (block != null)
                 offset += copyBlock(block, offset);
-            }
-        }
-        for (AbstractMetadataBlock block : metadataBlocks) {
-            if (block instanceof UnknownMetadataBlock) {
-                offset += copyBlock(block, offset);
-            }
         }
         return bytes;
     }
