@@ -148,82 +148,58 @@ public class OggPage implements Component {
         ArrayList<OggPage> pages = new ArrayList<>();
         OggPage page = new OggPage(serial, pageSequence++);
 
-        boolean addPage = false;
         OggPacket packet;
         for (int i = sequenceNumber; i < packets.size(); i++) {
 
             packet = packets.get(i);
             byte[] packetBuffer = packet.getData();
-            int length  = packetBuffer.length;
-            int written = 0;
-            addPage = false;
+
+            int length    = packetBuffer.length;
+            int remainder = length % SEGMENT_MAX_SIZE;
+            int written   = 0;
 
             while (written < length) {
 
-                int left = length - written;
-                int fullSegments = left / SEGMENT_MAX_SIZE;
-                int remaining = left % SEGMENT_MAX_SIZE;
+                int left     = length - written;
+                int segments = left / SEGMENT_MAX_SIZE;
 
-                int[] result = page.writePacket(
-                        packetBuffer,
-                        written,
-                        fullSegments,
-                        remaining
-                );
+                OggPageHeader header = page.getHeader();
+                int size = 0;
+                for (int j = 0; j < segments; j++) {
+                    if (!header.addSegment(SEGMENT_MAX_SIZE))
+                        break;
+                    size += SEGMENT_MAX_SIZE;
+                }
 
-                int size     = result[0];
-                int segments = result[1];
+                page.writePacket(packetBuffer, written, size);
                 written += size;
 
-                boolean newPage = !page.getHeader().hasAvailableSegments();
-                if (newPage) {
+                boolean hasSegments = header.hasAvailableSegments();
+                boolean packetDone  = written == length;
+
+                if (!hasSegments) {
                     pages.add(page);
                     page = new OggPage(serial, pageSequence++);
-                    page.getHeader().setFreshPage(segments - (fullSegments + 1) == 0);
+                    page.getHeader().setFreshPage(remainder != 0);
                 }
-                if (written == length) {
-                    if (remaining == 0 &&
-                            segments - (fullSegments + 1) == -1)
-                    {
+                if (packetDone) {
+                    if (remainder == 0)
                         page.getHeader().addSegment(0);
-                    }
-                    if (!newPage) {
-                        addPage = true;
-                    }
+                } else if (left == remainder) {
+                    page.getHeader().addSegment(remainder);
+                    page.writePacket(packetBuffer, written, remainder);
+                    written += remainder;
                 }
             }
         }
-        if (addPage && page.getHeader().getPageSegments() != 0) {
+        if (page.getHeader().getPageSegments() > 0)
             pages.add(page);
-        }
         return pages;
     }
 
-    public int[] writePacket(
-            byte[] packet,
-            int offset,
-            int fullSegments,
-            int remaining)
-    {
-        int length   = 0;
-        int segments = 0;
-
-        for (int i = 0; i < fullSegments; i++) {
-            if (header.addSegment(SEGMENT_MAX_SIZE)) {
-                length += SEGMENT_MAX_SIZE;
-                segments++;
-            }
-        }
-        if (header.addSegment(remaining)) {
-            length += remaining;
-            segments++;
-        }
+    private void writePacket(byte[] packet, int offset, int length) {
         System.arraycopy(packet, offset, pageData, index, length);
         index += length;
-        return new int[] {
-                length,
-                segments
-        };
     }
 
     public void setHeader(OggPageHeader header) {
@@ -253,8 +229,7 @@ public class OggPage implements Component {
         byte[] headerBytes = header.getBytes();
         byte[] pageData    = getData();
 
-        bytes = new byte[headerBytes.length + getData().length];
-
+        bytes = new byte[headerBytes.length + pageData.length];
         System.arraycopy(headerBytes, 0, bytes, 0, headerBytes.length);
         System.arraycopy(pageData, 0, bytes, headerBytes.length, pageData.length);
 

@@ -59,7 +59,7 @@ public class OggVorbisParser extends OggParser implements StreamInfoParser<Vorbi
 
         VorbisCommentsParser parser       = new VorbisCommentsParser();
         VorbisCommentHeader commentHeader = new VorbisCommentHeader();
-        commentHeader.setVorbisComments(parser.parse(headerData, false));
+        commentHeader.setVorbisComments(parser.parse(headerData, true));
 
         return commentHeader;
     }

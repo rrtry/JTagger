@@ -8,6 +8,7 @@ import com.jtagger.ogg.vorbis.OggVorbisParser;
 import com.jtagger.ogg.vorbis.VorbisComments;
 import com.jtagger.utils.BytesIO;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -65,7 +66,8 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
 
         int size = 0;
         for (OggPage page : newPages) {
-            size += page.assemble().length;
+            byte[] buffer = page.assemble();
+            size += buffer.length;
         }
 
         if (newPages.size() != parser.headerPages()) {
@@ -80,15 +82,15 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
 
                 position = file.getFilePointer();
                 OggPage page = parser.parsePage(file, false);
+
                 OggPageHeader header = page.getHeader();
                 header.setSequenceNumber(header.getPageSequenceNumber() + diff);
 
                 file.seek(position);
                 file.write(page.assemble());
 
-                if (header.isLastPage()) {
+                if (header.isLastPage())
                     break;
-                }
             }
         }
         int diff = size - parser.getStreamOffset();
@@ -97,13 +99,7 @@ abstract public class OggTagEditor extends AbstractTagEditor<VorbisComments> {
             int from = parser.getStreamOffset();
             int to   = from + diff;
 
-            BytesIO.moveBlock(
-                    file,
-                    from,
-                    to,
-                    diff,
-                    (int) file.length() - from
-            );
+            BytesIO.moveBlock(file, from, to, diff, (int) file.length() - from);
         }
         file.seek(0);
         for (OggPage page : newPages) {
