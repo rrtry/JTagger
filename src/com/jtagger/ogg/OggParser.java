@@ -87,7 +87,7 @@ abstract public class OggParser implements TagParser<VorbisComments> {
             !meta && granulePos > 0)
         {
             byte[] pageData = new byte[pageDataSize]; // TODO: check pageDataSize before allocating memory
-            file.readFully(pageData);
+            file.read(pageData);
 
             OggPageHeader oggPageHeader = new OggPageHeader();
             oggPageHeader.setFreshPage(isFreshPage);

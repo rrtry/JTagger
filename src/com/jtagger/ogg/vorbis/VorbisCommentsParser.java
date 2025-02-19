@@ -9,7 +9,7 @@ public class VorbisCommentsParser {
     public VorbisComments parse(byte[] data, boolean framingBit) {
 
         if (data[data.length - 1] != 0x1 && framingBit) {
-            throw new IllegalStateException("Framing bit not set");
+            System.err.println("VorbisCommentsParser: Framing bit not set");
         }
 
         VorbisComments comments = new VorbisComments(framingBit);
