@@ -225,7 +225,7 @@ public class MpegStreamInfoParser implements StreamInfoParser<MpegStreamInfo> {
             bitrate  = getBitrate(vbriHeader.getTotalBytes() - syncPosition + 4, sampleRate, vbriHeader.getTotalFrames() * samplesFrame);
             duration = getDuration(vbriHeader.getTotalFrames() * samplesFrame, sampleRate);
         }
-        mpegStreamInfo.setBitrate(bitrate);
+        mpegStreamInfo.setBitrate(bitrate / 1000);
         mpegStreamInfo.setDuration((int) duration);
         return mpegStreamInfo;
     }
