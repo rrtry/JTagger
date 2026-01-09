@@ -30,10 +30,12 @@ public class VorbisCommentsParser {
             String comment = new String(Arrays.copyOfRange(data, offset, offset + commentSize), StandardCharsets.UTF_8);
             String[] split = comment.split("=");
 
-            String field = split[0];
-            String value = split[1];
+            if (split.length == 2) {
+                String field = split[0];
+                String value = split[1];
+                comments.setComment(field, value);
+            }
 
-            comments.setComment(field, value);
             n++; offset += commentSize;
         }
         comments.assemble();
